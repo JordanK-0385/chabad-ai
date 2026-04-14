@@ -25,7 +25,7 @@ export default function Landing({ firebaseReady = false }) {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 24px 40px", textAlign: "center" }}>
         <ChabadLogo size={48} style={{ marginBottom: 16 }} />
         <h1 style={{ fontFamily: SERIF, fontSize: "clamp(28px, 5vw, 42px)", color: T.text, margin: "0 0 6px", letterSpacing: "-0.03em", fontWeight: 700 }}>
-          Shliach.ai
+          Habad.ai
         </h1>
         <p style={{ fontSize: "clamp(16px, 2.5vw, 20px)", color: T.text, margin: "0 0 8px", maxWidth: 520, lineHeight: 1.6, fontFamily: SERIF }}>
           L'assistant IA des Shluchim de France

@@ -104,7 +104,7 @@ function LPNav({ onSignIn }) {
       {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
         <ChabadLogo size={34} />
-        <span style={{ fontFamily: SERIF, fontSize: 17, color: "var(--navbar-text)", fontWeight: 700 }}>Shliach.ai</span>
+        <span style={{ fontFamily: SERIF, fontSize: 17, color: "var(--navbar-text)", fontWeight: 700 }}>Habad.ai</span>
       </div>
 
       {/* Nav links */}
@@ -185,7 +185,7 @@ function BrowserMockup() {
         {/* Mini navbar */}
         <div style={{ background: "var(--navbar-bg)", height: 44, display: "flex", alignItems: "center", padding: "0 16px", gap: 12 }}>
           <ChabadLogo size={24} />
-          <span style={{ fontFamily: SERIF, fontSize: 13, color: "var(--navbar-text)", fontWeight: 700 }}>Shliach.ai</span>
+          <span style={{ fontFamily: SERIF, fontSize: 13, color: "var(--navbar-text)", fontWeight: 700 }}>Habad.ai</span>
           <div style={{ flex: 1, display: "flex", gap: 4, justifyContent: "center" }}>
             {["🎨 Affiches","📖 Cours","💬 Messages"].map(l => (
               <span key={l} style={{ fontSize: 11, color: "var(--navbar-text-muted)", padding: "3px 8px", borderRadius: 5, fontFamily: SANS }}>{l}</span>
@@ -479,7 +479,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <ChabadLogo size={28} />
-            <span style={{ fontFamily: SERIF, fontSize: 16, color: "var(--navbar-text)", fontWeight: 700 }}>Shliach.ai</span>
+            <span style={{ fontFamily: SERIF, fontSize: 16, color: "var(--navbar-text)", fontWeight: 700 }}>Habad.ai</span>
           </div>
           <p style={{ margin: 0, fontSize: 13, color: "rgba(250,235,215,0.6)", fontFamily: SANS }}>
             L'assistant IA des shluchim

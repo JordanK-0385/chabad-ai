@@ -169,7 +169,7 @@ export function AppHeader({ currentScreen, onNavigate, user, onSignOut }) {
       {/* LEFT */}
       <div onClick={() => onNavigate("dashboard")} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flexShrink: 0 }}>
         <ChabadLogo size={36} />
-        {!mobile && <span style={{ fontFamily: SERIF, fontSize: 17, color: T.navbarText, fontWeight: 700 }}>Shliach.ai</span>}
+        {!mobile && <span style={{ fontFamily: SERIF, fontSize: 17, color: T.navbarText, fontWeight: 700 }}>Habad.ai</span>}
       </div>
 
       {/* CENTER — Nav */}
