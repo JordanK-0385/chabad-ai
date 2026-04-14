@@ -1,0 +1,201 @@
+/* ─── Messages.jsx ─── Community message drafting module ─── */
+
+import { useState, useEffect } from "react";
+import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
+
+const TYPES = [
+  { v: "invitation",  l: "Invitation",    e: "\uD83D\uDCE9" },
+  { v: "voeux",       l: "Voeux",         e: "\uD83C\uDF1F" },
+  { v: "remerciement",l: "Remerciement",  e: "\uD83D\uDE4F" },
+  { v: "annonce",     l: "Annonce",       e: "\uD83D\uDCE2" },
+  { v: "condoleances",l: "Condoléances",  e: "\uD83D\uDD4E" },
+  { v: "collecte",    l: "Collecte",      e: "\uD83D\uDCB0" },
+  { v: "rappel",      l: "Rappel",        e: "\u23F0" },
+  { v: "autre",       l: "Autre",         e: "\u270F\uFE0F" },
+];
+
+const TONS = ["Chaleureux", "Formel", "Joyeux", "Solennel", "Amical", "Urgent"];
+
+const TAILLES = [
+  { v: "tres-court", l: "Très court" },
+  { v: "court",      l: "Court" },
+  { v: "moyen",      l: "Moyen" },
+  { v: "long",       l: "Long" },
+];
+const FORMULATIONS = ["Tutoiement", "Vouvoiement"];
+
+const CLAUDE_MSG_SYS = `Tu es expert en communication communautaire pour les institutions Chabad-Loubavitch en France.
+Tu rediges des messages clairs, chaleureux et adaptes au contexte juif orthodoxe.
+Inclus des formules hebraiques appropriees (Bezrat Hachem, Bli Neder, etc).
+Reponds en francais.
+
+LONGUEUR :
+- Tres court : 2-3 lignes maximum, WhatsApp one-liner
+- Court : 4-5 lignes, essentiel uniquement
+- Moyen : 6-8 lignes, avec une pensee developpee
+- Long : 10-12 lignes, message elabore avec benediction complete
+
+FORMULATION :
+Applique strictement le tutoiement (tu, toi, ton, ta) ou le vouvoiement (vous, votre, vos) dans tout le message y compris dans les formules d'ouverture et de cloture.`;
+
+export default function Messages({ profil, onBack, headerProps }) {
+  const [mobile, setMobile] = useState(window.innerWidth <= 600);
+  useEffect(() => {
+    const h = () => setMobile(window.innerWidth <= 600);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+
+  const [type, setType] = useState("");
+  const [destinataire, setDestinataire] = useState("");
+  const [sujet, setSujet] = useState("");
+  const [ton, setTon] = useState("Chaleureux");
+  const [taille, setTaille] = useState("court");
+  const [formulation, setFormulation] = useState("Vouvoiement");
+  const [details, setDetails] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState("");
+  const [err, setErr] = useState("");
+
+  async function generate() {
+    if (!type && !sujet.trim()) { setErr("Choisissez un type ou décrivez le message."); return; }
+    setLoading(true); setErr(""); setResult("");
+    try {
+      const bc = profil?.betChabad ? `Beth Chabad de ${profil.betChabad}` : "Beth Chabad";
+      const msg = [
+        `Redige un message de type : ${type || "general"}`,
+        destinataire.trim() ? `Destinataire(s) : ${destinataire.trim()}` : "",
+        sujet.trim() ? `Sujet : ${sujet.trim()}` : "",
+        `Ton : ${ton}`,
+        `Longueur : ${taille}`,
+        `Formulation : ${formulation}`,
+        details.trim() ? `Details : ${details.trim()}` : "",
+        `Institution : ${bc}`,
+        profil?.telephone ? `Contact : ${profil.telephone}` : "",
+        profil?.email ? `Email : ${profil.email}` : "",
+        profil?.siteWeb ? `Site web : ${profil.siteWeb}` : "",
+      ].filter(Boolean).join("\n");
+
+      const res = await fetch("/api/anthropic/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, system: CLAUDE_MSG_SYS, messages: [{ role: "user", content: msg }] }),
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+      const text = d.content?.find(b => b.type === "text")?.text || "";
+      if (!text) throw new Error("Reponse vide de Claude.");
+      setResult(text);
+    } catch (e) {
+      setErr("Erreur : " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: SANS }}>
+
+      {/* Header */}
+      {headerProps && <AppHeader currentScreen="messages" {...headerProps} />}
+
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: mobile ? "16px 12px" : "24px 18px", display: "flex", gap: 22, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
+
+        {/* LEFT - controls */}
+        <div style={{ flex: "1 1 300px", minWidth: 0 }}>
+          <Card>
+            <StepLabel n="1">Type de message</StepLabel>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {TYPES.map(t => (
+                <div key={t.v} onClick={() => setType(t.v)} style={{ padding: "10px 12px", borderRadius: 8, cursor: "pointer", border: `1px solid ${type === t.v ? T.gold : T.border}`, background: type === t.v ? T.goldFaint : T.surface, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>{t.e}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: type === t.v ? T.gold : T.text }}>{t.l}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <StepLabel n="2">Personnalisation</StepLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 11, color: T.muted, marginBottom: 4, display: "block" }}>Destinataire(s)</label>
+                <input value={destinataire} onChange={e => setDestinataire(e.target.value)} placeholder="Ex: Les fidèles, M. et Mme Cohen, La communauté..." style={INP} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: T.muted, marginBottom: 4, display: "block" }}>Sujet</label>
+                <input value={sujet} onChange={e => setSujet(e.target.value)} placeholder="Ex: Invitation au Seder communautaire" style={INP} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: T.muted, marginBottom: 6, display: "block" }}>Ton</label>
+                <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                  {TONS.map(t => (
+                    <span key={t} onClick={() => setTon(t)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${ton === t ? T.gold : T.border}`, color: ton === t ? T.gold : T.muted, background: ton === t ? T.goldSoft : T.surface }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: T.muted, marginBottom: 6, display: "block" }}>Formulation</label>
+                <div style={{ display: "flex", gap: 7 }}>
+                  {FORMULATIONS.map(f => (
+                    <span key={f} onClick={() => setFormulation(f)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${formulation === f ? T.gold : T.border}`, color: formulation === f ? T.gold : T.muted, background: formulation === f ? T.goldSoft : T.surface }}>{f}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: T.muted, marginBottom: 6, display: "block" }}>Longueur</label>
+                <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                  {TAILLES.map(t => (
+                    <span key={t.v} onClick={() => setTaille(t.v)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${taille === t.v ? T.gold : T.border}`, color: taille === t.v ? T.gold : T.muted, background: taille === t.v ? T.goldSoft : T.surface }}>{t.l}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: T.muted, marginBottom: 4, display: "block" }}>Détails supplémentaires (optionnel)</label>
+                <textarea value={details} onChange={e => setDetails(e.target.value)} placeholder="Ajoutez des informations spécifiques..." rows={3} style={{ ...INP, resize: "vertical", lineHeight: 1.6 }} />
+              </div>
+            </div>
+          </Card>
+
+          {err && <div style={{ color: T.red, fontSize: 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px" }}>{err}</div>}
+
+          <div style={mobile ? { minHeight: 48 } : {}}>
+            <GBtn onClick={generate} disabled={loading} fullWidth>
+              {loading ? "Rédaction en cours..." : "Rédiger le message"}
+            </GBtn>
+          </div>
+        </div>
+
+        {/* RIGHT - result */}
+        <div style={{ flex: "1 1 380px", minWidth: 0, width: mobile ? "100%" : "auto" }}>
+          {!result && !loading && (
+            <Card style={{ minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
+              <ChabadLogo size={48} color={T.faint} />
+              <div style={{ fontSize: 12, color: T.muted, textAlign: "center", lineHeight: 1.6 }}>
+                Configurez les paramètres à gauche<br />puis cliquez sur <span style={{ color: T.gold }}>Rédiger le message</span>
+              </div>
+            </Card>
+          )}
+          {loading && (
+            <Card style={{ minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
+              <div style={{ fontSize: 32, animation: "pulse 1.5s ease-in-out infinite" }}>{"\u2709\uFE0F"}</div>
+              <div style={{ fontSize: 14, color: T.gold }}>Rédaction en cours...</div>
+            </Card>
+          )}
+          {result && (
+            <Card style={{ maxHeight: "75vh", overflowY: "auto" }}>
+              <div style={{ fontSize: 13, color: T.text, lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: SANS }}>
+                {result}
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                <GBtn onClick={() => { navigator.clipboard.writeText(result); }} outline sm>Copier</GBtn>
+                <GBtn onClick={generate} outline sm>Regénérer</GBtn>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

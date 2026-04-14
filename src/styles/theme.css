@@ -1,0 +1,73 @@
+/* ─── theme.css ─── Chabad Brand color system ─────────────────── */
+
+/* ── Dark mode — "Flamme Royale" (default) ───────────────────── */
+:root,
+:root[data-theme="dark"] {
+  --bg-primary:          #110309;
+  --bg-surface:          #2a0a1a;
+  --bg-surface-hover:    #3d1225;
+  --bg-surface-elevated: #1d0813;
+  --color-primary:       #5d0b30;
+  --color-brand:         #871a39;
+  --color-accent:        #f27730;
+  --color-accent-hover:  #ff8c42;
+  --color-text:          #faebd7;
+  --color-text-muted:    #c9a88a;
+  --color-text-subtle:   #8a6a55;
+  --color-border:        rgba(242, 119, 48, 0.15);
+  --color-border-active: #f27730;
+  --color-border-brand:  #871a39;
+  --navbar-bg:           #0a0206;
+  --paracha-bg:          #2d0a1a;
+  --paracha-border:      #871a39;
+  /* Navbar text stays light on both themes (navbar is always dark) */
+  --navbar-text:         #faebd7;
+  --navbar-text-muted:   #c9a88a;
+  /* Alpha tints derived from accent */
+  --color-accent-faint:  rgba(242, 119, 48, 0.08);
+  --color-accent-soft:   rgba(242, 119, 48, 0.12);
+  --color-accent-alpha:  rgba(242, 119, 48, 0.25);
+}
+
+/* ── Light mode — "Torah Blanc" ──────────────────────────────── */
+:root[data-theme="light"] {
+  --bg-primary:          #fdf8f5;
+  --bg-surface:          #f5ece6;
+  --bg-surface-hover:    #eeddd4;
+  --bg-surface-elevated: #ffffff;
+  --color-primary:       #5d0b30;
+  --color-brand:         #871a39;
+  --color-accent:        #f27730;
+  --color-accent-hover:  #d4601a;
+  --color-text:          #1a0510;
+  --color-text-muted:    #7a4a3a;
+  --color-text-subtle:   #b08070;
+  --color-border:        rgba(93, 11, 48, 0.15);
+  --color-border-active: #871a39;
+  --color-border-brand:  #5d0b30;
+  --navbar-bg:           #5d0b30;
+  --paracha-bg:          #f5ece6;
+  --paracha-border:      #871a39;
+  /* Navbar text stays light (burgundy navbar) */
+  --navbar-text:         #faebd7;
+  --navbar-text-muted:   #e8c9a8;
+  /* Alpha tints */
+  --color-accent-faint:  rgba(242, 119, 48, 0.08);
+  --color-accent-soft:   rgba(242, 119, 48, 0.12);
+  --color-accent-alpha:  rgba(93, 11, 48, 0.20);
+}
+
+/* ── Base reset ──────────────────────────────────────────────── */
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* ── Theme transitions (smooth 250ms switch) ─────────────────── */
+*, *::before, *::after {
+  transition:
+    background-color 0.25s ease,
+    border-color     0.25s ease,
+    color            0.25s ease;
+}

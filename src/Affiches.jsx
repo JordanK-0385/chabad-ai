@@ -1,0 +1,570 @@
+/* ─── Affiches.jsx ─── Poster generator module (extracted from App.jsx) ─── */
+
+import { useState, useCallback, useRef, useEffect } from "react";
+import html2canvas from "html2canvas";
+import { T, SERIF, SANS, INP, ChabadLogo, Card, GBtn, StepLabel, BackButton, AppHeader } from "./shared";
+
+/* ─── Claude system prompt ─── */
+const CLAUDE_SYS = `Tu es expert en communication visuelle pour institutions Chabad-Loubavitch France.
+
+REGLES ABSOLUES :
+- BSD (\u05D1\u05E1\u05F4\u05D3) haut a droite sur toute affiche
+- Etoile de David : 6 branches classiques, jamais carre ni hexagone
+- Kippah TOUJOURS sombre : marine, noir ou bordeaux \u2014 JAMAIS blanche (blanc = taqiyah islamique)
+- Filles/femmes : cheveux NATURELS visibles (tresse, queue de cheval) \u2014 JAMAIS hijab, voile ou foulard islamique
+- Tsniout : jupe longue sous genou, manches longues
+- Jamais croix, hamsa, symboles d\u2019autres religions
+- Seuls les GARCONS/HOMMES portent la kippah. Les FILLES/FEMMES ne portent JAMAIS de kippah.
+- Le type d\u2019illustration (personnages) est choisi par l\u2019utilisateur cote interface. Ne decide PAS des personnages. Le champ "personnages" doit toujours etre un tableau vide [].
+
+COULEURS : Pessah\u2192blanc,or,bleu clair | Hanoukka\u2192bleu,argent,or | Pourim\u2192violet,or | Lag BaOmer\u2192orange,brun | Solennelle/Yahrzeit\u2192bordeaux,gris | Defaut\u2192#003087+or
+
+Reponds UNIQUEMENT JSON valide sans backtick :
+{"titre":"...","sous_titre":"...","date":"...","heure":"...","lieu":"...","adresse":"...","public":"...","accroche":"...","texte_hebreu":"...","ambiance":"festive","emoji":"...","contact":"...","kashrout":"...","personnages":[],"couleur_dominante":"#003087","couleur_accent":"#C9971A"}`;
+
+/* ─── buildPrompt ─── */
+function buildPrompt(data, bc, fmt, illustSelection = []) {
+  const ratios = { carre: "1:1", story: "9:16", a4: "3:4", paysage: "4:3" };
+  const ar     = ratios[fmt] || "1:1";
+  const isSol = data.ambiance === "solennelle";
+  const pal   = isSol ? "dark burgundy and charcoal, dignified" : "deep Chabad blue and warm gold, festive";
+  const scene = data.accroche ? `Scene hint: "${data.accroche}". ` : "";
+
+  const ageMap = { "Enfants": "young children (ages 5-10)", "Adolescents": "teenagers (ages 13-17)", "Adolescentes": "teenage girls (ages 13-17)", "Adultes": "young adults (ages 25-40)", "Adulte": "adult (age 35-55)", "Seniors": "elderly (ages 65+)", "\u00C2g\u00E9": "elderly man (age 65+)", "\u00C2g\u00E9e": "elderly woman (age 65+)" };
+  const MALE_TILES = ["garcons", "rav"];
+  const FEMALE_TILES = ["filles", "rabbanit"];
+
+  function descTile(tile, age, qty) {
+    const a = age && ageMap[age] ? `, age group: ${ageMap[age]}` : ", adults";
+    const solo = qty === "1";
+    if (tile === "garcons") return solo
+      ? `A single Jewish Chabad boy${a}. Dark navy or black suede kippah (NEVER white). White shirt, visible tzitzit strings at waist, long dark trousers. Warm, friendly, expressive face. Only ONE boy, no other characters.`
+      : `Jewish Chabad boys (small group of 2-4)${a}. Dark navy or black suede kippah (NEVER white). White shirt, visible tzitzit strings at waist, long dark trousers. Warm, friendly, expressive faces.`;
+    if (tile === "filles") return solo
+      ? `A single Jewish Chabad girl${a}. Completely natural uncovered hair \u2014 braids, ponytail, or loose. NO kippah, NO head covering. Modest long dress below knee, long sleeves. Warm, friendly, expressive face. Only ONE girl, no other characters.`
+      : `Jewish Chabad girls (small group of 2-4)${a}. Completely natural uncovered hair \u2014 braids, ponytail, or loose flowing hair. NO kippah, NO head covering. Modest long dress below knee, long sleeves. Warm, friendly, expressive faces.`;
+    if (tile === "rav") return `A single Chabad Rabbi (Rav)${a}. Full beard, wearing a black fedora hat (classic Chabad rabbi hat) on his head, dark suit jacket, white shirt, visible tzitzit strings. Warm, wise, approachable expression. The black hat is essential.`;
+    if (tile === "rabbanit") return `A single Chabad Rebbetzin (Rabbanit)${a}. Elegant, modest dress below knee, long sleeves. Completely natural uncovered hair \u2014 styled nicely. ABSOLUTELY NO kippah, NO head covering. Warm, wise, gracious expression.`;
+    if (tile === "mixte") return `Mixed scene${a} \u2014 Boys/men strictly LEFT side, girls/women strictly RIGHT side, clear visual divider (mechitza, partition, table). No interaction, no touching. Boys: kippah (dark navy, NEVER white), tzitzit. Girls: natural uncovered hair, modest dress. SEPARATION MUST BE OBVIOUS.`;
+    return "";
+  }
+
+  let charSection = "";
+  if (!illustSelection.length) {
+    charSection = `SCENE: NO human characters at all. Beautiful atmospheric scene only: Jewish decorative elements, warm lighting, Chabad blue and gold color palette, relevant objects for the event. Cozy and inviting ambiance.`;
+  } else if (illustSelection.length === 1) {
+    const s = illustSelection[0];
+    if (s.tile === "mixte") {
+      charSection = `CHARACTERS: ${descTile(s.tile, s.age, s.qty)}\nPixar-meets-storybook aesthetic.`;
+    } else {
+      const isMale = MALE_TILES.includes(s.tile);
+      const isFemale = FEMALE_TILES.includes(s.tile);
+      charSection = `CHARACTERS: ${descTile(s.tile, s.age, s.qty)}\nPixar-meets-storybook aesthetic.`;
+      if (isMale) charSection += `\nABSOLUTELY NO girls or women visible anywhere, including background.`;
+      if (isFemale) charSection += `\nABSOLUTELY NO boys or men visible anywhere, including background.`;
+    }
+  } else {
+    const s1 = illustSelection[0], s2 = illustSelection[1];
+    const strictMale = MALE_TILES.includes(s1.tile) && MALE_TILES.includes(s2.tile);
+    const strictFemale = FEMALE_TILES.includes(s1.tile) && FEMALE_TILES.includes(s2.tile);
+    const g1male = MALE_TILES.includes(s1.tile), g1female = FEMALE_TILES.includes(s1.tile);
+    const g2male = MALE_TILES.includes(s2.tile), g2female = FEMALE_TILES.includes(s2.tile);
+    const mixedGender = (g1male && g2female) || (g1female && g2male) || s1.tile === "mixte" || s2.tile === "mixte";
+    charSection = `SCENE COMPOSITION: Two groups in the same image.\nGroup 1: ${descTile(s1.tile, s1.age, s1.qty)}\nGroup 2: ${descTile(s2.tile, s2.age, s2.qty)}\nPixar-meets-storybook aesthetic.`;
+    if (mixedGender) charSection += `\nGroups must be visually separated by a clear divider (table, architectural element, or space). No physical contact between groups. Orthodox Jewish modesty rule (tzniut).`;
+    else charSection += `\nGroups interact naturally in the same space.`;
+    if (strictMale) charSection += `\nABSOLUTELY NO girls, women, or female characters visible ANYWHERE in the image \u2014 not in the scene, not in the background, not partially visible. This is a MALES ONLY scene. Zero females.`;
+    if (strictFemale) charSection += `\nABSOLUTELY NO boys, men, or male characters visible ANYWHERE in the image \u2014 not in the scene, not in the background, not partially visible. This is a FEMALES ONLY scene. Zero males.`;
+  }
+
+  const titre = data.titre || "";
+  const feteKey = titre.toLowerCase();
+  let feteRules = "";
+  if (feteKey.includes("pessah") || feteKey.includes("matsa") || feteKey.includes("seder"))
+    feteRules = "Pessah objects ONLY: matzot, seder plate, wine cups, Haggadah, spring flowers. NO menorah, NO shofar, NO sukkah, NO lulav.";
+  else if (feteKey.includes("hanouk") || feteKey.includes("hanuk") || feteKey.includes("hanoucca"))
+    feteRules = "Hanoukka objects ONLY: menorah/hanukkiah (9 branches), dreidels, sufganiyot (donuts), latkes, gelt, oil jug. NO matzot, NO shofar, NO sukkah. Torah books and Siddur if present must be on a table or bookshelf ONLY \u2014 never on the floor or ground level.";
+  else if (feteKey.includes("pourim") || feteKey.includes("purim"))
+    feteRules = "Pourim objects ONLY: megillah scroll, mishloah manot (gift baskets), hamantashen cookies, masks, costumes. NO menorah, NO matzot, NO shofar.";
+  else if (feteKey.includes("souccot") || feteKey.includes("sukkot") || feteKey.includes("soukka"))
+    feteRules = "Souccot objects ONLY: sukkah, lulav, etrog, schach (roof branches), decorations. NO menorah, NO matzot.";
+  else if (feteKey.includes("chavouot") || feteKey.includes("shavuot"))
+    feteRules = "Chavouot objects ONLY: Torah scroll, flowers, greenery, dairy foods, Ten Commandments tablets. NO menorah, NO matzot, NO sukkah.";
+  else if (feteKey.includes("roch hachana") || feteKey.includes("rosh hashana"))
+    feteRules = "Roch Hachana objects ONLY: shofar, pomegranate, apple and honey, round challah, prayer book. NO menorah, NO matzot, NO sukkah.";
+  else if (feteKey.includes("kippour") || feteKey.includes("kippur"))
+    feteRules = "Yom Kippour: white garments, prayer shawl (tallit), candles, machzor prayer book. Solemn atmosphere. NO food, NO festive objects.";
+  else if (feteKey.includes("lag") || feteKey.includes("omer"))
+    feteRules = "CETTE AFFICHE EST POUR LAG BAOMER. OBJETS OBLIGATOIRES: grand feu de joie central, guirlandes lumineuses dans les arbres, fruits et nourriture festive, atmosphere de fete en plein air, parc verdoyant. PERSONNAGES: melange d'enfants ET d'adultes \u2014 familles completes, parents avec enfants, groupes d'amis. Pas que des enfants \u2014 au moins 40% de personnages adultes. OBJETS STRICTEMENT INTERDITS: arcs et fleches ou toute arme de quelque nature que ce soit, epees, couteaux, lances, tout objet pouvant etre percu comme une arme \u2014 meme decoratif, meme historique. C'est une affiche communautaire familiale, pas guerriere. Matzot, hanoukia, meguilah (autres fetes) aussi interdits. COULEURS: orange chaud, brun automnal, or, flammes du feu de joie, guirlandes dorees.";
+  else if (feteKey.includes("chabbat") || feteKey.includes("shabbat") || feteKey.includes("shabbos"))
+    feteRules = "Chabbat objects ONLY: two challah loaves, candlesticks with candles, wine cup (kiddush), white tablecloth. NO menorah (9 branches), NO matzot.";
+  else
+    feteRules = "Use only objects relevant to the specific event described. Do not mix holiday symbols.";
+
+  const hasFemale = illustSelection.some(s => FEMALE_TILES.includes(s.tile) || s.tile === "mixte");
+  const hasOnlyMale = illustSelection.length > 0 && !hasFemale;
+
+  const firstRule = hasOnlyMale
+    ? `This is a MALES-ONLY scene. There must be ZERO women or girls anywhere in the image.`
+    : `FIRST: Every female head must have ONLY natural hair. No kippah, no cap, no hat, no fabric on any girl/woman. Males only wear dark navy kippah.`;
+
+  let rules = `RULES (all mandatory):
+- NO TEXT/LETTERS anywhere in the image, any language
+- Holy books always on table/shelf/hands, never on floor
+- Max 1 ChabadLogo of David, prefer zero. No repeated ChabadLogos
+- No crosses, crescents, hamsa, non-Jewish symbols
+- No Rebbe's face. No non-kosher animals
+- ${feteRules}`;
+
+  if (hasOnlyMale) {
+    rules += `\n- ZERO FEMALES in image. No girls, no women, not even in background. Males only.`;
+  } else if (hasFemale) {
+    rules += `\n- Kippah: dark navy/black, males ONLY. Never white. Females NEVER wear kippah`;
+    rules += `\n- Female hair: natural uncovered (braids/ponytail/loose). Zero head coverings`;
+    rules += `\n- Modesty: long skirts, long sleeves on all females`;
+    rules += `\n- Gender separation: boys and girls never mixed together`;
+  }
+
+  const finalCheck = hasOnlyMale
+    ? `FINAL CHECK: Confirm there are ZERO female characters anywhere in the image. Males only.`
+    : hasFemale
+    ? `FINAL CHECK: Scan all female heads \u2014 if anything on top of skull, remove it. Natural hair only on females.`
+    : "";
+
+  return {
+    ar,
+    text: `${firstRule}
+
+Warm storybook illustration for a Chabad Jewish community event in France.
+Event: "${data.titre}"${data.sous_titre ? " \u2014 " + data.sous_titre : ""}. ${[data.date, data.heure, data.lieu].filter(Boolean).join(" \u00B7 ")}. ${bc}.
+${scene}
+Style: editorial children's book illustration. 3-4 harmonious colors, ${pal}. Warm soft lighting. Max 4 characters. Bottom 25% dark/simple for text overlay.
+
+${charSection}
+
+${rules}
+Aspect ratio: ${ar}. High quality illustration, no text. All text added as CSS overlay.
+
+${finalCheck}`,
+  };
+}
+
+/* ─── Poster sizes ─── */
+const SIZES = { carre: { w: 400, ar: "1/1" }, story: { w: 320, ar: "9/16" }, a4: { w: 370, ar: "3/4" }, paysage: { w: 480, ar: "4/3" } };
+
+/* ─── AfficheFinale ─── */
+function AfficheFinale({ data, bc, fmt, imgSrc, loading, afficheRef, logoUrl }) {
+  const { w, ar } = SIZES[fmt] || SIZES.carre;
+  const logo = logoUrl || "/logo-beth-loubavitch.png";
+
+  if (loading) {
+    return (
+      <div style={{ width: w, aspectRatio: ar, background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+        <div style={{ position: "relative", width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(135deg, var(--color-accent-faint), transparent, var(--color-accent-faint))", animation: "pulse 1.5s ease-in-out infinite" }} />
+          <span style={{ fontSize: 36, animation: "pulse 2s ease-in-out infinite", filter: "drop-shadow(0 0 8px rgba(201,151,26,0.4))" }}>&#10024;</span>
+        </div>
+        <div style={{ color: T.gold, fontSize: 14, fontFamily: SANS }}>Génération en cours...</div>
+        <div style={{ color: T.muted, fontSize: 11, fontFamily: SANS }}>Claude structure le contenu &middot; Gemini illustre</div>
+      </div>
+    );
+  }
+
+  if (!imgSrc && !data) {
+    return (
+      <div style={{ width: w, aspectRatio: ar, background: T.card, border: `1px dashed ${T.border}`, borderRadius: 12, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
+        <ChabadLogo size={56} color={T.faint} />
+        <div style={{ fontSize: 12, color: T.muted, textAlign: "center", padding: "0 24px", lineHeight: 1.6 }}>
+          Décrivez votre événement et cliquez sur Générer l'affiche
+        </div>
+      </div>
+    );
+  }
+
+  if (!imgSrc && data) {
+    return (
+      <div style={{ width: w, aspectRatio: ar, background: T.card, border: `1px solid ${T.gold}30`, borderRadius: 12, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: 20, boxSizing: "border-box" }}>
+        <ChabadLogo size={40} color={T.gold} />
+        <div style={{ fontSize: 13, color: T.gold, textAlign: "center", fontFamily: SANS }}>Contenu prêt !</div>
+        <div style={{ fontSize: 11, color: T.muted, textAlign: "center", lineHeight: 1.5 }}>
+          Ajoutez votre clé Google AI Studio<br />pour générer l'image illustrée
+        </div>
+      </div>
+    );
+  }
+
+  const SH  = "0 2px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7)";
+  const SH2 = "0 2px 10px rgba(0,0,0,0.9)";
+  const SH3 = "0 2px 12px rgba(0,0,0,0.9)";
+  return (
+    <div ref={afficheRef} style={{ width: w, aspectRatio: ar, borderRadius: 12, overflow: "hidden", position: "relative", boxShadow: `0 8px 40px rgba(0,0,0,0.5), 0 0 60px var(--color-accent-faint)`, border: `1px solid var(--color-accent-alpha)` }}>
+      <img src={imgSrc} alt="Affiche" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        <img src={logo} alt="" style={{ position: "absolute", top: 10, left: 12, width: "clamp(28px, 7%, 44px)", height: "auto", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))", opacity: 0.9 }} />
+        <div style={{ position: "absolute", top: 10, right: 14, fontSize: "clamp(12px, 1.8vw, 15px)", color: "#E8B030", fontFamily: SERIF, textShadow: SH2, fontWeight: 600 }}>{"\u05D1\u05E1\u05F4\u05D3"}</div>
+        {data.texte_hebreu && <div style={{ position: "absolute", top: 14, left: 0, right: 0, fontSize: "clamp(20px, 4vw, 32px)", color: "#E8B030", fontFamily: SERIF, textAlign: "center", direction: "rtl", textShadow: "0 2px 15px rgba(0,0,0,0.95)", fontWeight: 700 }}>{data.texte_hebreu}</div>}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)", padding: "40px 0 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ maxWidth: "90%", display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+            {data.titre && <div style={{ fontSize: "clamp(26px, 5vw, 38px)", fontWeight: 900, color: "#FFF", textAlign: "center", lineHeight: 1.1, fontFamily: SERIF, textShadow: SH, letterSpacing: -0.5, maxWidth: "90%" }}>{data.titre}</div>}
+            {data.sous_titre && <div style={{ fontSize: "clamp(14px, 2.5vw, 18px)", fontWeight: 400, color: "rgba(255,255,255,0.9)", textAlign: "center", fontFamily: SANS, textShadow: SH2, marginTop: 6 }}>{data.sous_titre}</div>}
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10 }}>
+              {data.date  && <span style={{ fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 800, color: "#E8B030", fontFamily: SANS, textShadow: SH3 }}>{data.date}</span>}
+              {data.heure && <span style={{ fontSize: "clamp(16px, 2.5vw, 20px)", fontWeight: 400, color: "rgba(255,255,255,0.95)", fontFamily: SANS, textShadow: SH3 }}>&middot; {data.heure}</span>}
+            </div>
+            {data.lieu    && <div style={{ fontSize: "clamp(14px, 2vw, 17px)", fontWeight: 600, color: "#FFF", textAlign: "center", fontFamily: SANS, textShadow: SH2, marginTop: 6 }}>{data.lieu}</div>}
+            {data.adresse && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: SH2 }}>{data.adresse}</div>}
+            {data.kashrout && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "#E8B030", textAlign: "center", fontFamily: SANS, fontStyle: "italic", fontWeight: 600, textShadow: SH2, marginTop: 3 }}>{data.kashrout}</div>}
+            {data.contact && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: SH2 }}>{data.contact}</div>}
+            <div style={{ fontSize: "clamp(11px, 1.5vw, 14px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: 8, textShadow: SH2, textTransform: "uppercase" }}>{bc}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main Affiches component ─── */
+export default function Affiches({ profil, onBack, headerProps }) {
+  const [mobile, setMobile] = useState(window.innerWidth <= 600);
+  useEffect(() => {
+    const h = () => setMobile(window.innerWidth <= 600);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+
+  const [geminiKey] = useState(import.meta.env.VITE_GEMINI_KEY || "");
+  const [desc,      setDesc]      = useState("");
+  const [fmt,       setFmt]       = useState("carre");
+  const [illustSelection, setIllustSelection] = useState([]);
+
+  const [loading,   setLoading]   = useState(false);
+  const [aData,     setAData]     = useState(null);
+  const [errMsg,    setErrMsg]    = useState("");
+
+  const [imgSrc,     setImgSrc]     = useState(null);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [copied,     setCopied]     = useState(false);
+  const [preview,    setPreview]    = useState(false);
+  const afficheRef = useRef(null);
+
+  const bc = profil?.betChabad ? `Beth Chabad de ${profil.betChabad}` : "Beth Chabad";
+  const logoUrl = profil?.logoBase64 || "/logo-beth-loubavitch.png";
+  const contactDefault = profil?.telephone || "";
+  const kashroutDefault = profil?.kashroutDefaut || "";
+
+  const geminiKeyRef = useRef(geminiKey);
+  geminiKeyRef.current = geminiKey;
+
+  const illustSelRef = useRef(illustSelection);
+  illustSelRef.current = illustSelection;
+
+  const callGemini = useCallback(async (contentData, bcName, format, sel) => {
+    const key = geminiKeyRef.current.trim();
+    if (!key) return;
+    const { text: prompt } = buildPrompt(contentData, bcName, format, sel);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ["IMAGE", "TEXT"] } }),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e?.error?.message || `Gemini HTTP ${res.status}`);
+    }
+    const data  = await res.json();
+    const cand = data.candidates?.[0];
+    if (!cand || !cand.content) {
+      const reason = cand?.finishReason || data.promptFeedback?.blockReason || "unknown";
+      throw new Error(`Gemini a refuse la generation (raison: ${reason}). Essayez avec "Decor uniquement" ou reformulez.`);
+    }
+    const parts = cand.content.parts || [];
+    const img   = parts.find(p => p.inlineData);
+    if (!img) {
+      const txt = parts.find(p => p.text)?.text || "";
+      console.warn("Gemini text response (no image):", txt);
+      throw new Error(txt ? `Gemini: ${txt.slice(0, 200)}` : "Aucune image retournee par Gemini. Essayez un autre style.");
+    }
+    return `data:${img.inlineData.mimeType};base64,${img.inlineData.data}`;
+  }, []);
+
+  const generate = useCallback(async (note = "") => {
+    if (!desc.trim()) { setErrMsg("Décrivez l'événement d'abord."); return; }
+    setLoading(true); setErrMsg(""); setAData(null); setImgSrc(null);
+    try {
+      const msg = [
+        `Affiche pour : ${desc.trim()}`,
+        note ? `Ajustement : ${note}` : "",
+        bc ? `Institution : ${bc}` : "",
+        `Format : ${fmt}`,
+        contactDefault ? `Contact par defaut : ${contactDefault}` : "",
+        kashroutDefault ? `Kashrout par defaut : ${kashroutDefault}` : "",
+      ].filter(Boolean).join("\n");
+      const res = await fetch("/api/anthropic/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: CLAUDE_SYS, messages: [{ role: "user", content: msg }] }),
+      });
+      const d   = await res.json();
+      if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+      const raw = d.content?.find(b => b.type === "text")?.text || "";
+      if (!raw) throw new Error("Reponse vide de Claude.");
+      const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+      setAData(parsed);
+
+      if (geminiKeyRef.current.trim()) {
+        const src = await callGemini(parsed, bc, fmt, illustSelRef.current);
+        if (src) setImgSrc(src);
+      }
+    } catch (e) {
+      setErrMsg("Erreur : " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [desc, fmt, bc, contactDefault, kashroutDefault, callGemini]);
+
+  const regenImage = useCallback(async () => {
+    if (!aData || !geminiKey.trim()) return;
+    setLoading(true); setErrMsg(""); setImgSrc(null);
+    try {
+      const src = await callGemini(aData, bc, fmt, illustSelection);
+      if (src) setImgSrc(src);
+    } catch (e) {
+      setErrMsg("Erreur Gemini : " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [aData, geminiKey, bc, fmt, illustSelection, callGemini]);
+
+  async function downloadAffiche() {
+    if (!afficheRef.current) return;
+    const canvas = await html2canvas(afficheRef.current, { useCORS: true, scale: 2, backgroundColor: null });
+    const link = document.createElement("a");
+    link.download = "affiche-chabad.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+
+  function copyPrompt() {
+    if (!aData) return;
+    const { text } = buildPrompt(aData, bc, fmt, illustSelection);
+    navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  }
+
+  const FMTS   = [{ v: "carre", l: "Carré", s: "1:1" }, { v: "story", l: "Story", s: "9:16" }, { v: "a4", l: "A4", s: "Impression" }, { v: "paysage", l: "Paysage", s: "4:3" }];
+  const TWEAKS = ["Plus chaleureux", "Plus solennel", "Sans personnages", "Ajoute un verset", "Plus festif", "Simplifie"];
+
+  return (
+    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: SANS }}>
+
+      {headerProps && <AppHeader currentScreen="affiches" {...headerProps} />}
+
+      {/* Main */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: mobile ? "16px 12px" : "24px 18px", display: "flex", gap: 22, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
+
+        {/* LEFT */}
+        <div style={{ flex: "1 1 300px", minWidth: 0 }}>
+          <Card>
+            <StepLabel n="1">Décrivez votre événement</StepLabel>
+            <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder={`Ex : Atelier Pessah pour les enfants, dimanche 20 avril, 16h à 18h, ${bc}. Garçons et filles de 4 à 12 ans. Kiddouch offert.`} rows={5} style={{ ...INP, resize: "vertical", lineHeight: 1.6, fontSize: 13 }} />
+            <div style={{ fontSize: 11, color: T.muted, marginTop: 7, lineHeight: 1.5 }}>Précisez le public pour adapter les illustrations automatiquement.</div>
+          </Card>
+
+          <Card>
+            <StepLabel n="2">Format</StepLabel>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {FMTS.map(f => (
+                <div key={f.v} onClick={() => setFmt(f.v)} style={{ padding: "10px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${fmt === f.v ? T.gold : T.border}`, background: fmt === f.v ? T.goldFaint : T.surface }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: fmt === f.v ? T.gold : T.text }}>{f.l}</div>
+                  <div style={{ fontSize: 10.5, color: T.muted, marginTop: 2 }}>{f.s}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <StepLabel n="3">Illustration</StepLabel>
+            {(() => {
+              const TILES = [
+                { v: "decor",    e: "\uD83C\uDFDB", l: "Décor",     s: "Sans personnage" },
+                { v: "garcons",  e: "\uD83D\uDC66", l: "Garçons",   s: "Masculin uniquement" },
+                { v: "filles",   e: "\uD83D\uDC67", l: "Filles",    s: "Féminin uniquement" },
+                { v: "rav",      e: "\uD83E\uDDD4", l: "Rav",       s: "Masculin uniquement" },
+                { v: "rabbanit", e: "\uD83D\uDC69", l: "Rabbanit",  s: "Féminin uniquement" },
+                { v: "mixte",    e: "\uD83D\uDC68\u200D\uD83D\uDC69", l: "Mixte", s: "Scène séparée" },
+              ];
+              const MALE_T = ["garcons", "rav"];
+              const FEMALE_T = ["filles", "rabbanit"];
+              const CHIPS = { garcons: ["Enfants","Adolescents","Adultes","Seniors"], filles: ["Enfants","Adolescentes","Adultes","Seniors"], rav: ["Adulte","\u00C2g\u00E9"], rabbanit: ["Adulte","\u00C2g\u00E9e"], mixte: ["Enfants","Adolescents","Adultes","Seniors"] };
+              const LABELS = { garcons: "Garçons", filles: "Filles", rav: "Rav", rabbanit: "Rabbanit", mixte: "Mixte" };
+
+              function toggleTile(tid) {
+                if (tid === "decor") { setIllustSelection([]); return; }
+                const exists = illustSelection.find(s => s.tile === tid);
+                if (exists) { setIllustSelection(illustSelection.filter(s => s.tile !== tid)); }
+                else if (illustSelection.length >= 2) { setIllustSelection([illustSelection[1], { tile: tid, age: null, qty: null }]); }
+                else { setIllustSelection([...illustSelection, { tile: tid, age: null, qty: null }]); }
+              }
+              function setAge(tid, age) { setIllustSelection(illustSelection.map(s => s.tile === tid ? { ...s, age: s.age === age ? null : age } : s)); }
+              function setQty(tid, q) { setIllustSelection(illustSelection.map(s => s.tile === tid ? { ...s, qty: s.qty === q ? null : q } : s)); }
+              const HAS_QTY = ["garcons", "filles"];
+
+              const isDecor = !illustSelection.length;
+              const selTiles = illustSelection.map(s => s.tile);
+              const hasMixed = illustSelection.length === 2 && ((MALE_T.includes(selTiles[0]) && FEMALE_T.includes(selTiles[1])) || (FEMALE_T.includes(selTiles[0]) && MALE_T.includes(selTiles[1])));
+
+              let summary = "Décor uniquement \u2014 aucun personnage";
+              if (illustSelection.length === 1) {
+                const s = illustSelection[0];
+                summary = s.age ? `${LABELS[s.tile]} \u00B7 ${s.age}` : `Choisissez une tranche d'âge`;
+              } else if (illustSelection.length === 2) {
+                const noAge = illustSelection.find(s => !s.age);
+                if (noAge) summary = `Complétez la tranche d'âge pour ${LABELS[noAge.tile]}`;
+                else summary = illustSelection.map(s => `${LABELS[s.tile]} ${s.age}`).join(" \u00B7 ");
+              }
+
+              return (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                    {TILES.map(o => {
+                      const sel = selTiles.includes(o.v);
+                      const isDecorSel = o.v === "decor" && isDecor;
+                      const active = sel || isDecorSel;
+                      const idx = selTiles.indexOf(o.v);
+                      return (
+                        <div key={o.v} onClick={() => toggleTile(o.v)} style={{ padding: "12px 8px", borderRadius: 8, cursor: "pointer", textAlign: "center", position: "relative", border: `1px solid ${active ? T.gold : T.border}`, background: active ? T.goldFaint : T.surface }}>
+                          {sel && illustSelection.length === 2 && <div style={{ position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: "50%", background: T.gold, color: "#05100C", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{idx + 1}</div>}
+                          <div style={{ fontSize: 24, marginBottom: 6 }}>{o.e}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: active ? T.gold : T.text }}>{o.l}</div>
+                          <div style={{ fontSize: 10, color: T.muted, marginTop: 2 }}>{o.s}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {illustSelection.map(s => {
+                    const opts = CHIPS[s.tile] || [];
+                    if (!opts.length) return null;
+                    const showQty = HAS_QTY.includes(s.tile);
+                    return (
+                      <div key={s.tile} style={{ marginTop: 14 }}>
+                        <div style={{ fontSize: 10, color: T.muted, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{LABELS[s.tile]} \u2014 tranche d'age</div>
+                        <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                          {opts.map(a => (
+                            <span key={a} onClick={() => setAge(s.tile, a)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${s.age === a ? T.gold : T.border}`, color: s.age === a ? T.gold : T.muted, background: s.age === a ? T.goldSoft : T.surface }}>{a}</span>
+                          ))}
+                        </div>
+                        {showQty && (
+                          <>
+                            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4, marginTop: 10 }}>{LABELS[s.tile]} \u2014 nombre</div>
+                            <div style={{ display: "flex", gap: 7 }}>
+                              {[{ v: "1", l: "Seul(e)" }, { v: "groupe", l: "Groupe" }].map(q => (
+                                <span key={q.v} onClick={() => setQty(s.tile, q.v)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${s.qty === q.v ? T.gold : T.border}`, color: s.qty === q.v ? T.gold : T.muted, background: s.qty === q.v ? T.goldSoft : T.surface }}>{q.l}</span>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {hasMixed && <div style={{ fontSize: 10, color: T.gold, marginTop: 6 }}>Scene mixte \u2014 separation visuelle appliquee automatiquement</div>}
+                  <div style={{ fontSize: 11, color: T.muted, marginTop: 10 }}>{summary}</div>
+                </>
+              );
+            })()}
+          </Card>
+
+          {errMsg && <div style={{ color: T.red, fontSize: 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px", lineHeight: 1.5 }}>{errMsg}</div>}
+          {!geminiKey && <div style={{ color: T.red, fontSize: 11, marginBottom: 10 }}>Configuration requise \u2014 clé API manquante</div>}
+
+          <div style={{ position: "sticky", bottom: 16, zIndex: 10, background: T.bg, paddingTop: 8, paddingBottom: 8, ...(mobile ? { minHeight: 52 } : {}) }}>
+            <GBtn onClick={() => generate()} disabled={loading} fullWidth>
+              {loading ? "Génération en cours..." : "Générer l'affiche"}
+            </GBtn>
+          </div>
+
+          {aData && !loading && (
+            <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, padding: 14, marginTop: 12 }}>
+              <div style={{ fontSize: 11, color: T.muted, marginBottom: 9 }}>Ajuster :</div>
+              <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                {TWEAKS.map(tw => (
+                  <span key={tw} onClick={() => generate(tw)} style={{ fontSize: 11, padding: "5px 11px", border: `1px solid ${T.border}`, borderRadius: 20, color: T.muted, cursor: "pointer", background: T.surface }}>{tw}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT */}
+        <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", alignItems: mobile ? "stretch" : "center", gap: 14, minWidth: mobile ? "100%" : 280, width: mobile ? "100%" : "auto" }}>
+          <div onClick={() => imgSrc && setPreview(true)} style={{ cursor: imgSrc ? "pointer" : "default" }}>
+            <AfficheFinale data={aData} bc={bc} fmt={fmt} imgSrc={imgSrc} loading={loading} afficheRef={afficheRef} logoUrl={logoUrl} />
+          </div>
+          {imgSrc && !loading && <div style={{ fontSize: 10, color: T.muted, marginTop: -8 }}>Cliquez sur l'affiche pour l'aperçu plein écran</div>}
+
+          {imgSrc && !loading && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+              <GBtn onClick={() => setPreview(true)} outline sm>Aperçu</GBtn>
+              <GBtn onClick={downloadAffiche} outline sm>Télécharger</GBtn>
+              <GBtn onClick={regenImage} outline sm>Nouvelle image</GBtn>
+              <GBtn onClick={() => generate()} outline sm>Tout regénérer</GBtn>
+              <button onClick={() => { setAData(null); setDesc(""); setImgSrc(null); }} style={{ padding: "7px 14px", background: "transparent", border: `1px solid ${T.border}`, borderRadius: 7, color: T.muted, fontSize: 12, cursor: "pointer" }}>Effacer</button>
+            </div>
+          )}
+
+          {aData && !loading && (
+            <div style={{ width: "100%", maxWidth: 420 }}>
+              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                <button onClick={copyPrompt} style={{ flex: 1, padding: "7px 12px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 7, color: copied ? T.green : T.muted, fontSize: 11, cursor: "pointer", fontFamily: SANS }}>
+                  {copied ? "Copie !" : "Copier le prompt"}
+                </button>
+                <button onClick={() => setShowPrompt(v => !v)} style={{ padding: "7px 10px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 7, color: T.muted, fontSize: 11, cursor: "pointer" }}>
+                  {showPrompt ? "\u25B2" : "\u25BC"}
+                </button>
+              </div>
+              {showPrompt && (
+                <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: "10px 12px", fontSize: 10.5, color: T.muted, fontFamily: "monospace", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 180, overflowY: "auto", marginTop: 8 }}>
+                  {buildPrompt(aData, bc, fmt, illustSelection).text}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Preview overlay */}
+      {preview && imgSrc && aData && (
+        <div onClick={() => setPreview(false)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, cursor: "zoom-out" }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "relative", maxWidth: "min(90vw, 700px)", maxHeight: "90vh", cursor: "default" }}>
+            <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", boxShadow: `0 20px 80px rgba(0,0,0,0.7), 0 0 100px var(--color-accent-faint)`, border: `1px solid var(--color-accent-soft)` }}>
+              <img src={imgSrc} alt="Affiche" style={{ width: "100%", display: "block" }} />
+              <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                <img src={logoUrl} alt="" style={{ position: "absolute", top: 14, left: 16, width: "clamp(36px, 8%, 56px)", height: "auto", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.7))", opacity: 0.9 }} />
+                <div style={{ position: "absolute", top: 16, right: 20, fontSize: "clamp(14px, 2vw, 18px)", color: "#E8B030", fontFamily: SERIF, textShadow: "0 2px 10px rgba(0,0,0,0.9)", fontWeight: 600 }}>{"\u05D1\u05E1\u05F4\u05D3"}</div>
+                {aData.texte_hebreu && <div style={{ position: "absolute", top: 22, left: 0, right: 0, fontSize: "clamp(24px, 5vw, 38px)", color: "#E8B030", fontFamily: SERIF, textAlign: "center", direction: "rtl", textShadow: "0 2px 15px rgba(0,0,0,0.95)", fontWeight: 700 }}>{aData.texte_hebreu}</div>}
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)", padding: "50px 0 28px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ maxWidth: "90%", display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+                    {aData.titre && <div style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, color: "#FFF", textAlign: "center", lineHeight: 1.1, fontFamily: SERIF, textShadow: "0 2px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7)", letterSpacing: -0.5, maxWidth: "90%" }}>{aData.titre}</div>}
+                    {aData.sous_titre && <div style={{ fontSize: "clamp(15px, 2.5vw, 20px)", fontWeight: 400, color: "rgba(255,255,255,0.9)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)", marginTop: 6 }}>{aData.sous_titre}</div>}
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12 }}>
+                      {aData.date  && <span style={{ fontSize: "clamp(20px, 3.5vw, 28px)", fontWeight: 800, color: "#E8B030", fontFamily: SANS, textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}>{aData.date}</span>}
+                      {aData.heure && <span style={{ fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 400, color: "rgba(255,255,255,0.95)", fontFamily: SANS, textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}>&middot; {aData.heure}</span>}
+                    </div>
+                    {aData.lieu    && <div style={{ fontSize: "clamp(15px, 2.2vw, 20px)", fontWeight: 600, color: "#FFF", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)", marginTop: 6 }}>{aData.lieu}</div>}
+                    {aData.adresse && <div style={{ fontSize: "clamp(13px, 2vw, 17px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}>{aData.adresse}</div>}
+                    {aData.kashrout && <div style={{ fontSize: "clamp(13px, 2vw, 17px)", color: "#E8B030", textAlign: "center", fontFamily: SANS, fontStyle: "italic", fontWeight: 600, textShadow: "0 2px 10px rgba(0,0,0,0.9)", marginTop: 5 }}>{aData.kashrout}</div>}
+                    {aData.contact && <div style={{ fontSize: "clamp(13px, 2vw, 17px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}>{aData.contact}</div>}
+                    <div style={{ fontSize: "clamp(12px, 1.8vw, 16px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: 10, textShadow: "0 2px 10px rgba(0,0,0,0.9)", textTransform: "uppercase" }}>{bc}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 16 }}>
+              <GBtn onClick={downloadAffiche} sm>Télécharger</GBtn>
+              <GBtn onClick={() => setPreview(false)} outline sm>Fermer</GBtn>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
