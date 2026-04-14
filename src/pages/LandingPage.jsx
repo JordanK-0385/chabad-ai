@@ -1,6 +1,6 @@
 /* ─── LandingPage.jsx ─── Public home before auth ─── */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { T, SERIF, SANS, ChabadLogo } from "../shared";
 import { signInWithGoogle, firebaseReady } from "../firebase";
 
@@ -126,7 +126,7 @@ function LPNav({ onSignIn }) {
 }
 
 /* ── Hero ────────────────────────────────────────────────────── */
-function Hero({ onSignIn }) {
+function Hero({ onSignIn, authErr, authLoading }) {
   return (
     <section style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 24px 60px" }}>
       {/* Badge */}
@@ -147,13 +147,20 @@ function Hero({ onSignIn }) {
       </p>
 
       {/* Buttons */}
-      <div className="lp-hero-btns" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
-        <button onClick={onSignIn} className="lp-cta-primary lp-btn-primary" style={{ padding: "14px 32px", borderRadius: "0.75rem", fontSize: 15, fontWeight: 600, background: "var(--color-accent)", color: "#1a0510", border: "none", cursor: "pointer", fontFamily: SANS, display: "flex", alignItems: "center", gap: 8 }}>
-          Commencer maintenant →
-        </button>
-        <a href="#features" className="lp-cta-secondary lp-btn-secondary" style={{ padding: "14px 32px", borderRadius: "0.75rem", fontSize: 15, fontWeight: 500, background: "transparent", color: "var(--color-text-muted)", border: "1px solid var(--color-border)", cursor: "pointer", fontFamily: SANS, textDecoration: "none", display: "flex", alignItems: "center" }}>
-          Voir les fonctionnalités ↓
-        </a>
+      <div className="lp-hero-btns" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+          <button onClick={onSignIn} disabled={authLoading} className="lp-cta-primary lp-btn-primary" style={{ padding: "14px 32px", borderRadius: "0.75rem", fontSize: 15, fontWeight: 600, background: "var(--color-accent)", color: "#1a0510", border: "none", cursor: authLoading ? "wait" : "pointer", fontFamily: SANS, display: "flex", alignItems: "center", gap: 8, opacity: authLoading ? 0.7 : 1 }}>
+            {authLoading ? "Connexion en cours..." : "Commencer maintenant →"}
+          </button>
+          <a href="#features" className="lp-cta-secondary lp-btn-secondary" style={{ padding: "14px 32px", borderRadius: "0.75rem", fontSize: 15, fontWeight: 500, background: "transparent", color: "var(--color-text-muted)", border: "1px solid var(--color-border)", cursor: "pointer", fontFamily: SANS, textDecoration: "none", display: "flex", alignItems: "center" }}>
+            Voir les fonctionnalités ↓
+          </a>
+        </div>
+        {authErr && (
+          <div style={{ fontSize: 13, color: "#D94F4F", background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 8, padding: "10px 18px", maxWidth: 480, textAlign: "center", fontFamily: SANS }}>
+            ⚠️ {authErr}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -360,6 +367,8 @@ function FeatureBlock({ title, desc, tags, mockup, reverse, addRef }) {
 /* ── Main component ──────────────────────────────────────────── */
 export default function LandingPage() {
   const fadeRefs = useRef([]);
+  const [authErr, setAuthErr] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -373,8 +382,20 @@ export default function LandingPage() {
   const addRef = el => { if (el && !fadeRefs.current.includes(el)) fadeRefs.current.push(el); };
 
   async function handleSignIn() {
-    if (!firebaseReady) return;
-    try { await signInWithGoogle(); } catch (e) { console.error("Auth:", e); }
+    if (!firebaseReady) {
+      setAuthErr("Firebase non configuré — variables .env.local manquantes.");
+      return;
+    }
+    setAuthErr("");
+    setAuthLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (e) {
+      setAuthErr(e.message || "Erreur de connexion.");
+      console.error("Auth error:", e);
+    } finally {
+      setAuthLoading(false);
+    }
   }
 
   return (
@@ -384,7 +405,7 @@ export default function LandingPage() {
       <LPNav onSignIn={handleSignIn} />
 
       {/* ── Hero ── */}
-      <Hero onSignIn={handleSignIn} />
+      <Hero onSignIn={handleSignIn} authErr={authErr} authLoading={authLoading} />
 
       {/* ── Mockup section ── */}
       <section style={{ padding: "60px 24px 100px", maxWidth: 960, margin: "0 auto" }}>
