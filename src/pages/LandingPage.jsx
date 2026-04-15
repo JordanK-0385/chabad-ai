@@ -38,12 +38,17 @@ if (typeof document !== "undefined" && !document.getElementById("lp-styles")) {
     .lp-cta-secondary { transition: border-color 0.15s, color 0.15s !important; }
     .lp-cta-secondary:hover { border-color: var(--color-accent) !important; color: var(--color-accent) !important; }
     .mock-item-sel { border-color: var(--color-accent) !important; color: var(--color-accent) !important; background: var(--color-accent-faint) !important; }
+    .lp-nav-hamburger { display: none; }
     @media (max-width: 768px) {
       .lp-feature-row { flex-direction: column !important; }
       .lp-feature-row.rev { flex-direction: column !important; }
-      .lp-mockup-full { display: none !important; }
+      .lp-mockup-full { display: none !important; height: 0 !important; padding: 0 !important; margin: 0 !important; border: 0 !important; }
       .lp-btn-primary, .lp-btn-secondary { width: 100% !important; justify-content: center !important; }
       .lp-pourqui-grid { flex-direction: column !important; }
+      .lp-section { padding-top: 40px !important; padding-bottom: 40px !important; }
+      .lp-pourqui-card { padding: 24px !important; height: auto !important; min-height: 0 !important; }
+      .lp-nav-desktop { display: none !important; }
+      .lp-nav-hamburger { display: flex !important; }
     }
   `;
   document.head.appendChild(s);
@@ -99,36 +104,61 @@ function SectionTitle({ children, sub, light }) {
 
 /* ── Navbar ──────────────────────────────────────────────────── */
 function LPNav({ onSignIn }) {
+  const [open, setOpen] = useState(false);
   return (
-    <nav style={{ background: "var(--navbar-bg)", height: 60, display: "flex", alignItems: "center", padding: "0 32px", gap: 16, position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid rgba(242,119,48,0.12)" }}>
-      {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-        <ChabadLogo size={34} />
-        <span style={{ fontFamily: SERIF, fontSize: 17, color: "var(--navbar-text)", fontWeight: 700 }}>Habad.ai</span>
-      </div>
+    <>
+      <nav style={{ background: "var(--navbar-bg)", height: 60, display: "flex", alignItems: "center", padding: "0 32px", gap: 16, position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid rgba(242,119,48,0.12)" }}>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <ChabadLogo size={34} />
+          <span style={{ fontFamily: SERIF, fontSize: 17, color: "var(--navbar-text)", fontWeight: 700 }}>Habad.ai</span>
+        </div>
 
-      {/* Nav links */}
-      <div style={{ flex: 1, display: "flex", gap: 4, justifyContent: "center" }}>
-        {["Fonctionnalités", "Pour qui ?"].map((label, i) => (
-          <a key={label} href={i === 0 ? "#features" : "#pourqui"} className="lp-nav-link"
-            style={{ fontSize: 13, color: "var(--navbar-text-muted)", textDecoration: "none", padding: "6px 14px", borderRadius: 7, fontFamily: SANS }}>
-            {label}
-          </a>
-        ))}
-      </div>
+        {/* Desktop nav links */}
+        <div className="lp-nav-desktop" style={{ flex: 1, display: "flex", gap: 4, justifyContent: "center" }}>
+          {["Fonctionnalités", "Pour qui ?"].map((label, i) => (
+            <a key={label} href={i === 0 ? "#features" : "#pourqui"} className="lp-nav-link"
+              style={{ fontSize: 13, color: "var(--navbar-text-muted)", textDecoration: "none", padding: "6px 14px", borderRadius: 7, fontFamily: SANS }}>
+              {label}
+            </a>
+          ))}
+        </div>
 
-      {/* CTA */}
-      <button onClick={onSignIn} className="lp-connect-btn" style={{ padding: "8px 20px", borderRadius: "0.75rem", fontSize: 13, fontWeight: 600, cursor: "pointer", background: "transparent", border: "1px solid var(--color-accent)", color: "var(--color-accent)", fontFamily: SANS, flexShrink: 0 }}>
-        Se connecter →
-      </button>
-    </nav>
+        {/* Desktop CTA */}
+        <button onClick={onSignIn} className="lp-nav-desktop lp-connect-btn" style={{ padding: "8px 20px", borderRadius: "0.75rem", fontSize: 13, fontWeight: 600, cursor: "pointer", background: "transparent", border: "1px solid var(--color-accent)", color: "var(--color-accent)", fontFamily: SANS, flexShrink: 0 }}>
+          Se connecter →
+        </button>
+
+        {/* Mobile hamburger toggle */}
+        <button
+          className="lp-nav-hamburger"
+          onClick={() => setOpen(o => !o)}
+          aria-label="Menu"
+          aria-expanded={open}
+          style={{ marginLeft: "auto", background: "transparent", border: "none", color: "var(--color-accent)", fontSize: 26, cursor: "pointer", padding: "6px 10px", lineHeight: 1, alignItems: "center", justifyContent: "center", borderRadius: 6 }}
+        >
+          {open ? "✕" : "☰"}
+        </button>
+      </nav>
+
+      {/* Mobile dropdown */}
+      {open && (
+        <div className="lp-nav-hamburger" style={{ position: "fixed", top: 60, left: 0, right: 0, zIndex: 99, background: "var(--navbar-bg)", borderBottom: "1px solid rgba(242,119,48,0.12)", flexDirection: "column", padding: "8px 24px 16px", boxShadow: "0 8px 24px rgba(0,0,0,0.25)" }}>
+          <a href="#features" onClick={() => setOpen(false)} style={{ fontSize: 16, color: "var(--navbar-text)", textDecoration: "none", padding: "16px 4px", fontFamily: SANS, borderBottom: "1px solid rgba(242,119,48,0.12)" }}>Fonctionnalités</a>
+          <a href="#pourqui" onClick={() => setOpen(false)} style={{ fontSize: 16, color: "var(--navbar-text)", textDecoration: "none", padding: "16px 4px", fontFamily: SANS, borderBottom: "1px solid rgba(242,119,48,0.12)" }}>Pour qui ?</a>
+          <button onClick={() => { setOpen(false); onSignIn(); }} style={{ marginTop: 14, padding: "12px 20px", borderRadius: "0.75rem", fontSize: 15, fontWeight: 600, cursor: "pointer", background: "transparent", border: "1px solid var(--color-accent)", color: "var(--color-accent)", fontFamily: SANS, width: "100%" }}>
+            Se connecter →
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
 /* ── Hero ────────────────────────────────────────────────────── */
 function Hero({ onSignIn, authErr, authLoading }) {
   return (
-    <section style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 24px 60px" }}>
+    <section className="lp-section" style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 24px 60px" }}>
       {/* Badge */}
       <div className="lp-hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 18px", borderRadius: 9999, background: "rgba(242,119,48,0.10)", border: "1px solid rgba(242,119,48,0.30)", marginBottom: 40 }}>
         <span className="lp-pulse-dot" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--color-accent)", display: "inline-block" }} />
@@ -408,7 +438,7 @@ export default function LandingPage() {
       <Hero onSignIn={handleSignIn} authErr={authErr} authLoading={authLoading} />
 
       {/* ── Mockup section ── */}
-      <section style={{ padding: "60px 24px 100px", maxWidth: 960, margin: "0 auto" }}>
+      <section className="lp-section" style={{ padding: "60px 24px 100px", maxWidth: 960, margin: "0 auto" }}>
         <div ref={addRef} className="lp-fade" style={{ textAlign: "center", marginBottom: 52 }}>
           <h2 style={{ fontFamily: SERIF, fontSize: "clamp(1.8rem,4vw,2.6rem)", fontWeight: 700, color: "var(--color-text)", margin: "0 0 12px", letterSpacing: "-0.02em" }}>
             Votre outil, en vrai.
@@ -423,7 +453,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ── */}
-      <section id="features" style={{ padding: "80px 24px", maxWidth: 1000, margin: "0 auto" }}>
+      <section id="features" className="lp-section" style={{ padding: "80px 24px", maxWidth: 1000, margin: "0 auto" }}>
         <div ref={addRef} className="lp-fade">
           <SectionTitle sub="Trois modules, un seul outil — taillé pour les rabbins de terrain.">
             3 outils. Zéro prise de tête.
@@ -457,7 +487,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pour qui ── */}
-      <section id="pourqui" style={{ background: "var(--color-primary)", padding: "100px 24px" }}>
+      <section id="pourqui" className="lp-section" style={{ background: "var(--color-primary)", padding: "100px 24px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <div ref={addRef} className="lp-fade">
             <SectionTitle light sub="">
@@ -470,7 +500,7 @@ export default function LandingPage() {
               { icon: "📖", title: "Avant un cours improvisé", body: "L'occasion vient de se présenter ? Générez un cours structuré en 30 secondes." },
               { icon: "💌", title: "Pour chaque simha ou deuil", body: "Le bon message, à la bonne personne, sans passer une heure à le formuler." },
             ].map(c => (
-              <div key={c.title} style={{ flex: "1 1 240px", background: "var(--color-brand)", borderRadius: 14, padding: "28px 24px", border: "1px solid rgba(250,235,215,0.08)" }}>
+              <div key={c.title} className="lp-pourqui-card" style={{ flex: "1 1 240px", background: "var(--color-brand)", borderRadius: 14, padding: "28px 24px", border: "1px solid rgba(250,235,215,0.08)" }}>
                 <div style={{ fontSize: 32, marginBottom: 14 }}>{c.icon}</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#faebd7", marginBottom: 10, fontFamily: SANS, lineHeight: 1.3 }}>{c.title}</div>
                 <div style={{ fontSize: 14, color: "rgba(250,235,215,0.75)", lineHeight: 1.65, fontFamily: SANS }}>{c.body}</div>
@@ -481,7 +511,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA final ── */}
-      <section style={{ background: "var(--bg-surface)", padding: "100px 24px" }}>
+      <section className="lp-section" style={{ background: "var(--bg-surface)", padding: "100px 24px" }}>
         <div ref={addRef} className="lp-fade" style={{ maxWidth: 560, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ fontFamily: SERIF, fontSize: "clamp(2rem,4vw,3rem)", fontWeight: 700, color: "var(--color-text)", margin: "0 0 16px", letterSpacing: "-0.02em" }}>
             Prêt à commencer ?
