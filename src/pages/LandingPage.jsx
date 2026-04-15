@@ -42,11 +42,8 @@ if (typeof document !== "undefined" && !document.getElementById("lp-styles")) {
     @media (max-width: 768px) {
       .lp-feature-row { flex-direction: column !important; }
       .lp-feature-row.rev { flex-direction: column !important; }
-      .lp-mockup-full { display: none !important; height: 0 !important; padding: 0 !important; margin: 0 !important; border: 0 !important; }
       .lp-btn-primary, .lp-btn-secondary { width: 100% !important; justify-content: center !important; }
       .lp-pourqui-grid { flex-direction: column !important; }
-      .lp-section { padding-top: 40px !important; padding-bottom: 40px !important; }
-      .lp-pourqui-card { padding: 24px !important; height: auto !important; min-height: 0 !important; }
       .lp-nav-desktop { display: none !important; }
       .lp-nav-hamburger { display: flex !important; }
     }
@@ -158,7 +155,7 @@ function LPNav({ onSignIn }) {
 /* ── Hero ────────────────────────────────────────────────────── */
 function Hero({ onSignIn, authErr, authLoading }) {
   return (
-    <section className="lp-section" style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 24px 60px" }}>
+    <section style={{ minHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 24px 60px", ...(window.innerWidth <= 768 ? { paddingTop: '32px', paddingBottom: '32px' } : {}) }}>
       {/* Badge */}
       <div className="lp-hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 18px", borderRadius: 9999, background: "rgba(242,119,48,0.10)", border: "1px solid rgba(242,119,48,0.30)", marginBottom: 40 }}>
         <span className="lp-pulse-dot" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--color-accent)", display: "inline-block" }} />
@@ -206,7 +203,7 @@ function BrowserMockup() {
   ];
 
   return (
-    <div className="lp-float lp-mockup-full" style={{ width: "100%", maxWidth: 900, margin: "0 auto", borderRadius: 12, overflow: "hidden", boxShadow: "0 40px 80px rgba(93,11,48,0.15)", border: "1px solid var(--color-border)" }}>
+    <div className="lp-float lp-mockup-full" style={{ width: "100%", maxWidth: 900, margin: "0 auto", borderRadius: 12, overflow: "hidden", boxShadow: "0 40px 80px rgba(93,11,48,0.15)", border: "1px solid var(--color-border)", ...(window.innerWidth <= 768 ? { display: 'none', height: 0, padding: 0, margin: 0, overflow: 'hidden' } : {}) }}>
       {/* Browser chrome */}
       <div style={{ background: "#e8e0db", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ display: "flex", gap: 6 }}>
@@ -438,7 +435,7 @@ export default function LandingPage() {
       <Hero onSignIn={handleSignIn} authErr={authErr} authLoading={authLoading} />
 
       {/* ── Mockup section ── */}
-      <section className="lp-section" style={{ padding: "60px 24px 100px", maxWidth: 960, margin: "0 auto" }}>
+      <section style={{ padding: "60px 24px 100px", maxWidth: 960, margin: "0 auto", ...(window.innerWidth <= 768 ? { paddingTop: '32px', paddingBottom: '32px' } : {}) }}>
         <div ref={addRef} className="lp-fade" style={{ textAlign: "center", marginBottom: 52 }}>
           <h2 style={{ fontFamily: SERIF, fontSize: "clamp(1.8rem,4vw,2.6rem)", fontWeight: 700, color: "var(--color-text)", margin: "0 0 12px", letterSpacing: "-0.02em" }}>
             Votre outil, en vrai.
@@ -453,7 +450,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ── */}
-      <section id="features" className="lp-section" style={{ padding: "80px 24px", maxWidth: 1000, margin: "0 auto" }}>
+      <section id="features" style={{ padding: "80px 24px", maxWidth: 1000, margin: "0 auto", ...(window.innerWidth <= 768 ? { paddingTop: '32px', paddingBottom: '32px' } : {}) }}>
         <div ref={addRef} className="lp-fade">
           <SectionTitle sub="Trois modules, un seul outil — taillé pour les rabbins de terrain.">
             3 outils. Zéro prise de tête.
@@ -487,7 +484,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pour qui ── */}
-      <section id="pourqui" className="lp-section" style={{ background: "var(--color-primary)", padding: "100px 24px" }}>
+      <section id="pourqui" style={{ background: "var(--color-primary)", padding: "100px 24px", ...(window.innerWidth <= 768 ? { paddingTop: '32px', paddingBottom: '32px' } : {}) }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <div ref={addRef} className="lp-fade">
             <SectionTitle light sub="">
@@ -500,7 +497,7 @@ export default function LandingPage() {
               { icon: "📖", title: "Avant un cours improvisé", body: "L'occasion vient de se présenter ? Générez un cours structuré en 30 secondes." },
               { icon: "💌", title: "Pour chaque simha ou deuil", body: "Le bon message, à la bonne personne, sans passer une heure à le formuler." },
             ].map(c => (
-              <div key={c.title} className="lp-pourqui-card" style={{ flex: "1 1 240px", background: "var(--color-brand)", borderRadius: 14, padding: "28px 24px", border: "1px solid rgba(250,235,215,0.08)" }}>
+              <div key={c.title} style={{ flex: "1 1 240px", background: "var(--color-brand)", borderRadius: 14, padding: '24px', border: "1px solid rgba(250,235,215,0.08)", height: 'auto', minHeight: 0, alignItems: 'flex-start' }}>
                 <div style={{ fontSize: 32, marginBottom: 14 }}>{c.icon}</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#faebd7", marginBottom: 10, fontFamily: SANS, lineHeight: 1.3 }}>{c.title}</div>
                 <div style={{ fontSize: 14, color: "rgba(250,235,215,0.75)", lineHeight: 1.65, fontFamily: SANS }}>{c.body}</div>
@@ -511,7 +508,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA final ── */}
-      <section className="lp-section" style={{ background: "var(--bg-surface)", padding: "100px 24px" }}>
+      <section style={{ background: "var(--bg-surface)", padding: "100px 24px", ...(window.innerWidth <= 768 ? { paddingTop: '32px', paddingBottom: '32px' } : {}) }}>
         <div ref={addRef} className="lp-fade" style={{ maxWidth: 560, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ fontFamily: SERIF, fontSize: "clamp(2rem,4vw,3rem)", fontWeight: 700, color: "var(--color-text)", margin: "0 0 16px", letterSpacing: "-0.02em" }}>
             Prêt à commencer ?
