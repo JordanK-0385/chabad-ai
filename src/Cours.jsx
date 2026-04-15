@@ -18,7 +18,7 @@ const OCCASIONS = [
 
 const DUREES = ["5 min", "10 min", "20 min", "30 min", "45 min"];
 const LANGUES = ["Français", "Hébreu", "Français + Hébreu"];
-const ENRICHISSEMENTS = ["Histoires hassidiques", "Gematria", "Halakha pratique", "Pensée du Rabbi", "Midrash", "Kabbalah", "Actualité", "Humour et anecdotes légères"];
+const ENRICHISSEMENTS = ["Histoires hassidiques", "Tanya", "Halakha pratique", "Pensée du Rabbi", "Midrash", "Kabbalah", "Actualité", "Humour et anecdotes légères"];
 
 const CLAUDE_COURS_SYS = `RECHERCHE WEB — INSTRUCTIONS :
 Avant de generer le cours, effectue une recherche web pour trouver des sources precises sur le sujet demande.
