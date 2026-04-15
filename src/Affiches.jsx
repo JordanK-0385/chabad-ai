@@ -360,29 +360,30 @@ export default function Affiches({ profil, onBack, headerProps }) {
       {headerProps && <AppHeader currentScreen="affiches" {...headerProps} />}
 
       {/* Main */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: mobile ? "16px 12px" : "24px 18px", display: "flex", gap: 22, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
+      <div className="mfp-page" style={{ maxWidth: 860, margin: "0 auto", padding: mobile ? "20px 14px" : "36px 24px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
+        <style>{`@media (max-width:600px){.mfp-page button{min-height:44px!important;font-size:14px!important;width:100%!important;box-sizing:border-box!important}.mfp-page input,.mfp-page textarea{font-size:16px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}.mfp-page .poster-wrap,.mfp-page .poster-wrap *{max-width:100%!important;box-sizing:border-box!important}}`}</style>
 
         {/* LEFT */}
         <div style={{ flex: "1 1 300px", minWidth: 0 }}>
-          <Card>
+          <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
             <StepLabel n="1">Décrivez votre événement</StepLabel>
-            <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder={`Ex : Atelier Pessah pour les enfants, dimanche 20 avril, 16h à 18h, ${bc}. Garçons et filles de 4 à 12 ans. Kiddouch offert.`} rows={5} style={{ ...INP, resize: "vertical", lineHeight: 1.6, fontSize: 13 }} />
-            <div style={{ fontSize: 11, color: T.muted, marginTop: 7, lineHeight: 1.5 }}>Précisez le public pour adapter les illustrations automatiquement.</div>
+            <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder={`Ex : Atelier Pessah pour les enfants, dimanche 20 avril, 16h à 18h, ${bc}. Garçons et filles de 4 à 12 ans. Kiddouch offert.`} rows={5} style={{ ...INP, resize: "vertical", lineHeight: 1.6, fontSize: mobile ? 16 : 13 }} />
+            <div style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginTop: 7, lineHeight: 1.5 }}>Précisez le public pour adapter les illustrations automatiquement.</div>
           </Card>
 
-          <Card>
+          <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
             <StepLabel n="2">Format</StepLabel>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: mobile ? 10 : 8 }}>
               {FMTS.map(f => (
-                <div key={f.v} onClick={() => setFmt(f.v)} style={{ padding: "10px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${fmt === f.v ? T.gold : T.border}`, background: fmt === f.v ? T.goldFaint : T.surface }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: fmt === f.v ? T.gold : T.text }}>{f.l}</div>
-                  <div style={{ fontSize: 10.5, color: T.muted, marginTop: 2 }}>{f.s}</div>
+                <div key={f.v} onClick={() => setFmt(f.v)} style={{ padding: mobile ? "14px 14px" : "10px 14px", minHeight: mobile ? 60 : 'auto', borderRadius: 8, cursor: "pointer", border: `1px solid ${fmt === f.v ? T.gold : T.border}`, background: fmt === f.v ? T.goldFaint : T.surface, boxSizing: "border-box" }}>
+                  <div style={{ fontSize: mobile ? 14 : 12, fontWeight: 600, color: fmt === f.v ? T.gold : T.text }}>{f.l}</div>
+                  <div style={{ fontSize: mobile ? 14 : 10.5, color: T.muted, marginTop: 2 }}>{f.s}</div>
                 </div>
               ))}
             </div>
           </Card>
 
-          <Card>
+          <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
             <StepLabel n="3">Illustration</StepLabel>
             {(() => {
               const TILES = [
@@ -425,18 +426,18 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
               return (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: mobile ? 10 : 8 }}>
                     {TILES.map(o => {
                       const sel = selTiles.includes(o.v);
                       const isDecorSel = o.v === "decor" && isDecor;
                       const active = sel || isDecorSel;
                       const idx = selTiles.indexOf(o.v);
                       return (
-                        <div key={o.v} onClick={() => toggleTile(o.v)} style={{ padding: "12px 8px", borderRadius: 8, cursor: "pointer", textAlign: "center", position: "relative", border: `1px solid ${active ? T.gold : T.border}`, background: active ? T.goldFaint : T.surface }}>
+                        <div key={o.v} onClick={() => toggleTile(o.v)} style={{ padding: mobile ? "16px 8px" : "12px 8px", minHeight: mobile ? 88 : 'auto', borderRadius: 8, cursor: "pointer", textAlign: "center", position: "relative", border: `1px solid ${active ? T.gold : T.border}`, background: active ? T.goldFaint : T.surface, boxSizing: "border-box" }}>
                           {sel && illustSelection.length === 2 && <div style={{ position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: "50%", background: T.gold, color: "#05100C", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{idx + 1}</div>}
                           <div style={{ fontSize: 24, marginBottom: 6 }}>{o.e}</div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: active ? T.gold : T.text }}>{o.l}</div>
-                          <div style={{ fontSize: 10, color: T.muted, marginTop: 2 }}>{o.s}</div>
+                          <div style={{ fontSize: mobile ? 14 : 13, fontWeight: 600, color: active ? T.gold : T.text }}>{o.l}</div>
+                          <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, marginTop: 2, lineHeight: 1.4 }}>{o.s}</div>
                         </div>
                       );
                     })}
@@ -447,18 +448,18 @@ export default function Affiches({ profil, onBack, headerProps }) {
                     const showQty = HAS_QTY.includes(s.tile);
                     return (
                       <div key={s.tile} style={{ marginTop: 14 }}>
-                        <div style={{ fontSize: 10, color: T.muted, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{LABELS[s.tile]} \u2014 tranche d'age</div>
-                        <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                        <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, letterSpacing: mobile ? 0.5 : 1.5, textTransform: "uppercase", marginBottom: 6 }}>{LABELS[s.tile]} \u2014 tranche d'age</div>
+                        <div style={{ display: "flex", gap: mobile ? 10 : 7, flexWrap: "wrap" }}>
                           {opts.map(a => (
-                            <span key={a} onClick={() => setAge(s.tile, a)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${s.age === a ? T.gold : T.border}`, color: s.age === a ? T.gold : T.muted, background: s.age === a ? T.goldSoft : T.surface }}>{a}</span>
+                            <span key={a} onClick={() => setAge(s.tile, a)} style={{ fontSize: mobile ? 14 : 11, padding: mobile ? "11px 16px" : "5px 12px", minHeight: mobile ? 44 : 'auto', display: mobile ? "inline-flex" : "inline-block", alignItems: "center", boxSizing: "border-box", borderRadius: 20, cursor: "pointer", border: `1px solid ${s.age === a ? T.gold : T.border}`, color: s.age === a ? T.gold : T.muted, background: s.age === a ? T.goldSoft : T.surface }}>{a}</span>
                           ))}
                         </div>
                         {showQty && (
                           <>
-                            <div style={{ fontSize: 10, color: T.muted, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4, marginTop: 10 }}>{LABELS[s.tile]} \u2014 nombre</div>
-                            <div style={{ display: "flex", gap: 7 }}>
+                            <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, letterSpacing: mobile ? 0.5 : 1.5, textTransform: "uppercase", marginBottom: 6, marginTop: 10 }}>{LABELS[s.tile]} \u2014 nombre</div>
+                            <div style={{ display: "flex", gap: mobile ? 10 : 7, flexWrap: "wrap" }}>
                               {[{ v: "1", l: "Seul(e)" }, { v: "groupe", l: "Groupe" }].map(q => (
-                                <span key={q.v} onClick={() => setQty(s.tile, q.v)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${s.qty === q.v ? T.gold : T.border}`, color: s.qty === q.v ? T.gold : T.muted, background: s.qty === q.v ? T.goldSoft : T.surface }}>{q.l}</span>
+                                <span key={q.v} onClick={() => setQty(s.tile, q.v)} style={{ fontSize: mobile ? 14 : 11, padding: mobile ? "11px 16px" : "5px 12px", minHeight: mobile ? 44 : 'auto', display: mobile ? "inline-flex" : "inline-block", alignItems: "center", boxSizing: "border-box", borderRadius: 20, cursor: "pointer", border: `1px solid ${s.qty === q.v ? T.gold : T.border}`, color: s.qty === q.v ? T.gold : T.muted, background: s.qty === q.v ? T.goldSoft : T.surface }}>{q.l}</span>
                               ))}
                             </div>
                           </>
@@ -466,15 +467,15 @@ export default function Affiches({ profil, onBack, headerProps }) {
                       </div>
                     );
                   })}
-                  {hasMixed && <div style={{ fontSize: 10, color: T.gold, marginTop: 6 }}>Scene mixte \u2014 separation visuelle appliquee automatiquement</div>}
-                  <div style={{ fontSize: 11, color: T.muted, marginTop: 10 }}>{summary}</div>
+                  {hasMixed && <div style={{ fontSize: mobile ? 14 : 10, color: T.gold, marginTop: 6 }}>Scene mixte \u2014 separation visuelle appliquee automatiquement</div>}
+                  <div style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginTop: 10 }}>{summary}</div>
                 </>
               );
             })()}
           </Card>
 
-          {errMsg && <div style={{ color: T.red, fontSize: 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px", lineHeight: 1.5 }}>{errMsg}</div>}
-          {!geminiKey && <div style={{ color: T.red, fontSize: 11, marginBottom: 10 }}>Configuration requise \u2014 clé API manquante</div>}
+          {errMsg && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px", lineHeight: 1.5 }}>{errMsg}</div>}
+          {!geminiKey && <div style={{ color: T.red, fontSize: mobile ? 14 : 11, marginBottom: 10 }}>Configuration requise \u2014 clé API manquante</div>}
 
           <div style={{ position: "sticky", bottom: 16, zIndex: 10, background: T.bg, paddingTop: 8, paddingBottom: 8, ...(mobile ? { minHeight: 52 } : {}) }}>
             <GBtn onClick={() => generate()} disabled={loading} fullWidth>
@@ -484,10 +485,10 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
           {aData && !loading && (
             <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 10, padding: 14, marginTop: 12 }}>
-              <div style={{ fontSize: 11, color: T.muted, marginBottom: 9 }}>Ajuster :</div>
-              <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+              <div style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginBottom: 9 }}>Ajuster :</div>
+              <div style={{ display: "flex", gap: mobile ? 10 : 7, flexWrap: "wrap" }}>
                 {TWEAKS.map(tw => (
-                  <span key={tw} onClick={() => generate(tw)} style={{ fontSize: 11, padding: "5px 11px", border: `1px solid ${T.border}`, borderRadius: 20, color: T.muted, cursor: "pointer", background: T.surface }}>{tw}</span>
+                  <span key={tw} onClick={() => generate(tw)} style={{ fontSize: mobile ? 14 : 11, padding: mobile ? "11px 16px" : "5px 11px", minHeight: mobile ? 44 : 'auto', display: mobile ? "inline-flex" : "inline-block", alignItems: "center", boxSizing: "border-box", border: `1px solid ${T.border}`, borderRadius: 20, color: T.muted, cursor: "pointer", background: T.surface }}>{tw}</span>
                 ))}
               </div>
             </div>
@@ -496,33 +497,33 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
         {/* RIGHT */}
         <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", alignItems: mobile ? "stretch" : "center", gap: 14, minWidth: mobile ? "100%" : 280, width: mobile ? "100%" : "auto" }}>
-          <div onClick={() => imgSrc && setPreview(true)} style={{ cursor: imgSrc ? "pointer" : "default" }}>
+          <div className="poster-wrap" onClick={() => imgSrc && setPreview(true)} style={{ cursor: imgSrc ? "pointer" : "default", maxWidth: "100%" }}>
             <AfficheFinale data={aData} bc={bc} fmt={fmt} imgSrc={imgSrc} loading={loading} afficheRef={afficheRef} logoUrl={logoUrl} />
           </div>
-          {imgSrc && !loading && <div style={{ fontSize: 10, color: T.muted, marginTop: -8 }}>Cliquez sur l'affiche pour l'aperçu plein écran</div>}
+          {imgSrc && !loading && <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, marginTop: -8 }}>Cliquez sur l'affiche pour l'aperçu plein écran</div>}
 
           {imgSrc && !loading && (
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+            <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, flexWrap: "wrap", justifyContent: "center" }}>
               <GBtn onClick={() => setPreview(true)} outline sm>Aperçu</GBtn>
               <GBtn onClick={downloadAffiche} outline sm>Télécharger</GBtn>
               <GBtn onClick={regenImage} outline sm>Nouvelle image</GBtn>
               <GBtn onClick={() => generate()} outline sm>Tout regénérer</GBtn>
-              <button onClick={() => { setAData(null); setDesc(""); setImgSrc(null); }} style={{ padding: "7px 14px", background: "transparent", border: `1px solid ${T.border}`, borderRadius: 7, color: T.muted, fontSize: 12, cursor: "pointer" }}>Effacer</button>
+              <button onClick={() => { setAData(null); setDesc(""); setImgSrc(null); }} style={{ padding: "7px 14px", background: "transparent", border: `1px solid ${T.border}`, borderRadius: 7, color: T.muted, fontSize: mobile ? 14 : 12, cursor: "pointer" }}>Effacer</button>
             </div>
           )}
 
           {aData && !loading && (
             <div style={{ width: "100%", maxWidth: 420 }}>
-              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                <button onClick={copyPrompt} style={{ flex: 1, padding: "7px 12px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 7, color: copied ? T.green : T.muted, fontSize: 11, cursor: "pointer", fontFamily: SANS }}>
+              <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, marginTop: 4 }}>
+                <button onClick={copyPrompt} style={{ flex: 1, padding: "7px 12px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 7, color: copied ? T.green : T.muted, fontSize: mobile ? 14 : 11, cursor: "pointer", fontFamily: SANS }}>
                   {copied ? "Copie !" : "Copier le prompt"}
                 </button>
-                <button onClick={() => setShowPrompt(v => !v)} style={{ padding: "7px 10px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 7, color: T.muted, fontSize: 11, cursor: "pointer" }}>
+                <button onClick={() => setShowPrompt(v => !v)} style={{ padding: "7px 10px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 7, color: T.muted, fontSize: mobile ? 14 : 11, cursor: "pointer" }}>
                   {showPrompt ? "\u25B2" : "\u25BC"}
                 </button>
               </div>
               {showPrompt && (
-                <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: "10px 12px", fontSize: 10.5, color: T.muted, fontFamily: "monospace", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 180, overflowY: "auto", marginTop: 8 }}>
+                <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: "10px 12px", fontSize: mobile ? 14 : 10.5, color: T.muted, fontFamily: "monospace", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 180, overflowY: "auto", marginTop: 8 }}>
                   {buildPrompt(aData, bc, fmt, illustSelection).text}
                 </div>
               )}
@@ -533,7 +534,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
       {/* Preview overlay */}
       {preview && imgSrc && aData && (
-        <div onClick={() => setPreview(false)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, cursor: "zoom-out" }}>
+        <div onClick={() => setPreview(false)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? 12 : 24, cursor: "zoom-out", boxSizing: "border-box" }}>
           <div onClick={e => e.stopPropagation()} style={{ position: "relative", maxWidth: "min(90vw, 700px)", maxHeight: "90vh", cursor: "default" }}>
             <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", boxShadow: `0 20px 80px rgba(0,0,0,0.7), 0 0 100px var(--color-accent-faint)`, border: `1px solid var(--color-accent-soft)` }}>
               <img src={imgSrc} alt="Affiche" style={{ width: "100%", display: "block" }} />
@@ -558,7 +559,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
                 </div>
               </div>
             </div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 16 }}>
+            <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 10, justifyContent: "center", marginTop: 16 }}>
               <GBtn onClick={downloadAffiche} sm>Télécharger</GBtn>
               <GBtn onClick={() => setPreview(false)} outline sm>Fermer</GBtn>
             </div>

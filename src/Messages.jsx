@@ -100,65 +100,66 @@ export default function Messages({ profil, onBack, headerProps }) {
       {/* Header */}
       {headerProps && <AppHeader currentScreen="messages" {...headerProps} />}
 
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: mobile ? "16px 12px" : "24px 18px", display: "flex", gap: 22, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
+      <div className="mfp-page" style={{ maxWidth: 860, margin: "0 auto", padding: mobile ? "20px 14px" : "36px 24px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
+        <style>{`@media (max-width:600px){.mfp-page button{min-height:44px!important;font-size:14px!important;width:100%!important;box-sizing:border-box!important}.mfp-page input,.mfp-page textarea{font-size:16px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}}`}</style>
 
         {/* LEFT - controls */}
         <div style={{ flex: "1 1 300px", minWidth: 0 }}>
-          <Card>
+          <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
             <StepLabel n="1">Type de message</StepLabel>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: mobile ? 10 : 8 }}>
               {TYPES.map(t => (
-                <div key={t.v} onClick={() => setType(t.v)} style={{ padding: "10px 12px", borderRadius: 8, cursor: "pointer", border: `1px solid ${type === t.v ? T.gold : T.border}`, background: type === t.v ? T.goldFaint : T.surface, display: "flex", alignItems: "center", gap: 8 }}>
+                <div key={t.v} onClick={() => setType(t.v)} style={{ padding: mobile ? "14px 12px" : "10px 12px", minHeight: mobile ? 44 : 'auto', borderRadius: 8, cursor: "pointer", border: `1px solid ${type === t.v ? T.gold : T.border}`, background: type === t.v ? T.goldFaint : T.surface, display: "flex", alignItems: "center", gap: 8, boxSizing: "border-box" }}>
                   <span style={{ fontSize: 18 }}>{t.e}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: type === t.v ? T.gold : T.text }}>{t.l}</span>
+                  <span style={{ fontSize: mobile ? 14 : 12, fontWeight: 600, color: type === t.v ? T.gold : T.text }}>{t.l}</span>
                 </div>
               ))}
             </div>
           </Card>
 
-          <Card>
+          <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
             <StepLabel n="2">Personnalisation</StepLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <label style={{ fontSize: 11, color: T.muted, marginBottom: 4, display: "block" }}>Destinataire(s)</label>
+                <label style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginBottom: 4, display: "block" }}>Destinataire(s)</label>
                 <input value={destinataire} onChange={e => setDestinataire(e.target.value)} placeholder="Ex: Les fidèles, M. et Mme Cohen, La communauté..." style={INP} />
               </div>
               <div>
-                <label style={{ fontSize: 11, color: T.muted, marginBottom: 4, display: "block" }}>Sujet</label>
+                <label style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginBottom: 4, display: "block" }}>Sujet</label>
                 <input value={sujet} onChange={e => setSujet(e.target.value)} placeholder="Ex: Invitation au Seder communautaire" style={INP} />
               </div>
               <div>
-                <label style={{ fontSize: 11, color: T.muted, marginBottom: 6, display: "block" }}>Ton</label>
-                <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                <label style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginBottom: 6, display: "block" }}>Ton</label>
+                <div style={{ display: "flex", gap: mobile ? 10 : 7, flexWrap: "wrap" }}>
                   {TONS.map(t => (
-                    <span key={t} onClick={() => setTon(t)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${ton === t ? T.gold : T.border}`, color: ton === t ? T.gold : T.muted, background: ton === t ? T.goldSoft : T.surface }}>{t}</span>
+                    <span key={t} onClick={() => setTon(t)} style={{ fontSize: mobile ? 14 : 11, padding: mobile ? "11px 16px" : "5px 12px", minHeight: mobile ? 44 : 'auto', display: mobile ? "inline-flex" : "inline-block", alignItems: "center", boxSizing: "border-box", borderRadius: 20, cursor: "pointer", border: `1px solid ${ton === t ? T.gold : T.border}`, color: ton === t ? T.gold : T.muted, background: ton === t ? T.goldSoft : T.surface }}>{t}</span>
                   ))}
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: T.muted, marginBottom: 6, display: "block" }}>Formulation</label>
-                <div style={{ display: "flex", gap: 7 }}>
+                <label style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginBottom: 6, display: "block" }}>Formulation</label>
+                <div style={{ display: "flex", gap: mobile ? 10 : 7, flexWrap: "wrap" }}>
                   {FORMULATIONS.map(f => (
-                    <span key={f} onClick={() => setFormulation(f)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${formulation === f ? T.gold : T.border}`, color: formulation === f ? T.gold : T.muted, background: formulation === f ? T.goldSoft : T.surface }}>{f}</span>
+                    <span key={f} onClick={() => setFormulation(f)} style={{ fontSize: mobile ? 14 : 11, padding: mobile ? "11px 16px" : "5px 12px", minHeight: mobile ? 44 : 'auto', display: mobile ? "inline-flex" : "inline-block", alignItems: "center", boxSizing: "border-box", borderRadius: 20, cursor: "pointer", border: `1px solid ${formulation === f ? T.gold : T.border}`, color: formulation === f ? T.gold : T.muted, background: formulation === f ? T.goldSoft : T.surface }}>{f}</span>
                   ))}
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: T.muted, marginBottom: 6, display: "block" }}>Longueur</label>
-                <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                <label style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginBottom: 6, display: "block" }}>Longueur</label>
+                <div style={{ display: "flex", gap: mobile ? 10 : 7, flexWrap: "wrap" }}>
                   {TAILLES.map(t => (
-                    <span key={t.v} onClick={() => setTaille(t.v)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", border: `1px solid ${taille === t.v ? T.gold : T.border}`, color: taille === t.v ? T.gold : T.muted, background: taille === t.v ? T.goldSoft : T.surface }}>{t.l}</span>
+                    <span key={t.v} onClick={() => setTaille(t.v)} style={{ fontSize: mobile ? 14 : 11, padding: mobile ? "11px 16px" : "5px 12px", minHeight: mobile ? 44 : 'auto', display: mobile ? "inline-flex" : "inline-block", alignItems: "center", boxSizing: "border-box", borderRadius: 20, cursor: "pointer", border: `1px solid ${taille === t.v ? T.gold : T.border}`, color: taille === t.v ? T.gold : T.muted, background: taille === t.v ? T.goldSoft : T.surface }}>{t.l}</span>
                   ))}
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 11, color: T.muted, marginBottom: 4, display: "block" }}>Détails supplémentaires (optionnel)</label>
+                <label style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginBottom: 4, display: "block" }}>Détails supplémentaires (optionnel)</label>
                 <textarea value={details} onChange={e => setDetails(e.target.value)} placeholder="Ajoutez des informations spécifiques..." rows={3} style={{ ...INP, resize: "vertical", lineHeight: 1.6 }} />
               </div>
             </div>
           </Card>
 
-          {err && <div style={{ color: T.red, fontSize: 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px" }}>{err}</div>}
+          {err && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px" }}>{err}</div>}
 
           <div style={mobile ? { minHeight: 48 } : {}}>
             <GBtn onClick={generate} disabled={loading} fullWidth>
@@ -170,25 +171,25 @@ export default function Messages({ profil, onBack, headerProps }) {
         {/* RIGHT - result */}
         <div style={{ flex: "1 1 380px", minWidth: 0, width: mobile ? "100%" : "auto" }}>
           {!result && !loading && (
-            <Card style={{ minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
+            <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28, minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
               <ChabadLogo size={48} color={T.faint} />
-              <div style={{ fontSize: 12, color: T.muted, textAlign: "center", lineHeight: 1.6 }}>
+              <div style={{ fontSize: mobile ? 14 : 12, color: T.muted, textAlign: "center", lineHeight: 1.6 }}>
                 Configurez les paramètres à gauche<br />puis cliquez sur <span style={{ color: T.gold }}>Rédiger le message</span>
               </div>
             </Card>
           )}
           {loading && (
-            <Card style={{ minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
+            <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28, minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
               <div style={{ fontSize: 32, animation: "pulse 1.5s ease-in-out infinite" }}>{"\u2709\uFE0F"}</div>
               <div style={{ fontSize: 14, color: T.gold }}>Rédaction en cours...</div>
             </Card>
           )}
           {result && (
-            <Card style={{ maxHeight: "75vh", overflowY: "auto" }}>
-              <div style={{ fontSize: 13, color: T.text, lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: SANS }}>
+            <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28, maxHeight: "75vh", overflowY: "auto" }}>
+              <div style={{ fontSize: mobile ? 14 : 13, color: T.text, lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: SANS }}>
                 {result}
               </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, marginTop: 16 }}>
                 <GBtn onClick={() => { navigator.clipboard.writeText(result); }} outline sm>Copier</GBtn>
                 <GBtn onClick={generate} outline sm>Regénérer</GBtn>
               </div>
