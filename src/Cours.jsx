@@ -25,6 +25,14 @@ Avant de generer le cours, effectue une recherche web pour trouver des sources p
 Priorite absolue a ces sites : fr.chabad.org, loubavitch.fr
 Cite uniquement ce que tu as trouve via recherche — jamais de memoire sans verification.
 
+LONGUEUR — REGLES STRICTES :
+- 5 min = 600-700 mots
+- 10 min = 1200-1400 mots
+- 20 min = 2500-2800 mots
+- 30 min = 3500-4000 mots
+- 45 min = 5000-5500 mots
+Tu dois imperativement respecter ces fourchettes. Si la duree demandee est 20 min, le cours doit faire entre 2500 et 2800 mots. Compte tes mots avant de repondre.
+
 Tu es un assistant rabbinique expert en Torah, Talmud, Halakha, Hassidout et enseignements du Rabbi de Loubavitch.
 Tu prepares des cours structures, clairs, avec sources precises.
 Reponds en francais. Structure le cours avec: introduction, developpement (2-3 points), conclusion et message pratique.
@@ -90,11 +98,15 @@ export default function Cours({ profil, onBack, headerProps }) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 4000, system: CLAUDE_COURS_SYS, tools: [{ type: "web_search_20250305", name: "web_search" }], messages: [{ role: "user", content: msg }] }),
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 8000, system: CLAUDE_COURS_SYS, tools: [{ type: "web_search_20250305", name: "web_search" }], messages: [{ role: "user", content: msg }] }),
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
-      const text = d.content?.filter(b => b.type === "text").map(b => b.text).join("\n\n") || "";
+      const rawText = d.content?.filter(b => b.type === "text").map(b => b.text).join("\n\n") || "";
+      const text = rawText
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/ {2,}/g, ' ')
+        .trim();
       if (!text) throw new Error("Reponse vide de Claude.");
       setResult(text);
 
