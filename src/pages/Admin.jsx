@@ -2,9 +2,74 @@
 
 import { useEffect, useState, Fragment } from "react";
 import { collection, getDocs, deleteDoc, updateDoc, doc } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, listAll, deleteObject, getDownloadURL } from "firebase/storage";
-import { db, storage } from "../firebase";
+import { db } from "../firebase";
 import { T, SERIF, SANS, INP, AppHeader } from "../shared";
+
+const GH_OWNER  = "JordanK-0385";
+const GH_REPO   = "chabad-ai";
+const GH_BRANCH = "main";
+const GH_PATH   = "public/pdfs";
+const GH_TOKEN  = import.meta.env.VITE_GITHUB_TOKEN;
+const GH_BASE   = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`;
+const ghHeaders = () => ({
+  Authorization: `Bearer ${GH_TOKEN}`,
+  Accept: "application/vnd.github+json",
+  "X-GitHub-Api-Version": "2022-11-28",
+});
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function ghList() {
+  const res = await fetch(`${GH_BASE}?ref=${GH_BRANCH}`, { headers: ghHeaders() });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`GitHub list failed (${res.status})`);
+  const data = await res.json();
+  return Array.isArray(data) ? data.map(f => ({ name: f.name, path: f.path, sha: f.sha })) : [];
+}
+
+async function ghGetSha(filename) {
+  const res = await fetch(`${GH_BASE}/${encodeURIComponent(filename)}?ref=${GH_BRANCH}`, { headers: ghHeaders() });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`GitHub get failed (${res.status})`);
+  const data = await res.json();
+  return data.sha;
+}
+
+async function ghUpload(filename, base64) {
+  const sha = await ghGetSha(filename);
+  const body = { message: `Add PDF: ${filename}`, content: base64, branch: GH_BRANCH };
+  if (sha) body.sha = sha;
+  const res = await fetch(`${GH_BASE}/${encodeURIComponent(filename)}`, {
+    method: "PUT",
+    headers: { ...ghHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.message || `GitHub upload failed (${res.status})`);
+  }
+}
+
+async function ghDelete(filename) {
+  const sha = await ghGetSha(filename);
+  if (!sha) throw new Error("Fichier introuvable sur GitHub.");
+  const res = await fetch(`${GH_BASE}/${encodeURIComponent(filename)}`, {
+    method: "DELETE",
+    headers: { ...ghHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ message: `Remove PDF: ${filename}`, sha, branch: GH_BRANCH }),
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.message || `GitHub delete failed (${res.status})`);
+  }
+}
 
 const ADMIN_UID = "9B2EWANLCaMssqkdRjTy66bjhCE3";
 
@@ -25,9 +90,8 @@ export default function Admin({ user, profil, headerProps }) {
   const isAdmin = user?.uid === ADMIN_UID;
 
   async function refreshPdfList() {
-    const folderRef = ref(storage, "cours-pdfs");
-    const res = await listAll(folderRef);
-    setPdfFiles(res.items.map(i => ({ name: i.name, fullPath: i.fullPath })));
+    const items = await ghList();
+    setPdfFiles(items);
   }
 
   async function handlePdfUpload() {
@@ -43,8 +107,8 @@ export default function Admin({ user, profil, headerProps }) {
           setPdfErr("Format invalide (PDF uniquement) : " + file.name);
           continue;
         }
-        const fileRef = ref(storage, `cours-pdfs/${file.name}`);
-        await uploadBytes(fileRef, file);
+        const base64 = await fileToBase64(file);
+        await ghUpload(file.name, base64);
       }
       await refreshPdfList();
       setPdfSelection(null);
@@ -61,7 +125,7 @@ export default function Admin({ user, profil, headerProps }) {
     if (!window.confirm(`Supprimer ${name} ?`)) return;
     setPdfBusy(true); setPdfErr("");
     try {
-      await deleteObject(ref(storage, `cours-pdfs/${name}`));
+      await ghDelete(name);
       setPdfFiles(prev => prev.filter(f => f.name !== name));
     } catch (e) {
       setPdfErr(e.message || "Erreur de suppression.");
@@ -178,9 +242,8 @@ export default function Admin({ user, profil, headerProps }) {
     let cancelled = false;
     (async () => {
       try {
-        const folderRef = ref(storage, "cours-pdfs");
-        const res = await listAll(folderRef);
-        if (!cancelled) setPdfFiles(res.items.map(i => ({ name: i.name, fullPath: i.fullPath })));
+        const items = await ghList();
+        if (!cancelled) setPdfFiles(items);
       } catch (e) {
         if (!cancelled) setPdfErr(e.message || "Erreur de chargement PDF.");
       } finally {
@@ -314,7 +377,7 @@ export default function Admin({ user, profil, headerProps }) {
           ) : (
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
               {pdfFiles.map(f => (
-                <li key={f.fullPath} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "10px 14px", background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 8 }}>
+                <li key={f.path} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "10px 14px", background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 8 }}>
                   <span style={{ fontSize: 14, color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📄 {f.name}</span>
                   <button
                     onClick={() => handlePdfDelete(f.name)}

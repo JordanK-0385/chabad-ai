@@ -2,9 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
-import { db, storage } from "./firebase";
+import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, listAll, getDownloadURL } from "firebase/storage";
+
+const GH_OWNER  = "JordanK-0385";
+const GH_REPO   = "chabad-ai";
+const GH_BRANCH = "main";
+const GH_PATH   = "public/pdfs";
+const GH_TOKEN  = import.meta.env.VITE_GITHUB_TOKEN;
 
 const OCCASIONS = [
   { v: "chabbat",    l: "Chabbat",     e: "\uD83D\uDD6F\uFE0F" },
@@ -59,12 +64,20 @@ function arrayBufferToBase64(buffer) {
 
 async function fetchPdfDocuments() {
   try {
-    const folderRef = ref(storage, "cours-pdfs");
-    const res = await listAll(folderRef);
-    if (res.items.length === 0) return [];
-    const docs = await Promise.all(res.items.map(async item => {
-      const url = await getDownloadURL(item);
-      const resp = await fetch(url);
+    const ghHeaders = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+    if (GH_TOKEN) ghHeaders.Authorization = `Bearer ${GH_TOKEN}`;
+    const listRes = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}?ref=${GH_BRANCH}`,
+      { headers: ghHeaders }
+    );
+    if (listRes.status === 404) return [];
+    if (!listRes.ok) throw new Error(`GitHub list failed (${listRes.status})`);
+    const items = await listRes.json();
+    if (!Array.isArray(items) || items.length === 0) return [];
+
+    const docs = await Promise.all(items.map(async item => {
+      const resp = await fetch(`/pdfs/${encodeURIComponent(item.name)}`);
+      if (!resp.ok) throw new Error(`PDF fetch failed for ${item.name} (${resp.status})`);
       const buf = await resp.arrayBuffer();
       return { data: arrayBufferToBase64(buf) };
     }));
