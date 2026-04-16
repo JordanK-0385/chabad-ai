@@ -24,7 +24,7 @@ const OCCASIONS = [
 
 const DUREES = ["5 min", "10 min", "20 min", "30 min", "45 min"];
 const LANGUES = ["Français", "Hébreu", "Français + Hébreu"];
-const ENRICHISSEMENTS = ["Histoires hassidiques", "Tanya", "Halakha pratique", "Pensée du Rabbi", "Midrash", "Kabbalah", "Actualité", "Humour et anecdotes légères"];
+const ENRICHISSEMENTS = ["Histoires hassidiques", "Tanya", "Halakha pratique", "Pensée du Rabbi", "Midrash", "Hassidout", "Actualité", "Humour et anecdotes légères"];
 
 const CLAUDE_COURS_SYS = `Tu es un assistant rabbinique qui prépare des cours de Torah pour des Shluchim Chabad.
 
