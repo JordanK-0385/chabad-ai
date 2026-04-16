@@ -353,7 +353,23 @@ export default function Affiches({ profil, onBack, headerProps }) {
     const logoLine = profil?.logoBase64
       ? "Include the institution's logo at the bottom of the poster. The logo is a custom image provided by the user."
       : "Include at the bottom the Habad.ai logo: two golden Vav letters (ו ו) in gold color on a dark background.";
-    const criticalRule = "CRITICAL RULE — NO EXCEPTIONS: Girls and women have NO kippah, NO head covering of any kind except natural hair. Only boys and men wear kippah. Any female character with a kippah is a generation failure.";
+    const criticalRule = `CRITICAL RULES — ABSOLUTE PROHIBITION — NO EXCEPTIONS WHATSOEVER:
+
+RULE 1 — KIPPAH ON FEMALES IS FORBIDDEN:
+Look at EVERY single character in the image one by one.
+For EACH female character (girl, woman, teenager): she has ZERO head covering. No kippah. No hat. No cap. Nothing on her head except her natural hair (braids, ponytail, loose hair).
+For EACH male character (boy, man, teenager): he wears a dark kippah (navy, black or dark burgundy). NEVER white.
+A female character with a kippah = GENERATION FAILURE. Reject and regenerate.
+
+RULE 2 — IN MIXED SCENES (boys AND girls together):
+Identify each character's gender individually before applying head covering rules.
+Boys → dark kippah only.
+Girls → natural hair only, absolutely no head covering of any kind.
+Do NOT apply kippah to a character just because other characters nearby wear one.
+
+RULE 3 — TSNIOUT FOR ALL FEMALE CHARACTERS:
+Every girl and woman: long skirt or dress below the knee, long sleeves, closed neckline.
+No short skirts, no bare arms, no low necklines for any female character.`;
     const fullPrompt = criticalRule + "\n\n" + prompt + "\n\n" + logoLine;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`;
     const res = await fetch(url, {
