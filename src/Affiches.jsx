@@ -197,9 +197,34 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
   async function downloadAffiche() {
     if (!afficheRef.current) return;
-    const canvas = await html2canvas(afficheRef.current, { useCORS: true, scale: 2, backgroundColor: null });
+    const dimensions = {
+      carre: { w: 1080, h: 1080 },
+      story: { w: 1080, h: 1920 },
+      a4: { w: 794, h: 1123 },
+      paysage: { w: 1920, h: 1080 }
+    };
+    const { w, h } = dimensions[fmt] || dimensions.carre;
+    const el = afficheRef.current;
+    const originalWidth = el.style.width;
+    const originalHeight = el.style.height;
+
+    // Temporarily resize to exact target dimensions
+    el.style.width = `${w/2}px`;
+    el.style.height = `${h/2}px`;
+
+    const canvas = await html2canvas(el, {
+      useCORS: true,
+      scale: 2,
+      width: w/2,
+      height: h/2,
+      backgroundColor: null
+    });
+
+    // Restore original size
+    el.style.width = originalWidth;
+    el.style.height = originalHeight;
     const link = document.createElement("a");
-    link.download = "affiche-chabad.png";
+    link.download = `affiche-${(aData?.titre || "chabad").slice(0,20).replace(/\s+/g,"-")}-${fmt}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   }
