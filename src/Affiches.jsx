@@ -86,6 +86,7 @@ CONTENU À GÉNÉRER
 - Sous-titre : précise le contexte ou le public. Maximum 10 mots.
 - Accroche : phrase d'invitation courte et chaleureuse. Maximum 15 mots.
 - Texte hébreu : formule hébraïque adaptée à l'occasion. Toujours en hébreu authentique.
+- Texte hébreu : formule COURTE et GÉNÉRALE uniquement (ex: ברוכים הבאים, שבת שלום, חג שמח, מזל טוב, ברכה והצלחה). JAMAIS de termes halakhiques intimes, médicaux ou privés. Si le sujet est sensible (pureté familiale, deuil intime, etc.), utilise uniquement ברוכים הבאים ou une formule générale de bienvenue.
 - Emoji : 1 seul emoji représentatif de l'occasion.
 - Ambiance : "festive", "solennelle", "chaleureuse", "éducative" ou "communautaire".
 
@@ -179,7 +180,9 @@ The females have zero head coverings of any kind.`,
 
   const eventDetails = [titre, sous_titre, date, heure, lieu, bc].filter(Boolean).join(" · ");
 
-  return `Warm storybook illustration for a Chabad Jewish community event in France.
+  return `BEFORE GENERATING: Every female character must have zero head covering. Scan each female individually. If you would place a kippah on a female, place natural hair instead.
+
+Warm storybook illustration for a Chabad Jewish community event in France.
 Event: ${eventDetails}
 Scene hint: "${accroche || sous_titre}"
 Style: editorial children's book illustration. ${pal}. Warm soft lighting. Max 4 characters. Bottom 25% kept dark and simple for text overlay.
@@ -540,7 +543,7 @@ MIXED SCENES: Identify each character's gender individually. Do NOT apply kippah
                     const showQty = HAS_QTY.includes(s.tile);
                     return (
                       <div key={s.tile} style={{ marginTop: 14 }}>
-                        <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, letterSpacing: mobile ? 0.5 : 1.5, textTransform: "uppercase", marginBottom: 6 }}>{LABELS[s.tile]} \u2014 tranche d'age</div>
+                        <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, letterSpacing: mobile ? 0.5 : 1.5, textTransform: "uppercase", marginBottom: 6 }}>{LABELS[s.tile]} · Tranche d'âge</div>
                         <div style={{ display: "flex", gap: mobile ? 10 : 7, flexWrap: "wrap" }}>
                           {opts.map(a => (
                             <span key={a} onClick={() => setAge(s.tile, a)} style={{ fontSize: mobile ? 14 : 11, padding: mobile ? "11px 16px" : "5px 12px", minHeight: mobile ? 44 : 'auto', display: mobile ? "inline-flex" : "inline-block", alignItems: "center", boxSizing: "border-box", borderRadius: 20, cursor: "pointer", border: `1px solid ${s.age === a ? T.gold : T.border}`, color: s.age === a ? T.gold : T.muted, background: s.age === a ? T.goldSoft : T.surface }}>{a}</span>
@@ -548,7 +551,7 @@ MIXED SCENES: Identify each character's gender individually. Do NOT apply kippah
                         </div>
                         {showQty && (
                           <>
-                            <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, letterSpacing: mobile ? 0.5 : 1.5, textTransform: "uppercase", marginBottom: 6, marginTop: 10 }}>{LABELS[s.tile]} \u2014 nombre</div>
+                            <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, letterSpacing: mobile ? 0.5 : 1.5, textTransform: "uppercase", marginBottom: 6, marginTop: 10 }}>{LABELS[s.tile]} · Nombre</div>
                             <div style={{ display: "flex", gap: mobile ? 10 : 7, flexWrap: "wrap" }}>
                               {[{ v: "1", l: "Seul(e)" }, { v: "groupe", l: "Groupe" }].map(q => (
                                 <span key={q.v} onClick={() => setQty(s.tile, q.v)} style={{ fontSize: mobile ? 14 : 11, padding: mobile ? "11px 16px" : "5px 12px", minHeight: mobile ? 44 : 'auto', display: mobile ? "inline-flex" : "inline-block", alignItems: "center", boxSizing: "border-box", borderRadius: 20, cursor: "pointer", border: `1px solid ${s.qty === q.v ? T.gold : T.border}`, color: s.qty === q.v ? T.gold : T.muted, background: s.qty === q.v ? T.goldSoft : T.surface }}>{q.l}</span>
@@ -559,7 +562,7 @@ MIXED SCENES: Identify each character's gender individually. Do NOT apply kippah
                       </div>
                     );
                   })}
-                  {hasMixed && <div style={{ fontSize: mobile ? 14 : 10, color: T.gold, marginTop: 6 }}>Scene mixte \u2014 separation visuelle appliquee automatiquement</div>}
+                  {hasMixed && <div style={{ fontSize: mobile ? 14 : 10, color: T.gold, marginTop: 6 }}>Scène mixte — séparation visuelle appliquée automatiquement</div>}
                   <div style={{ fontSize: mobile ? 14 : 11, color: T.muted, marginTop: 10 }}>{summary}</div>
                 </>
               );
@@ -567,7 +570,7 @@ MIXED SCENES: Identify each character's gender individually. Do NOT apply kippah
           </Card>
 
           {errMsg && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px", lineHeight: 1.5 }}>{errMsg}</div>}
-          {!geminiKey && <div style={{ color: T.red, fontSize: mobile ? 14 : 11, marginBottom: 10 }}>Configuration requise \u2014 clé API manquante</div>}
+          {!geminiKey && <div style={{ color: T.red, fontSize: mobile ? 14 : 11, marginBottom: 10 }}>Configuration requise — clé API manquante</div>}
 
           <div style={{ position: "sticky", bottom: 16, zIndex: 10, background: T.bg, paddingTop: 8, paddingBottom: 8, ...(mobile ? { minHeight: 52 } : {}) }}>
             <GBtn onClick={() => generate()} disabled={loading} fullWidth>
