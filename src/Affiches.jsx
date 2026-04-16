@@ -101,130 +101,97 @@ Structure exacte obligatoire :
 Si une information n'est pas fournie, laisse le champ vide "".`;
 
 /* ─── buildPrompt ─── */
-function buildPrompt(data, bc, fmt, illustSelection = []) {
-  const ratios = { carre: "1:1", story: "9:16", a4: "3:4", paysage: "4:3" };
-  const ar     = ratios[fmt] || "1:1";
-  const isSol = data.ambiance === "solennelle";
-  const pal   = isSol ? "dark burgundy and charcoal, dignified" : "deep Chabad blue and warm gold, festive";
-  const scene = data.accroche ? `Scene hint: "${data.accroche}". ` : "";
+function buildPrompt(data, bc, fmt, illustSelection) {
+  const { titre, sous_titre, date, heure, lieu, accroche, ambiance } = data;
+  const ar = fmt === "story" ? "9:16" : fmt === "a4" ? "3:4" : fmt === "paysage" ? "4:3" : "1:1";
+  const issolemn = ambiance === "solennelle";
+  const pal = issolemn ? "dark burgundy and charcoal, dignified atmosphere" : "deep Chabad blue #003087 and warm gold #C9971A, festive warm atmosphere";
 
-  const ageMap = { "Enfants": "young children (ages 5-10)", "Adolescents": "teenagers (ages 13-17)", "Adolescentes": "teenage girls (ages 13-17)", "Adultes": "young adults (ages 25-40)", "Adulte": "adult (age 35-55)", "Seniors": "elderly (ages 65+)", "\u00C2g\u00E9": "elderly man (age 65+)", "\u00C2g\u00E9e": "elderly woman (age 65+)" };
-  const MALE_TILES = ["garcons", "rav"];
-  const FEMALE_TILES = ["filles", "rabbanit"];
+  const hasFemale = illustSelection?.some(t => ["filles","rabbanit","mixte"].includes(t?.tile));
+  const maleOnly = illustSelection?.every(t => ["garcons","rav"].includes(t?.tile)) && illustSelection?.length > 0;
 
+  // Scene description per tile
   function descTile(tile, age, qty) {
-    const a = age && ageMap[age] ? `, age group: ${ageMap[age]}` : ", adults";
-    const solo = qty === "1";
-    if (tile === "garcons") return solo
-      ? `A single Jewish Chabad boy${a}. Dark navy or black suede kippah (NEVER white). White shirt, visible tzitzit strings at waist, long dark trousers. Warm, friendly, expressive face. Only ONE boy, no other characters.`
-      : `Jewish Chabad boys (small group of 2-4)${a}. Dark navy or black suede kippah (NEVER white). White shirt, visible tzitzit strings at waist, long dark trousers. Warm, friendly, expressive faces.`;
-    if (tile === "filles") return solo
-      ? `A single Jewish Chabad girl${a}. Completely natural uncovered hair \u2014 braids, ponytail, or loose. NO kippah, NO head covering. Modest long dress below knee, long sleeves. Warm, friendly, expressive face. Only ONE girl, no other characters.`
-      : `Jewish Chabad girls (small group of 2-4)${a}. Completely natural uncovered hair \u2014 braids, ponytail, or loose flowing hair. NO kippah, NO head covering. Modest long dress below knee, long sleeves. Warm, friendly, expressive faces.`;
-    if (tile === "rav") return `A single Chabad Rabbi (Rav)${a}. Full beard, wearing a black fedora hat (classic Chabad rabbi hat) on his head, dark suit jacket, white shirt, visible tzitzit strings. Warm, wise, approachable expression. The black hat is essential.`;
-    if (tile === "rabbanit") return `A single Chabad Rebbetzin (Rabbanit)${a}. Elegant, modest dress below knee, long sleeves. Completely natural uncovered hair \u2014 styled nicely. ABSOLUTELY NO kippah, NO head covering. Warm, wise, gracious expression.`;
-    if (tile === "mixte") return `Mixed scene${a} \u2014 Boys/men strictly LEFT side, girls/women strictly RIGHT side, clear visual divider (mechitza, partition, table). No interaction, no touching. Boys: kippah (dark navy, NEVER white), tzitzit. Girls: natural uncovered hair, modest dress. SEPARATION MUST BE OBVIOUS.`;
-    return "";
+    const ageStr = age && age !== "Adulte" ? `, ${age}` : "";
+    const qtyStr = (qty === "groupe" || qty > 1) ? "group of 2-4" : "single";
+    const tiles = {
+      garcons: qty === "groupe" || qty > 1
+        ? `Jewish Chabad boys (${qtyStr}${ageStr}). Dark navy or black suede kippah, NEVER white. White shirt, visible tzitzit at waist, long dark trousers.`
+        : `A single Jewish Chabad boy${ageStr}. Dark navy or black suede kippah, NEVER white. White shirt, visible tzitzit at waist, long dark trousers. Only ONE boy, no other characters.`,
+      filles: qty === "groupe" || qty > 1
+        ? `Jewish Chabad girls (${qtyStr}${ageStr}). Natural uncovered hair — braids, ponytail or loose. NO kippah, NO head covering. Modest long dress below knee, long sleeves.`
+        : `A single Jewish Chabad girl${ageStr}. Natural uncovered hair — braids, ponytail or loose. NO kippah, NO head covering whatsoever. Modest long dress below knee, long sleeves. Only ONE girl, no other characters.`,
+      rav: `A single Chabad Rabbi${ageStr}. Full beard, classic black fedora hat, dark suit jacket, white shirt, visible tzitzit. Wise and warm expression. The black fedora is essential.`,
+      rabbanit: `A single Chabad Rebbetzin${ageStr}. Elegant modest dress below knee, long sleeves. Natural styled hair, NO kippah, NO head covering. Warm and gracious expression.`,
+      mixte: `Mixed family scene${ageStr} — boys and men on LEFT side, girls and women on RIGHT side, with a clear visual divider (table, partition or decorative element) between them. No touching. Boys: dark navy kippah, tzitzit. Girls: natural uncovered hair, modest dress.`,
+    };
+    return tiles[tile] || "";
   }
 
+  // Character section
   let charSection = "";
-  if (!illustSelection.length) {
-    charSection = `SCENE: NO human characters at all. Beautiful atmospheric scene only: Jewish decorative elements, warm lighting, Chabad blue and gold color palette, relevant objects for the event. Cozy and inviting ambiance.`;
+  if (!illustSelection || illustSelection.length === 0 || illustSelection.every(t => !t?.tile || t?.tile === "decor")) {
+    charSection = `SCENE: NO human characters. Beautiful atmospheric Jewish scene only: warm lighting, Chabad blue and gold palette, relevant objects for the event. Cozy and inviting.`;
   } else if (illustSelection.length === 1) {
-    const s = illustSelection[0];
-    if (s.tile === "mixte") {
-      charSection = `CHARACTERS: ${descTile(s.tile, s.age, s.qty)}\nPixar-meets-storybook aesthetic.`;
-    } else {
-      const isMale = MALE_TILES.includes(s.tile);
-      const isFemale = FEMALE_TILES.includes(s.tile);
-      charSection = `CHARACTERS: ${descTile(s.tile, s.age, s.qty)}\nPixar-meets-storybook aesthetic.`;
-      if (isMale) charSection += `\nABSOLUTELY NO girls or women visible anywhere, including background.`;
-      if (isFemale) charSection += `\nABSOLUTELY NO boys or men visible anywhere, including background.`;
-    }
+    const t = illustSelection[0];
+    charSection = `CHARACTER: ${descTile(t.tile, t.age, t.qty)}\nPixar-meets-storybook aesthetic.`;
+    if (maleOnly) charSection += `\nABSOLUTELY ZERO women or girls anywhere in the image, not even in background.`;
   } else {
-    const s1 = illustSelection[0], s2 = illustSelection[1];
-    const strictMale = MALE_TILES.includes(s1.tile) && MALE_TILES.includes(s2.tile);
-    const strictFemale = FEMALE_TILES.includes(s1.tile) && FEMALE_TILES.includes(s2.tile);
-    const g1male = MALE_TILES.includes(s1.tile), g1female = FEMALE_TILES.includes(s1.tile);
-    const g2male = MALE_TILES.includes(s2.tile), g2female = FEMALE_TILES.includes(s2.tile);
-    const mixedGender = (g1male && g2female) || (g1female && g2male) || s1.tile === "mixte" || s2.tile === "mixte";
-    charSection = `SCENE COMPOSITION: Two groups in the same image.\nGroup 1: ${descTile(s1.tile, s1.age, s1.qty)}\nGroup 2: ${descTile(s2.tile, s2.age, s2.qty)}\nPixar-meets-storybook aesthetic.`;
-    if (mixedGender) charSection += `\nGroups must be visually separated by a clear divider (table, architectural element, or space). No physical contact between groups. Orthodox Jewish modesty rule (tzniut).`;
-    else charSection += `\nGroups interact naturally in the same space.`;
-    if (strictMale) charSection += `\nABSOLUTELY NO girls, women, or female characters visible ANYWHERE in the image \u2014 not in the scene, not in the background, not partially visible. This is a MALES ONLY scene. Zero females.`;
-    if (strictFemale) charSection += `\nABSOLUTELY NO boys, men, or male characters visible ANYWHERE in the image \u2014 not in the scene, not in the background, not partially visible. This is a FEMALES ONLY scene. Zero males.`;
+    charSection = `SCENE COMPOSITION: Two distinct groups.\n`;
+    illustSelection.forEach((t, i) => {
+      charSection += `Group ${i+1}: ${descTile(t.tile, t.age, t.qty)}\n`;
+    });
+    charSection += `Pixar-meets-storybook aesthetic.`;
+    if (maleOnly) charSection += `\nABSOLUTELY ZERO women or girls anywhere, not even in background.`;
   }
 
-  const titre = data.titre || "";
-  const feteKey = titre.toLowerCase();
-  let feteRules = "";
-  if (feteKey.includes("pessah") || feteKey.includes("matsa") || feteKey.includes("seder"))
-    feteRules = "Pessah objects ONLY: matzot, seder plate, wine cups, Haggadah, spring flowers. NO menorah, NO shofar, NO sukkah, NO lulav.";
-  else if (feteKey.includes("hanouk") || feteKey.includes("hanuk") || feteKey.includes("hanoucca"))
-    feteRules = "Hanoukka objects ONLY: menorah/hanukkiah (9 branches), dreidels, sufganiyot (donuts), latkes, gelt, oil jug. NO matzot, NO shofar, NO sukkah. Torah books and Siddur if present must be on a table or bookshelf ONLY \u2014 never on the floor or ground level.";
-  else if (feteKey.includes("pourim") || feteKey.includes("purim"))
-    feteRules = "Pourim objects ONLY: megillah scroll, mishloah manot (gift baskets), hamantashen cookies, masks, costumes. NO menorah, NO matzot, NO shofar.";
-  else if (feteKey.includes("souccot") || feteKey.includes("sukkot") || feteKey.includes("soukka"))
-    feteRules = "Souccot objects ONLY: sukkah, lulav, etrog, schach (roof branches), decorations. NO menorah, NO matzot.";
-  else if (feteKey.includes("chavouot") || feteKey.includes("shavuot"))
-    feteRules = "Chavouot objects ONLY: Torah scroll, flowers, greenery, dairy foods, Ten Commandments tablets. NO menorah, NO matzot, NO sukkah.";
-  else if (feteKey.includes("roch hachana") || feteKey.includes("rosh hashana"))
-    feteRules = "Roch Hachana objects ONLY: shofar, pomegranate, apple and honey, round challah, prayer book. NO menorah, NO matzot, NO sukkah.";
-  else if (feteKey.includes("kippour") || feteKey.includes("kippur"))
-    feteRules = "Yom Kippour: white garments, prayer shawl (tallit), candles, machzor prayer book. Solemn atmosphere. NO food, NO festive objects.";
-  else if (feteKey.includes("lag") || feteKey.includes("omer"))
-    feteRules = "CETTE AFFICHE EST POUR LAG BAOMER. OBJETS OBLIGATOIRES: grand feu de joie central, guirlandes lumineuses dans les arbres, fruits et nourriture festive, atmosphere de fete en plein air, parc verdoyant. PERSONNAGES: melange d'enfants ET d'adultes \u2014 familles completes, parents avec enfants, groupes d'amis. Pas que des enfants \u2014 au moins 40% de personnages adultes. OBJETS STRICTEMENT INTERDITS: arcs et fleches ou toute arme de quelque nature que ce soit, epees, couteaux, lances, tout objet pouvant etre percu comme une arme \u2014 meme decoratif, meme historique. C'est une affiche communautaire familiale, pas guerriere. Matzot, hanoukia, meguilah (autres fetes) aussi interdits. COULEURS: orange chaud, brun automnal, or, flammes du feu de joie, guirlandes dorees.";
-  else if (feteKey.includes("chabbat") || feteKey.includes("shabbat") || feteKey.includes("shabbos"))
-    feteRules = "Chabbat objects ONLY: two challah loaves, candlesticks with candles, wine cup (kiddush), white tablecloth. NO menorah (9 branches), NO matzot.";
-  else
-    feteRules = "Use only objects relevant to the specific event described. Do not mix holiday symbols.";
+  // Holiday-specific objects (all in English)
+  const titleLower = (titre || "").toLowerCase() + " " + (accroche || "").toLowerCase();
+  let feteRules = `Use only objects relevant to the specific event. Do not mix holiday symbols.`;
+  if (/pessah|pessa[hc]|seder|matsa|matzot/i.test(titleLower))
+    feteRules = `PESSAH ONLY: matzot, seder plate, wine cups, Haggadah, spring flowers. FORBIDDEN: menorah, shofar, sukkah, lulav.`;
+  else if (/hanoukk|hanukkah|chanukah/i.test(titleLower))
+    feteRules = `HANUKKAH ONLY: hanukkiah (9-branch menorah), dreidels, sufganiyot donuts, latkes, gelt, oil jug. FORBIDDEN: matzot, shofar, sukkah. Books and siddurim on table or shelf only, never on the floor.`;
+  else if (/pourim|purim/i.test(titleLower))
+    feteRules = `PURIM ONLY: megillah scroll, mishloah manot baskets, hamantashen cookies, masks, festive costumes. FORBIDDEN: menorah, matzot, shofar.`;
+  else if (/souccot|sukkot|soukkot/i.test(titleLower))
+    feteRules = `SUKKOT ONLY: sukkah structure, lulav, etrog, schach roof branches, decorations. FORBIDDEN: menorah, matzot.`;
+  else if (/chavouot|shavuot/i.test(titleLower))
+    feteRules = `SHAVUOT ONLY: Torah scroll, flowers, greenery, dairy foods, Ten Commandments tablets. FORBIDDEN: menorah, matzot, sukkah.`;
+  else if (/roch.?hachana|rosh.?hashana/i.test(titleLower))
+    feteRules = `ROSH HASHANA ONLY: shofar, pomegranate, apple and honey, round challah, prayer book. FORBIDDEN: menorah, matzot, sukkah.`;
+  else if (/kippour|kippur|yom kippour/i.test(titleLower))
+    feteRules = `YOM KIPPUR: white garments, tallit prayer shawl, candles, machzor prayer book. Solemn atmosphere. FORBIDDEN: food, festive objects.`;
+  else if (/lag.?baomer|lag b'omer/i.test(titleLower))
+    feteRules = `LAG BAOMER: large central bonfire, string lights in trees, fruits and festive food, outdoor park setting, families with children AND adults (min 40% adults). FORBIDDEN: bows, arrows, swords, weapons of any kind, matzot, hanukkiah, megillah.`;
+  else if (/chabbat|shabbat/i.test(titleLower))
+    feteRules = `SHABBAT ONLY: two challah loaves, candlesticks with candles, kiddush wine cup, white tablecloth. FORBIDDEN: 9-branch menorah, matzot.`;
 
-  const hasFemale = illustSelection.some(s => FEMALE_TILES.includes(s.tile) || s.tile === "mixte");
-  const hasOnlyMale = illustSelection.length > 0 && !hasFemale;
+  // Final check
+  let finalCheck = "";
+  if (maleOnly) finalCheck = `FINAL CHECK: Confirm ZERO female characters anywhere in the image.`;
+  else if (hasFemale) finalCheck = `FINAL CHECK: Scan every female head — if anything on top of skull, remove it. Natural hair only on all females.`;
 
-  const firstRule = hasOnlyMale
-    ? `This is a MALES-ONLY scene. There must be ZERO women or girls anywhere in the image.`
-    : `FIRST: Every female head must have ONLY natural hair. No kippah, no cap, no hat, no fabric on any girl/woman. Males only wear dark navy kippah.`;
+  const eventDetails = [titre, sous_titre, date, heure, lieu, bc].filter(Boolean).join(" · ");
 
-  let rules = `RULES (all mandatory):
-- NO TEXT/LETTERS anywhere in the image, any language
-- Holy books always on table/shelf/hands, never on floor
-- Max 1 ChabadLogo of David, prefer zero. No repeated ChabadLogos
-- No crosses, crescents, hamsa, non-Jewish symbols
-- No Rebbe's face. No non-kosher animals
-- ${feteRules}`;
-
-  if (hasOnlyMale) {
-    rules += `\n- ZERO FEMALES in image. No girls, no women, not even in background. Males only.`;
-  } else if (hasFemale) {
-    rules += `\n- Kippah: dark navy/black, males ONLY. Never white. Females NEVER wear kippah`;
-    rules += `\n- Female hair: natural uncovered (braids/ponytail/loose). Zero head coverings`;
-    rules += `\n- Modesty: long skirts, long sleeves on all females`;
-    rules += `\n- Gender separation: boys and girls never mixed together`;
-  }
-
-  const finalCheck = hasOnlyMale
-    ? `FINAL CHECK: Confirm there are ZERO female characters anywhere in the image. Males only.`
-    : hasFemale
-    ? `FINAL CHECK: Scan all female heads \u2014 if anything on top of skull, remove it. Natural hair only on females.`
-    : "";
-
-  return {
-    ar,
-    text: `${firstRule}
-
-Warm storybook illustration for a Chabad Jewish community event in France.
-Event: "${data.titre}"${data.sous_titre ? " \u2014 " + data.sous_titre : ""}. ${[data.date, data.heure, data.lieu].filter(Boolean).join(" \u00B7 ")}. ${bc}.
-${scene}
-Style: editorial children's book illustration. 3-4 harmonious colors, ${pal}. Warm soft lighting. Max 4 characters. Bottom 25% dark/simple for text overlay.
+  return `Warm storybook illustration for a Chabad Jewish community event in France.
+Event: ${eventDetails}
+Scene hint: "${accroche || sous_titre}"
+Style: editorial children's book illustration. ${pal}. Warm soft lighting. Max 4 characters. Bottom 25% kept dark and simple for text overlay.
 
 ${charSection}
 
-${rules}
-Aspect ratio: ${ar}. High quality illustration, no text. All text added as CSS overlay.
+MANDATORY RULES:
+- NO TEXT or letters anywhere in the image (any language)
+- Holy books always on table, shelf or in hands — never on the floor
+- No Star of David symbol (prefer zero)
+- No crosses, crescents, hamsa or non-Jewish symbols
+- No Rebbe's face. No non-kosher animals
+- ${feteRules}
+${maleOnly ? "- ZERO FEMALES in image. No girls, no women, not even in background." : hasFemale ? "- Kippah: dark navy/black on males ONLY. Females: natural hair only, zero head coverings.\n- Modesty: long skirts and long sleeves on all females." : ""}
 
-${finalCheck}`,
-  };
+${finalCheck}
+Aspect ratio: ${ar}. High quality illustration. No text in image.`;
 }
 
 /* ─── Poster sizes ─── */
@@ -349,27 +316,14 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const callGemini = useCallback(async (contentData, bcName, format, sel) => {
     const key = geminiKeyRef.current.trim();
     if (!key) return;
-    const { text: prompt } = buildPrompt(contentData, bcName, format, sel);
+    const prompt = buildPrompt(contentData, bcName, format, sel);
     const logoLine = profil?.logoBase64
       ? "Include the institution's logo at the bottom of the poster. The logo is a custom image provided by the user."
       : "Include at the bottom the Habad.ai logo: two golden Vav letters (ו ו) in gold color on a dark background.";
-    const criticalRule = `CRITICAL RULES — ABSOLUTE PROHIBITION — NO EXCEPTIONS WHATSOEVER:
-
-RULE 1 — KIPPAH ON FEMALES IS FORBIDDEN:
-Look at EVERY single character in the image one by one.
-For EACH female character (girl, woman, teenager): she has ZERO head covering. No kippah. No hat. No cap. Nothing on her head except her natural hair (braids, ponytail, loose hair).
-For EACH male character (boy, man, teenager): he wears a dark kippah (navy, black or dark burgundy). NEVER white.
-A female character with a kippah = GENERATION FAILURE. Reject and regenerate.
-
-RULE 2 — IN MIXED SCENES (boys AND girls together):
-Identify each character's gender individually before applying head covering rules.
-Boys → dark kippah only.
-Girls → natural hair only, absolutely no head covering of any kind.
-Do NOT apply kippah to a character just because other characters nearby wear one.
-
-RULE 3 — TSNIOUT FOR ALL FEMALE CHARACTERS:
-Every girl and woman: long skirt or dress below the knee, long sleeves, closed neckline.
-No short skirts, no bare arms, no low necklines for any female character.`;
+    const criticalRule = `ABSOLUTE RULES — ZERO EXCEPTIONS:
+HEAD COVERINGS: Males (boys/men/teens) → dark navy or black kippah ONLY, never white. Females (girls/women/teens) → ZERO head covering, natural hair only (braids, ponytail, loose). One female with a kippah = total generation failure.
+MODESTY: All females → long dress or skirt below knee, long sleeves, closed neckline. No exceptions.
+MIXED SCENES: Identify each character's gender individually. Do NOT apply kippah to a character because nearby characters wear one.`;
     const fullPrompt = criticalRule + "\n\n" + prompt + "\n\n" + logoLine;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`;
     const res = await fetch(url, {
