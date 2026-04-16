@@ -76,7 +76,7 @@ function AfficheFinale({ data, bc, fmt, imgSrc, loading, afficheRef, logoUrl, lo
               {data.heure && <span style={{ fontSize: "clamp(16px, 2.5vw, 20px)", fontWeight: 400, color: "rgba(255,255,255,0.95)", fontFamily: SANS, textShadow: SH3 }}>&middot; {data.heure}</span>}
             </div>
             {data.contact && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: SH2 }}>{data.contact}</div>}
-            <div style={{ fontSize: "clamp(11px, 1.5vw, 14px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: 8, textShadow: SH2, textTransform: "uppercase" }}>{bc}</div>
+            <div style={{ fontSize: fmt === "story" ? "clamp(8px, 2vw, 11px)" : (fmt === "a4" || fmt === "paysage") ? "clamp(10px, 1.5vw, 13px)" : "clamp(10px, 1.8vw, 13px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: 8, textShadow: SH2, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{bc}</div>
           </div>
         </div>
       </div>
