@@ -37,7 +37,7 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
     }
 
     if (tile === "filles") {
-      const hairDesc = ageLabel.includes("child") ? "two long brown braids hanging down" :
+      const hairDesc = ageLabel.includes("child") ? "two long dark braids hanging freely on both sides of her face, with no accessory, clip, band or covering on top of the skull" :
                        ageLabel.includes("teenager") ? "long hair in a ponytail or loose flowing" :
                        ageLabel.includes("elderly") ? "silver hair in a neat bun" :
                        "long dark hair in a braid or elegant updo";
@@ -50,8 +50,8 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
                                    ageLabel.includes("elderly") ? "elderly women" :
                                    "young women";
       return isGroup
-        ? `A group of ${femaleAgeLabelPlural} with ${hairDesc} worn freely and visibly — none of them wear any hat, cap or head covering. They wear long modest dresses below the knee, with long sleeves.`
-        : `One ${femaleAgeLabel} with ${hairDesc}. Her hair cascades freely and visibly — she wears absolutely no hat, cap or head covering of any kind. She wears a long modest dress reaching below the knee, with long sleeves.`;
+        ? `A group of ${femaleAgeLabelPlural} with ${hairDesc} worn freely and visibly — none of them wear any hat, cap or head covering. Each girl's hair is parted and braided — the top of every head shows only hair, no bands, no clips, no accessories on top of the skull. They wear long modest dresses below the knee, with long sleeves.`
+        : `One ${femaleAgeLabel} with ${hairDesc}. The top of her head shows only hair parted in the middle — no blue band, no clip, no accessory of any kind on the top of the head. Her hair cascades freely and visibly — she wears absolutely no hat, cap or head covering of any kind. She wears a long modest dress reaching below the knee, with long sleeves.`;
     }
 
     if (tile === "rav") {
