@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey:        import.meta.env.VITE_FIREBASE_API_KEY,
@@ -12,7 +13,7 @@ const firebaseConfig = {
 
 export const firebaseReady = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== "undefined" && firebaseConfig.apiKey.length > 5;
 
-let app = null, auth = null, db = null, googleProvider = null;
+let app = null, auth = null, db = null, googleProvider = null, storage = null;
 
 if (firebaseReady) {
   try {
@@ -20,6 +21,7 @@ if (firebaseReady) {
     auth = getAuth(app);
     db = getFirestore(app);
     googleProvider = new GoogleAuthProvider();
+    storage = getStorage(app);
   } catch (e) {
     console.warn("Firebase init failed:", e.message);
   }
@@ -27,7 +29,7 @@ if (firebaseReady) {
   console.warn("Firebase non configuré — variables .env.local manquantes");
 }
 
-export { auth, db, googleProvider };
+export { auth, db, googleProvider, storage };
 
 export function signInWithGoogle() {
   if (!auth || !googleProvider) return Promise.reject(new Error("Firebase non configuré"));

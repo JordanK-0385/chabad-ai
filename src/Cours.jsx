@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
-import { db } from "./firebase";
+import { db, storage } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, listAll, getDownloadURL } from "firebase/storage";
 
 const OCCASIONS = [
   { v: "chabbat",    l: "Chabbat",     e: "\uD83D\uDD6F\uFE0F" },
@@ -45,6 +46,38 @@ Entre chaque idee, utilise des phrases de transition naturelles qui relient les 
 'Cela nous amene a...', 'Ce qui nous rappelle...', 'Fort de cette idee, on comprend mieux pourquoi...', 'Le Rabbi nous enseigne a ce sujet que...'
 Chaque paragraphe doit decouler naturellement du precedent.
 Pas de tirets, pas de bullet points — uniquement de la prose.`;
+
+function arrayBufferToBase64(buffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+async function fetchPdfDocuments() {
+  try {
+    const folderRef = ref(storage, "cours-pdfs");
+    const res = await listAll(folderRef);
+    if (res.items.length === 0) return [];
+    const docs = await Promise.all(res.items.map(async item => {
+      const url = await getDownloadURL(item);
+      const resp = await fetch(url);
+      const buf = await resp.arrayBuffer();
+      return { data: arrayBufferToBase64(buf) };
+    }));
+    return docs.map((d, i) => ({
+      type: "document",
+      source: { type: "base64", media_type: "application/pdf", data: d.data },
+      ...(i < 4 ? { cache_control: { type: "ephemeral" } } : {})
+    }));
+  } catch (e) {
+    console.warn("PDF fetch failed:", e.message);
+    return [];
+  }
+}
 
 export default function Cours({ profil, onBack, headerProps }) {
   const [mobile, setMobile] = useState(window.innerWidth <= 600);
@@ -95,10 +128,15 @@ export default function Cours({ profil, onBack, headerProps }) {
         `Institution : ${bc}`,
       ].filter(Boolean).join("\n");
 
+      const pdfBlocks = await fetchPdfDocuments();
+      const userContent = pdfBlocks.length > 0
+        ? [...pdfBlocks, { type: "text", text: msg }]
+        : msg;
+
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 8000, system: CLAUDE_COURS_SYS, tools: [{ type: "web_search_20250305", name: "web_search" }], messages: [{ role: "user", content: msg }] }),
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 8000, system: CLAUDE_COURS_SYS, tools: [{ type: "web_search_20250305", name: "web_search" }], messages: [{ role: "user", content: userContent }] }),
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));

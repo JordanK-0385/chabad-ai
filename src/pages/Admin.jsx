@@ -2,7 +2,8 @@
 
 import { useEffect, useState, Fragment } from "react";
 import { collection, getDocs, deleteDoc, updateDoc, doc } from "firebase/firestore";
-import { db } from "../firebase";
+import { getStorage, ref, uploadBytes, listAll, deleteObject, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../firebase";
 import { T, SERIF, SANS, INP, AppHeader } from "../shared";
 
 const ADMIN_UID = "9B2EWANLCaMssqkdRjTy66bjhCE3";
@@ -15,7 +16,59 @@ export default function Admin({ user, profil, headerProps }) {
   const [editData, setEditData] = useState({ betChabad: "", email: "", tailleCommunaute: "" });
   const [busyUid, setBusyUid] = useState(null);
 
+  const [pdfFiles, setPdfFiles] = useState([]);
+  const [pdfLoading, setPdfLoading] = useState(true);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfErr, setPdfErr] = useState("");
+  const [pdfSelection, setPdfSelection] = useState(null);
+
   const isAdmin = user?.uid === ADMIN_UID;
+
+  async function refreshPdfList() {
+    const folderRef = ref(storage, "cours-pdfs");
+    const res = await listAll(folderRef);
+    setPdfFiles(res.items.map(i => ({ name: i.name, fullPath: i.fullPath })));
+  }
+
+  async function handlePdfUpload() {
+    if (!pdfSelection || pdfSelection.length === 0) return;
+    setPdfBusy(true); setPdfErr("");
+    try {
+      for (const file of Array.from(pdfSelection)) {
+        if (file.size > 30 * 1024 * 1024) {
+          setPdfErr("Fichier trop lourd (max 30MB) : " + file.name);
+          continue;
+        }
+        if (file.type !== "application/pdf") {
+          setPdfErr("Format invalide (PDF uniquement) : " + file.name);
+          continue;
+        }
+        const fileRef = ref(storage, `cours-pdfs/${file.name}`);
+        await uploadBytes(fileRef, file);
+      }
+      await refreshPdfList();
+      setPdfSelection(null);
+      const input = document.getElementById("admin-pdf-input");
+      if (input) input.value = "";
+    } catch (e) {
+      setPdfErr(e.message || "Erreur d'upload.");
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
+  async function handlePdfDelete(name) {
+    if (!window.confirm(`Supprimer ${name} ?`)) return;
+    setPdfBusy(true); setPdfErr("");
+    try {
+      await deleteObject(ref(storage, `cours-pdfs/${name}`));
+      setPdfFiles(prev => prev.filter(f => f.name !== name));
+    } catch (e) {
+      setPdfErr(e.message || "Erreur de suppression.");
+    } finally {
+      setPdfBusy(false);
+    }
+  }
 
   async function handleDelete(uid) {
     if (!window.confirm("Supprimer cet utilisateur ?")) return;
@@ -120,6 +173,23 @@ export default function Admin({ user, profil, headerProps }) {
     return () => { cancelled = true; };
   }, [isAdmin]);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const folderRef = ref(storage, "cours-pdfs");
+        const res = await listAll(folderRef);
+        if (!cancelled) setPdfFiles(res.items.map(i => ({ name: i.name, fullPath: i.fullPath })));
+      } catch (e) {
+        if (!cancelled) setPdfErr(e.message || "Erreur de chargement PDF.");
+      } finally {
+        if (!cancelled) setPdfLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isAdmin]);
+
   if (!isAdmin) {
     return <div style={{ padding: 40 }}>Accès refusé.</div>;
   }
@@ -207,6 +277,57 @@ export default function Admin({ user, profil, headerProps }) {
             {err}
           </div>
         )}
+
+        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, padding: 24, marginBottom: 28 }}>
+          <h2 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, margin: "0 0 16px", color: "var(--color-text)", letterSpacing: "-0.01em" }}>
+            Documents de la semaine
+          </h2>
+
+          <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+            <input
+              id="admin-pdf-input"
+              type="file"
+              accept="application/pdf"
+              multiple
+              onChange={e => setPdfSelection(e.target.files)}
+              style={{ flex: "1 1 240px", minWidth: 0, padding: "9px 12px", background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 8, color: "var(--color-text)", fontSize: 13, fontFamily: SANS, cursor: "pointer" }}
+            />
+            <button
+              onClick={handlePdfUpload}
+              disabled={pdfBusy || !pdfSelection?.length}
+              style={{ ...actionBtn, ...actionBtnPrimary, opacity: (pdfBusy || !pdfSelection?.length) ? 0.5 : 1 }}
+            >
+              {pdfBusy ? "Envoi…" : "Uploader"}
+            </button>
+          </div>
+
+          {pdfErr && (
+            <div style={{ color: "#D94F4F", fontSize: 13, marginBottom: 12, padding: "10px 14px", background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 8 }}>
+              {pdfErr}
+            </div>
+          )}
+
+          {pdfLoading ? (
+            <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>Chargement…</div>
+          ) : pdfFiles.length === 0 ? (
+            <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>Aucun document.</div>
+          ) : (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+              {pdfFiles.map(f => (
+                <li key={f.fullPath} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "10px 14px", background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 8 }}>
+                  <span style={{ fontSize: 14, color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📄 {f.name}</span>
+                  <button
+                    onClick={() => handlePdfDelete(f.name)}
+                    disabled={pdfBusy}
+                    style={{ ...actionBtn, ...actionBtnDanger, flexShrink: 0, opacity: pdfBusy ? 0.5 : 1 }}
+                  >
+                    Supprimer
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, overflow: "hidden", marginBottom: 0 }}>
           <div style={{ overflowX: "auto" }}>
