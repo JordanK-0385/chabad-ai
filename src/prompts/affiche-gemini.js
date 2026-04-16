@@ -41,9 +41,17 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
                        ageLabel.includes("teenager") ? "long hair in a ponytail or loose flowing" :
                        ageLabel.includes("elderly") ? "silver hair in a neat bun" :
                        "long dark hair in a braid or elegant updo";
+      const femaleAgeLabel = ageLabel.includes("child") ? "young girl" :
+                             ageLabel.includes("teenager") ? "teenage girl" :
+                             ageLabel.includes("elderly") ? "elderly woman" :
+                             "young woman";
+      const femaleAgeLabelPlural = ageLabel.includes("child") ? "young girls" :
+                                   ageLabel.includes("teenager") ? "teenage girls" :
+                                   ageLabel.includes("elderly") ? "elderly women" :
+                                   "young women";
       return isGroup
-        ? `A group of 2-4 girls (${ageLabel}). Each girl has ${hairDesc}. Their hair is fully visible and flowing freely — no hat, no cap, no fabric, nothing covering their hair. Long modest dress below knee, long sleeves.`
-        : `One girl (${ageLabel}). She has ${hairDesc}. Her hair is fully visible and uncovered — no hat, no cap, no fabric on her head at all. Long modest dress below knee, long sleeves. Only this one girl, no other characters.`;
+        ? `A group of ${femaleAgeLabelPlural} with ${hairDesc} worn freely and visibly — none of them wear any hat, cap or head covering. They wear long modest dresses below the knee, with long sleeves.`
+        : `One ${femaleAgeLabel} with ${hairDesc}. Her hair cascades freely and visibly — she wears absolutely no hat, cap or head covering of any kind. She wears a long modest dress reaching below the knee, with long sleeves.`;
     }
 
     if (tile === "rav") {
@@ -52,15 +60,15 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
 
     if (tile === "rabbanit") {
       const hairDesc = ageLabel.includes("elderly") ? "neat silver hair in a bun" : "elegant dark hair styled in a bun or chignon";
-      return `One Rebbetzin/woman (${ageLabel}). She has ${hairDesc} — her hair is visible and styled, with absolutely nothing on top of her head. Elegant modest dress below knee, long sleeves, closed neckline.`;
+      return `One ${ageLabel} woman with ${hairDesc} worn freely and visibly. She wears no hat, cap or head covering. Elegant modest dress below knee, long sleeves, closed neckline. Warm gracious expression.`;
     }
 
     if (tile === "mixte") {
       return `A family scene (${ageLabel} generation):
 - Father: bearded man, dark navy kippah on his head, dark suit, white shirt, tzitzit strings at waist
 - Son/boy: dark navy kippah on his head, white shirt, dark trousers
-- Mother: woman with ${ageLabel.includes("elderly") ? "silver hair in a neat bun" : "dark hair styled in an elegant bun"} — her hair is fully visible, nothing on her head, elegant modest dress below knee, long sleeves
-- Daughter/girl: ${ageLabel.includes("child") ? "young girl with two long braids" : "girl with hair in a ponytail"} — her hair is fully visible, nothing on her head, modest long dress below knee, long sleeves`;
+- Mother: a ${ageLabel.includes("elderly") ? "mature" : "young"} woman with ${ageLabel.includes("elderly") ? "silver hair in a neat bun" : "dark hair in an elegant bun"}, hair fully visible, wearing an elegant modest dress below knee with long sleeves
+- Daughter: a ${ageLabel.includes("child") ? "young girl" : "teenage girl"} with ${ageLabel.includes("child") ? "two long braids" : "hair in a ponytail"}, hair completely visible and free, wearing a modest long dress below knee`;
     }
 
     return "";
@@ -113,7 +121,7 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
 
   const eventDetails = [titre, sous_titre, date, heure, lieu, bc].filter(Boolean).join(" · ");
 
-  return `Warm storybook illustration for a Jewish community event in France.
+  return `Warm storybook illustration for a religious community event in France.
 Event: ${eventDetails}
 Scene hint: "${accroche || sous_titre}"
 Style: editorial children's book illustration. ${pal}. Warm soft lighting. Max 4 characters. Bottom 20% kept dark and empty for text overlay — no visual elements in bottom 20%.
