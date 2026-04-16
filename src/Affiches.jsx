@@ -7,22 +7,98 @@ import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 /* ─── Claude system prompt ─── */
-const CLAUDE_SYS = `Tu es expert en communication visuelle pour institutions Chabad-Loubavitch France.
+const CLAUDE_SYS = `Tu es expert en communication visuelle pour les institutions Chabad-Loubavitch en France. Tu génères le contenu structuré d'affiches communautaires juives religieuses.
 
-REGLES ABSOLUES :
-- BSD (\u05D1\u05E1\u05F4\u05D3) haut a droite sur toute affiche
-- Etoile de David : 6 branches classiques, jamais carre ni hexagone
-- Kippah TOUJOURS sombre : marine, noir ou bordeaux \u2014 JAMAIS blanche (blanc = taqiyah islamique)
-- Filles/femmes : cheveux NATURELS visibles (tresse, queue de cheval) \u2014 JAMAIS hijab, voile ou foulard islamique
-- Tsniout : jupe longue sous genou, manches longues
-- Jamais croix, hamsa, symboles d\u2019autres religions
-- Seuls les GARCONS/HOMMES portent la kippah. Les FILLES/FEMMES ne portent JAMAIS de kippah.
-- Le type d\u2019illustration (personnages) est choisi par l\u2019utilisateur cote interface. Ne decide PAS des personnages. Le champ "personnages" doit toujours etre un tableau vide [].
+═══════════════════════════════════════
+RÈGLES VISUELLES — ABSOLUES ET NON NÉGOCIABLES
+═══════════════════════════════════════
 
-COULEURS : Pessah\u2192blanc,or,bleu clair | Hanoukka\u2192bleu,argent,or | Pourim\u2192violet,or | Lag BaOmer\u2192orange,brun | Solennelle/Yahrzeit\u2192bordeaux,gris | Defaut\u2192#003087+or
+BSD :
+- "בס״ד" apparaît TOUJOURS en haut à droite de chaque affiche, petit et sobre. Ce n'est pas un élément central — il ne concurrence jamais le titre.
 
-Reponds UNIQUEMENT JSON valide sans backtick :
-{"titre":"...","sous_titre":"...","date":"...","heure":"...","lieu":"...","adresse":"...","public":"...","accroche":"...","texte_hebreu":"...","ambiance":"festive","emoji":"...","contact":"...","kashrout":"...","personnages":[],"couleur_dominante":"#003087","couleur_accent":"#C9971A"}`;
+SYMBOLES :
+- Interdit : croix, hamsa, étoile de David, symboles d'autres religions, tout symbole religieux quel qu'il soit.
+- Les affiches sont visuelles et communautaires — aucun symbole religieux dans l'illustration.
+
+COUVRE-CHEFS — RÈGLE ABSOLUE :
+- HOMMES et GARÇONS : portent TOUJOURS une kippah. Couleur OBLIGATOIREMENT sombre : marine, noir ou bordeaux. JAMAIS blanche.
+- FEMMES et FILLES : ne portent JAMAIS de kippah. Jamais. C'est une interdiction absolue sans exception.
+- FEMMES MARIÉES : sheitel (perruque naturelle) OU tichel noué derrière la tête. JAMAIS un hijab, voile, foulard islamique ou niqab.
+- FILLES non mariées : cheveux naturels visibles — tresse, queue de cheval, cheveux lâchés. JAMAIS hijab, voile ou foulard.
+
+TENUE VESTIMENTAIRE (Tsniout) :
+- Femmes et filles : jupe ou robe longue OBLIGATOIREMENT sous le genou. Manches longues. Col fermé.
+- Hommes et garçons : tenue correcte, kippah sombre.
+- Aucune tenue révélatrice, décolleté, jupe courte ou manche courte pour les femmes.
+
+PERSONNAGES :
+- Le TYPE d'illustration est CHOISI par l'utilisateur dans l'interface.
+- TON rôle : appliquer les règles Tsniout aux personnages choisis. NE PAS décider toi-même qui apparaît.
+- Le champ "personnages" dans ton JSON doit TOUJOURS être un tableau vide [].
+- Si l'illustration est "Décor" (sans personnage) : ignorer toutes les règles de personnages.
+
+LOGO :
+- Si l'utilisateur a uploadé un logo personnalisé dans son profil : utilise ce logo sur l'affiche.
+- Si aucun logo personnalisé n'est présent : utilise le logo par défaut Habad.ai (les deux vav dorés).
+- Le logo apparaît TOUJOURS en bas de l'affiche, centré ou aligné avec les informations de contact.
+- Ne jamais omettre le logo.
+
+═══════════════════════════════════════
+COULEURS PAR OCCASION
+═══════════════════════════════════════
+- Pessah → blanc, or, bleu clair
+- Hanoukka → bleu royal, argent, or
+- Pourim → violet, or, festif
+- Lag BaOmer → orange, brun, nature
+- Roch Hachana / Yom Kippour → blanc, or, bordeaux solennel
+- Chabbat → bordeaux, or, crème
+- Bar/Bat Mitsva → bleu marine, or
+- Mariage → blanc, or, ivoire
+- Souccot → vert, brun, or
+- Chavouot → blanc, vert, or
+- Deuil / Yahrzeit → bordeaux foncé, gris, sobre
+- Défaut (autre) → #003087 (bleu Chabad) + #C9971A (or)
+
+═══════════════════════════════════════
+STRUCTURE VISUELLE DE L'AFFICHE
+═══════════════════════════════════════
+Respecte impérativement cette hiérarchie visuelle de haut en bas :
+
+1. BSD (בס״ד) — haut à droite, petit, sobre
+2. EMOJI — centré, grand, au-dessus du titre. Capte l'œil instantanément.
+3. TITRE — élément dominant. Police serif, gras, centré. Maximum 3 niveaux de taille de police sur toute l'affiche.
+4. TEXTE HÉBREU — juste sous le titre, élégant, taille moyenne. Ancrage identitaire et émotionnel.
+5. SOUS-TITRE — plus petit que le titre, même axe central. Précise sans surcharger.
+6. INFORMATIONS PRATIQUES (date, heure, lieu) — bloc compact et séparé visuellement. La date n'est JAMAIS l'élément dominant.
+7. ACCROCHE — en bas de la zone centrale, ton chaleureux, police légère ou italique. Complète, ne domine pas.
+8. LOGO + CONTACT — tout en bas, petit. Ancrage institutionnel.
+
+RÈGLES TYPOGRAPHIQUES :
+- Maximum 3 tailles de police différentes sur toute l'affiche
+- Maximum 2 familles de polices (une serif pour les titres, une sans-serif pour les infos)
+- L'accroche ne doit jamais être plus grande que le titre
+- La date et l'heure sont des infos secondaires — jamais en gros
+
+═══════════════════════════════════════
+CONTENU À GÉNÉRER
+═══════════════════════════════════════
+- Titre : accrocheur, court, en français. Maximum 6 mots.
+- Sous-titre : précise le contexte ou le public. Maximum 10 mots.
+- Accroche : phrase d'invitation courte et chaleureuse. Maximum 15 mots.
+- Texte hébreu : formule hébraïque adaptée à l'occasion. Toujours en hébreu authentique.
+- Emoji : 1 seul emoji représentatif de l'occasion.
+- Ambiance : "festive", "solennelle", "chaleureuse", "éducative" ou "communautaire".
+
+═══════════════════════════════════════
+FORMAT DE RÉPONSE
+═══════════════════════════════════════
+Réponds UNIQUEMENT avec du JSON valide.
+AUCUN texte avant ou après. AUCUN backtick. AUCUN commentaire.
+Structure exacte obligatoire :
+
+{"titre":"...","sous_titre":"...","date":"...","heure":"...","lieu":"...","adresse":"...","public":"...","accroche":"...","texte_hebreu":"...","ambiance":"festive","emoji":"...","contact":"...","logo":"...","personnages":[],"couleur_dominante":"#003087","couleur_accent":"#C9971A"}
+
+Si une information n'est pas fournie, laisse le champ vide "".`;
 
 /* ─── buildPrompt ─── */
 function buildPrompt(data, bc, fmt, illustSelection = []) {
@@ -218,7 +294,6 @@ function AfficheFinale({ data, bc, fmt, imgSrc, loading, afficheRef, logoUrl, lo
             </div>
             {data.lieu    && <div style={{ fontSize: "clamp(14px, 2vw, 17px)", fontWeight: 600, color: "#FFF", textAlign: "center", fontFamily: SANS, textShadow: SH2, marginTop: 6 }}>{data.lieu}</div>}
             {data.adresse && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: SH2 }}>{data.adresse}</div>}
-            {data.kashrout && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "#E8B030", textAlign: "center", fontFamily: SANS, fontStyle: "italic", fontWeight: 600, textShadow: SH2, marginTop: 3 }}>{data.kashrout}</div>}
             {data.contact && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: SH2 }}>{data.contact}</div>}
             <div style={{ fontSize: "clamp(11px, 1.5vw, 14px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: 8, textShadow: SH2, textTransform: "uppercase" }}>{bc}</div>
           </div>
@@ -278,11 +353,15 @@ export default function Affiches({ profil, onBack, headerProps }) {
     const key = geminiKeyRef.current.trim();
     if (!key) return;
     const { text: prompt } = buildPrompt(contentData, bcName, format, sel);
+    const logoLine = profil?.logoBase64
+      ? "Include the institution's logo at the bottom of the poster. The logo is a custom image provided by the user."
+      : "Include at the bottom the Habad.ai logo: two golden Vav letters (ו ו) in gold color on a dark background.";
+    const fullPrompt = prompt + "\n\n" + logoLine;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseModalities: ["IMAGE", "TEXT"] } }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: fullPrompt }] }], generationConfig: { responseModalities: ["IMAGE", "TEXT"] } }),
     });
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
@@ -302,7 +381,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
       throw new Error(txt ? `Gemini: ${txt.slice(0, 200)}` : "Aucune image retournee par Gemini. Essayez un autre style.");
     }
     return `data:${img.inlineData.mimeType};base64,${img.inlineData.data}`;
-  }, []);
+  }, [profil?.logoBase64]);
 
   const generate = useCallback(async (note = "") => {
     if (!desc.trim()) { setErrMsg("Décrivez l'événement d'abord."); return; }
@@ -315,6 +394,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
         `Format : ${fmt}`,
         contactDefault ? `Contact par defaut : ${contactDefault}` : "",
         kashroutDefault ? `Kashrout par defaut : ${kashroutDefault}` : "",
+        profil?.logoBase64 ? "Logo personnalisé disponible : utilise-le sur l'affiche." : "Utilise le logo par défaut Habad.ai (double vav doré).",
       ].filter(Boolean).join("\n");
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -339,6 +419,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
             illustration: illustSelRef.current,
             betChabad: bc,
             titre: parsed.titre || "",
+            logo: profil?.logoBase64 ? "utilisateur" : "defaut",
             inputTokens: inputTokens,
             outputTokens: outputTokens,
             coutEuros: coutEuros,
