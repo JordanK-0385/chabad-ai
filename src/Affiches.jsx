@@ -319,6 +319,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
       try {
         if (profil?.onboardingComplete) {
           const coutEuros = ((inputTokens / 1000 * 0.003) + (outputTokens / 1000 * 0.015)) * 0.93;
+          console.log("FIRESTORE LOG:", { inputTokens, outputTokens, coutEuros });
           await addDoc(collection(db, "users", profil.uid, "affiches"), {
             format: fmt,
             illustration: illustSelRef.current,
