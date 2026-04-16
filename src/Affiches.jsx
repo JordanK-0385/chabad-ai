@@ -292,8 +292,6 @@ function AfficheFinale({ data, bc, fmt, imgSrc, loading, afficheRef, logoUrl, lo
               {data.date  && <span style={{ fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 800, color: "#E8B030", fontFamily: SANS, textShadow: SH3 }}>{data.date}</span>}
               {data.heure && <span style={{ fontSize: "clamp(16px, 2.5vw, 20px)", fontWeight: 400, color: "rgba(255,255,255,0.95)", fontFamily: SANS, textShadow: SH3 }}>&middot; {data.heure}</span>}
             </div>
-            {data.lieu    && <div style={{ fontSize: "clamp(14px, 2vw, 17px)", fontWeight: 600, color: "#FFF", textAlign: "center", fontFamily: SANS, textShadow: SH2, marginTop: 6 }}>{data.lieu}</div>}
-            {data.adresse && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: SH2 }}>{data.adresse}</div>}
             {data.contact && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: SH2 }}>{data.contact}</div>}
             <div style={{ fontSize: "clamp(11px, 1.5vw, 14px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: 8, textShadow: SH2, textTransform: "uppercase" }}>{bc}</div>
           </div>
@@ -341,7 +339,6 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const bc = profil?.betChabad ? `Beth Chabad de ${profil.betChabad}` : "Beth Chabad";
   const logoUrl = profil?.logoBase64 || "/logo-beth-loubavitch.png";
   const contactDefault = profil?.telephone || "";
-  const kashroutDefault = profil?.kashroutDefaut || "";
 
   const geminiKeyRef = useRef(geminiKey);
   geminiKeyRef.current = geminiKey;
@@ -356,7 +353,8 @@ export default function Affiches({ profil, onBack, headerProps }) {
     const logoLine = profil?.logoBase64
       ? "Include the institution's logo at the bottom of the poster. The logo is a custom image provided by the user."
       : "Include at the bottom the Habad.ai logo: two golden Vav letters (ו ו) in gold color on a dark background.";
-    const fullPrompt = prompt + "\n\n" + logoLine;
+    const criticalRule = "CRITICAL RULE — NO EXCEPTIONS: Girls and women have NO kippah, NO head covering of any kind except natural hair. Only boys and men wear kippah. Any female character with a kippah is a generation failure.";
+    const fullPrompt = criticalRule + "\n\n" + prompt + "\n\n" + logoLine;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`;
     const res = await fetch(url, {
       method: "POST",
@@ -393,7 +391,6 @@ export default function Affiches({ profil, onBack, headerProps }) {
         bc ? `Institution : ${bc}` : "",
         `Format : ${fmt}`,
         contactDefault ? `Contact par defaut : ${contactDefault}` : "",
-        kashroutDefault ? `Kashrout par defaut : ${kashroutDefault}` : "",
         profil?.logoBase64 ? "Logo personnalisé disponible : utilise-le sur l'affiche." : "Utilise le logo par défaut Habad.ai (double vav doré).",
       ].filter(Boolean).join("\n");
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -437,7 +434,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
     } finally {
       setLoading(false);
     }
-  }, [desc, fmt, bc, contactDefault, kashroutDefault, callGemini]);
+  }, [desc, fmt, bc, contactDefault, callGemini]);
 
   const regenImage = useCallback(async () => {
     if (!aData || !geminiKey.trim()) return;
@@ -672,7 +669,6 @@ export default function Affiches({ profil, onBack, headerProps }) {
                     </div>
                     {aData.lieu    && <div style={{ fontSize: "clamp(15px, 2.2vw, 20px)", fontWeight: 600, color: "#FFF", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)", marginTop: 6 }}>{aData.lieu}</div>}
                     {aData.adresse && <div style={{ fontSize: "clamp(13px, 2vw, 17px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}>{aData.adresse}</div>}
-                    {aData.kashrout && <div style={{ fontSize: "clamp(13px, 2vw, 17px)", color: "#E8B030", textAlign: "center", fontFamily: SANS, fontStyle: "italic", fontWeight: 600, textShadow: "0 2px 10px rgba(0,0,0,0.9)", marginTop: 5 }}>{aData.kashrout}</div>}
                     {aData.contact && <div style={{ fontSize: "clamp(13px, 2vw, 17px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}>{aData.contact}</div>}
                     <div style={{ fontSize: "clamp(12px, 1.8vw, 16px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: 10, textShadow: "0 2px 10px rgba(0,0,0,0.9)", textTransform: "uppercase" }}>{bc}</div>
                   </div>

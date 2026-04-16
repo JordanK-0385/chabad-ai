@@ -29,7 +29,6 @@ export default function Onboarding({ user, onComplete }) {
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [tailleCommunaute, setTailleCommunaute] = useState("");
-  const [kashroutDefaut, setKashroutDefaut] = useState("");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
@@ -67,7 +66,6 @@ export default function Onboarding({ user, onComplete }) {
         siteWeb: siteWeb.trim(),
         logoBase64,
         tailleCommunaute,
-        kashroutDefaut: kashroutDefaut.trim(),
         onboardingComplete: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -169,11 +167,6 @@ export default function Onboarding({ user, onComplete }) {
                   </div>
                 </div>
 
-                {/* Kashrout default */}
-                <div>
-                  <label style={{ fontSize: 11, color: T.muted, marginBottom: 4, display: "block" }}>Kashrout par défaut (affiches)</label>
-                  <input value={kashroutDefaut} onChange={e => setKashroutDefaut(e.target.value)} placeholder="Ex: Sous la surveillance du Beth Din de Paris" style={INP} />
-                </div>
               </div>
             </Card>
 

@@ -156,7 +156,6 @@ function ProfileModal({ user, profil, onClose, onSave }) {
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(profil?.logoBase64 || null);
   const [tailleCommunaute, setTailleCommunaute] = useState(profil?.tailleCommunaute || "");
-  const [kashroutDefaut, setKashroutDefaut] = useState(profil?.kashroutDefaut || "");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
@@ -191,7 +190,6 @@ function ProfileModal({ user, profil, onClose, onSave }) {
         siteWeb: siteWeb.trim(),
         logoBase64,
         tailleCommunaute,
-        kashroutDefaut: kashroutDefaut.trim(),
         updatedAt: serverTimestamp(),
       };
 
@@ -260,10 +258,6 @@ function ProfileModal({ user, profil, onClose, onSave }) {
                 </span>
               ))}
             </div>
-          </div>
-          <div>
-            <label style={{ fontSize: 11, color: T.muted, marginBottom: 4, display: "block" }}>Kashrout par défaut (affiches)</label>
-            <input value={kashroutDefaut} onChange={e => setKashroutDefaut(e.target.value)} style={INP} />
           </div>
         </div>
 
