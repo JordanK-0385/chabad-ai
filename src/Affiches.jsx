@@ -119,16 +119,16 @@ function buildPrompt(data, bc, fmt, illustSelection) {
         ? `Jewish Chabad boys (${qtyStr}${ageStr}). Dark navy or black suede kippah, NEVER white. White shirt, visible tzitzit at waist, long dark trousers.`
         : `A single Jewish Chabad boy${ageStr}. Dark navy or black suede kippah, NEVER white. White shirt, visible tzitzit at waist, long dark trousers. Only ONE boy, no other characters.`,
       filles: qty === "groupe" || qty > 1
-        ? `Jewish Chabad girls (${qtyStr}${ageStr}). Natural uncovered hair — braids, ponytail or loose. NO kippah, NO head covering. Modest long dress below knee, long sleeves.`
-        : `A single Jewish Chabad girl${ageStr}. Natural uncovered hair — braids, ponytail or loose. NO kippah, NO head covering whatsoever. Modest long dress below knee, long sleeves. Only ONE girl, no other characters.`,
+        ? `Girls (${qtyStr}${ageStr}) with natural hair — braids, ponytails or loose. Every single girl has a completely bare head with nothing on it. Long modest dresses below knee, long sleeves. Warm friendly faces.`
+        : `A young girl${ageStr} with natural ${qty === "groupe" || qty > 1 ? "hair" : "hair in braids or ponytail"}. She has absolutely nothing on her head — no hat, no cap, no kippah, no fabric, no accessory on top of skull. Long modest dress below knee, long sleeves. Warm friendly face. Only ONE girl, no other characters.`,
       rav: `A single Chabad Rabbi${ageStr}. Full beard, classic black fedora hat, dark suit jacket, white shirt, visible tzitzit. Wise and warm expression. The black fedora is essential.`,
-      rabbanit: `A single Chabad Rebbetzin${ageStr}. Elegant modest dress below knee, long sleeves. Natural styled hair, NO kippah, NO head covering. Warm and gracious expression.`,
-      mixte: `Mixed family scene${ageStr}. INDIVIDUAL CHARACTER RULES:
-- Father/adult male: dark navy kippah, beard, tzitzit, dark suit
-- Son/boy: dark navy kippah, white shirt, tzitzit, dark trousers
-- Mother/adult female: BARE HEAD, natural brown or dark hair styled loosely or in a bun, NO kippah NO hat NO cap NO fabric on head
-- Daughter/girl: BARE HEAD, natural hair in braids or ponytail, NO kippah NO hat NO cap NO fabric on head whatsoever
-Each female character must have ONLY natural visible hair on her head. Zero exceptions.`,
+      rabbanit: `An elegant woman${ageStr} with natural styled hair — bun, updo or loose. Completely bare head, nothing on top of skull. Modest dress below knee, long sleeves, closed neckline. Warm gracious expression.`,
+      mixte: `A family scene${ageStr}.
+Father: bearded man with dark navy kippah, dark suit, white shirt, tzitzit strings at waist.
+Son/boy: dark navy kippah, white shirt, dark trousers.
+Mother: woman with natural hair in bun or loose style, NOTHING on her head, elegant modest dress below knee, long sleeves.
+Daughter/girl: natural hair in braids or ponytail, NOTHING on her head, modest long dress below knee, long sleeves.
+The females have zero head coverings of any kind.`,
     };
     return tiles[tile] || "";
   }
