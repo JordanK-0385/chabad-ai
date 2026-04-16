@@ -3,6 +3,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
 import { T, SERIF, SANS, INP, ChabadLogo, Card, GBtn, StepLabel, BackButton, AppHeader } from "./shared";
+import { db } from "./firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 /* ─── Claude system prompt ─── */
 const CLAUDE_SYS = `Tu es expert en communication visuelle pour institutions Chabad-Loubavitch France.
@@ -311,6 +313,18 @@ export default function Affiches({ profil, onBack, headerProps }) {
       if (!raw) throw new Error("Reponse vide de Claude.");
       const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
       setAData(parsed);
+
+      try {
+        if (profil?.onboardingComplete) {
+          await addDoc(collection(db, "users", profil.uid, "affiches"), {
+            format: fmt,
+            illustration: illustSelRef.current,
+            betChabad: bc,
+            titre: parsed.titre || "",
+            createdAt: serverTimestamp()
+          });
+        }
+      } catch (_) {}
 
       if (geminiKeyRef.current.trim()) {
         const src = await callGemini(parsed, bc, fmt, illustSelRef.current);

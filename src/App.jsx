@@ -11,11 +11,20 @@ import Dashboard from "./Dashboard";
 import Affiches from "./Affiches";
 import Cours from "./Cours";
 import Messages from "./Messages";
+import Admin from "./pages/Admin";
 
 export default function App() {
   const [screen, setScreen] = useState(firebaseReady ? "loading" : "landing");
   const [user, setUser] = useState(null);
   const [profil, setProfil] = useState(null);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setShowAdmin(window.location.hash === "#admin");
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
 
   useEffect(() => {
     if (!firebaseReady) return;
@@ -58,6 +67,9 @@ export default function App() {
         <div style={{ color: T.gold, fontSize: 18, fontFamily: SANS }}>Chargement...</div>
       </div>
     );
+
+  if (showAdmin && user?.uid === "9B2EWANLCaMssqkdRjTy66bjhCE3")
+    return <Admin user={user} profil={profil} />;
 
   if (screen === "landing")
     return <LandingPage />;

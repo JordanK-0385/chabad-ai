@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
+import { db } from "./firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const TYPES = [
   { v: "invitation",  l: "Invitation",    e: "\uD83D\uDCE9" },
@@ -87,6 +89,18 @@ export default function Messages({ profil, onBack, headerProps }) {
       const text = d.content?.find(b => b.type === "text")?.text || "";
       if (!text) throw new Error("Reponse vide de Claude.");
       setResult(text);
+
+      try {
+        if (profil?.onboardingComplete) {
+          await addDoc(collection(db, "users", profil.uid, "messages"), {
+            type: type,
+            ton: ton,
+            longueur: taille,
+            sujet: sujet.trim(),
+            createdAt: serverTimestamp()
+          });
+        }
+      } catch (_) {}
     } catch (e) {
       setErr("Erreur : " + e.message);
     } finally {
