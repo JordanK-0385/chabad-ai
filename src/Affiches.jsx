@@ -255,12 +255,12 @@ export default function Affiches({ profil, onBack, headerProps }) {
                 { v: "filles",   e: "\uD83D\uDC67", l: "Filles",    s: "Féminin uniquement" },
                 { v: "rav",      e: "\uD83E\uDDD4", l: "Rav",       s: "Masculin uniquement" },
                 { v: "rabbanit", e: "\uD83D\uDC69", l: "Rabbanit",  s: "Féminin uniquement" },
-                { v: "mixte",    e: "\uD83D\uDC68\u200D\uD83D\uDC69", l: "Mixte", s: "Scène séparée" },
+                { v: "mixte",    e: "\uD83D\uDC68\u200D\uD83D\uDC69", l: "Famille", s: "Scène familiale" },
               ];
               const MALE_T = ["garcons", "rav"];
               const FEMALE_T = ["filles", "rabbanit"];
-              const CHIPS = { garcons: ["Enfants","Adolescents","Adultes","Seniors"], filles: ["Enfants","Adolescentes","Adultes","Seniors"], rav: ["Adulte","\u00C2g\u00E9"], rabbanit: ["Adulte","\u00C2g\u00E9e"], mixte: ["Enfants","Adolescents","Adultes","Seniors"] };
-              const LABELS = { garcons: "Garçons", filles: "Filles", rav: "Rav", rabbanit: "Rabbanit", mixte: "Mixte" };
+              const CHIPS = { garcons: ["Enfants","Adolescents","Adultes","Seniors"], filles: ["Enfants","Adolescentes","Adultes","Seniors"], rav: ["Adulte","\u00C2g\u00E9"], rabbanit: ["Adulte","\u00C2g\u00E9e"] };
+              const LABELS = { garcons: "Garçons", filles: "Filles", rav: "Rav", rabbanit: "Rabbanit", mixte: "Famille" };
 
               function toggleTile(tid) {
                 if (tid === "decor") { setIllustSelection([]); return; }
@@ -280,11 +280,11 @@ export default function Affiches({ profil, onBack, headerProps }) {
               let summary = "Décor uniquement \u2014 aucun personnage";
               if (illustSelection.length === 1) {
                 const s = illustSelection[0];
-                summary = s.age ? `${LABELS[s.tile]} \u00B7 ${s.age}` : `Choisissez une tranche d'âge`;
+                summary = s.tile === "mixte" ? LABELS[s.tile] : (s.age ? `${LABELS[s.tile]} \u00B7 ${s.age}` : `Choisissez une tranche d'âge`);
               } else if (illustSelection.length === 2) {
-                const noAge = illustSelection.find(s => !s.age);
+                const noAge = illustSelection.find(s => !s.age && s.tile !== "mixte");
                 if (noAge) summary = `Complétez la tranche d'âge pour ${LABELS[noAge.tile]}`;
-                else summary = illustSelection.map(s => `${LABELS[s.tile]} ${s.age}`).join(" \u00B7 ");
+                else summary = illustSelection.map(s => s.tile === "mixte" ? LABELS[s.tile] : `${LABELS[s.tile]} ${s.age}`).join(" \u00B7 ");
               }
 
               return (

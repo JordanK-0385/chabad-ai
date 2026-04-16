@@ -64,11 +64,11 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
     }
 
     if (tile === "mixte") {
-      return `A family scene (${ageLabel} generation):
+      return `A warm family scene:
 - Father: bearded man, dark navy kippah on his head, dark suit, white shirt, tzitzit strings at waist
 - Son/boy: dark navy kippah on his head, white shirt, dark trousers
-- Mother: a ${ageLabel.includes("elderly") ? "mature" : "young"} woman with ${ageLabel.includes("elderly") ? "silver hair in a neat bun" : "dark hair in an elegant bun"}, hair fully visible, wearing an elegant modest dress below knee with long sleeves
-- Daughter: a ${ageLabel.includes("child") ? "young girl" : "teenage girl"} with ${ageLabel.includes("child") ? "two long braids" : "hair in a ponytail"}, hair completely visible and free, wearing a modest long dress below knee`;
+- Mother: a woman with dark hair in an elegant bun, hair fully visible, wearing an elegant modest dress below knee with long sleeves
+- Daughter: a young girl with hair in a braid or ponytail, hair completely visible and free, wearing a modest long dress below knee`;
     }
 
     return "";
