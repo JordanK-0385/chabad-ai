@@ -398,6 +398,10 @@ export default function Affiches({ profil, onBack, headerProps }) {
       <div className="mfp-page" style={{ maxWidth: 860, margin: "0 auto", padding: mobile ? "20px 14px" : "36px 24px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <style>{`@media (max-width:600px){.mfp-page button{min-height:44px!important;font-size:14px!important;width:100%!important;box-sizing:border-box!important}.mfp-page input,.mfp-page textarea{font-size:16px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}.mfp-page .poster-wrap,.mfp-page .poster-wrap *{max-width:100%!important;box-sizing:border-box!important}}`}</style>
 
+        <h1 style={{ flex: "1 1 100%", fontFamily: SERIF, fontSize: "1.4rem", fontWeight: 600, color: "var(--color-text)", margin: "0 0 24px" }}>
+          🎨 Créer une affiche
+        </h1>
+
         {/* LEFT */}
         <div style={{ flex: "1 1 300px", minWidth: 0 }}>
           <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
