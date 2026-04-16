@@ -26,6 +26,9 @@ const DUREES = ["5 min", "10 min", "20 min", "30 min", "45 min"];
 const LANGUES = ["Français", "Hébreu", "Français + Hébreu"];
 const ENRICHISSEMENTS = ["Histoires hassidiques", "Tanya", "Halakha pratique", "Pensée du Rabbi", "Midrash", "Hassidout", "Actualité", "Humour et anecdotes légères"];
 
+const COURS_LOAD_MSGS = ["Lecture des documents...", "Analyse des sources...", "Construction du plan...", "Rédaction du cours...", "Finalisation..."];
+const COURS_LOAD_START = 45;
+
 const CLAUDE_COURS_SYS = `Tu es un assistant rabbinique qui prépare des cours de Torah pour des Shluchim Chabad.
 
 RÈGLE ABSOLUE — SOURCES UNIQUEMENT :
@@ -117,6 +120,17 @@ export default function Cours({ profil, onBack, headerProps }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const [err, setErr] = useState("");
+  const [loadMsgIdx, setLoadMsgIdx] = useState(0);
+  const [loadTime, setLoadTime] = useState(COURS_LOAD_START);
+
+  useEffect(() => {
+    if (!loading) return;
+    setLoadMsgIdx(0);
+    setLoadTime(COURS_LOAD_START);
+    const m = setInterval(() => setLoadMsgIdx(i => (i + 1) % COURS_LOAD_MSGS.length), 3000);
+    const t = setInterval(() => setLoadTime(v => Math.max(0, v - 1)), 1000);
+    return () => { clearInterval(m); clearInterval(t); };
+  }, [loading]);
 
   function toggleEnrich(e) {
     setEnrichissements(prev => prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e]);
@@ -197,6 +211,10 @@ export default function Cours({ profil, onBack, headerProps }) {
       <div className="mfp-page" style={{ maxWidth: 860, margin: "0 auto", padding: mobile ? "20px 14px" : "36px 24px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <style>{`@media (max-width:600px){.mfp-page button{min-height:44px!important;font-size:14px!important;width:100%!important;box-sizing:border-box!important}.mfp-page input,.mfp-page textarea{font-size:16px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}}`}</style>
 
+        <h1 style={{ flex: "1 1 100%", fontFamily: SERIF, fontSize: "clamp(2.2rem, 5vw, 3.5rem)", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--color-text)", margin: "0 0 32px" }}>
+          Préparer un 📖 <span style={{ color: "var(--color-accent)" }}>cours</span>
+        </h1>
+
         {/* LEFT - controls */}
         <div style={{ flex: "1 1 300px", minWidth: 0 }}>
           <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
@@ -269,9 +287,13 @@ export default function Cours({ profil, onBack, headerProps }) {
             </Card>
           )}
           {loading && (
-            <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28, minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
-              <div style={{ fontSize: 32, animation: "pulse 1.5s ease-in-out infinite" }}>{"\uD83D\uDCDA"}</div>
-              <div style={{ fontSize: 14, color: T.gold }}>Préparation du cours...</div>
+            <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28, minHeight: 300, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18 }}>
+              <style>{`@keyframes mfp-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", border: "3px solid var(--color-border)", borderTopColor: "var(--color-accent)", animation: "mfp-spin 1s linear infinite" }} />
+              <div style={{ fontSize: 15, color: "var(--color-accent)", fontFamily: SANS, textAlign: "center", fontWeight: 600 }}>{COURS_LOAD_MSGS[loadMsgIdx]}</div>
+              <div style={{ fontSize: 13, color: "var(--color-text-muted)", fontFamily: SANS }}>
+                {loadTime > 0 ? `Temps estimé : ${loadTime} secondes` : "Presque terminé..."}
+              </div>
             </Card>
           )}
           {result && (

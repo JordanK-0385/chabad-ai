@@ -154,20 +154,23 @@ ${finalCheck}`,
 /* ─── Poster sizes ─── */
 const SIZES = { carre: { w: 400, ar: "1/1" }, story: { w: 320, ar: "9/16" }, a4: { w: 370, ar: "3/4" }, paysage: { w: 480, ar: "4/3" } };
 
+const AFF_LOAD_MSGS = ["Analyse de votre événement...", "Création du contenu...", "Génération de l'illustration...", "Finalisation de l'affiche..."];
+const AFF_LOAD_START = 30;
+
 /* ─── AfficheFinale ─── */
-function AfficheFinale({ data, bc, fmt, imgSrc, loading, afficheRef, logoUrl }) {
+function AfficheFinale({ data, bc, fmt, imgSrc, loading, afficheRef, logoUrl, loadingMsg, loadingTime }) {
   const { w, ar } = SIZES[fmt] || SIZES.carre;
   const logo = logoUrl || "/logo-beth-loubavitch.png";
 
   if (loading) {
     return (
-      <div style={{ width: w, aspectRatio: ar, background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-        <div style={{ position: "relative", width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "linear-gradient(135deg, var(--color-accent-faint), transparent, var(--color-accent-faint))", animation: "pulse 1.5s ease-in-out infinite" }} />
-          <span style={{ fontSize: 36, animation: "pulse 2s ease-in-out infinite", filter: "drop-shadow(0 0 8px rgba(201,151,26,0.4))" }}>&#10024;</span>
+      <div style={{ width: w, aspectRatio: ar, background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 16, boxSizing: "border-box" }}>
+        <style>{`@keyframes mfp-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+        <div style={{ width: 56, height: 56, borderRadius: "50%", border: "3px solid var(--color-border)", borderTopColor: "var(--color-accent)", animation: "mfp-spin 1s linear infinite" }} />
+        <div style={{ color: "var(--color-accent)", fontSize: 15, fontFamily: SANS, fontWeight: 600, textAlign: "center" }}>{loadingMsg}</div>
+        <div style={{ color: "var(--color-text-muted)", fontSize: 13, fontFamily: SANS }}>
+          {loadingTime > 0 ? `Temps estimé : ${loadingTime} secondes` : "Presque terminé..."}
         </div>
-        <div style={{ color: T.gold, fontSize: 14, fontFamily: SANS }}>Génération en cours...</div>
-        <div style={{ color: T.muted, fontSize: 11, fontFamily: SANS }}>Claude structure le contenu &middot; Gemini illustre</div>
       </div>
     );
   }
@@ -247,6 +250,17 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const [showPrompt, setShowPrompt] = useState(false);
   const [copied,     setCopied]     = useState(false);
   const [preview,    setPreview]    = useState(false);
+  const [loadMsgIdx, setLoadMsgIdx] = useState(0);
+  const [loadTime,   setLoadTime]   = useState(AFF_LOAD_START);
+
+  useEffect(() => {
+    if (!loading) return;
+    setLoadMsgIdx(0);
+    setLoadTime(AFF_LOAD_START);
+    const m = setInterval(() => setLoadMsgIdx(i => (i + 1) % AFF_LOAD_MSGS.length), 3000);
+    const t = setInterval(() => setLoadTime(v => Math.max(0, v - 1)), 1000);
+    return () => { clearInterval(m); clearInterval(t); };
+  }, [loading]);
   const afficheRef = useRef(null);
 
   const bc = profil?.betChabad ? `Beth Chabad de ${profil.betChabad}` : "Beth Chabad";
@@ -384,6 +398,10 @@ export default function Affiches({ profil, onBack, headerProps }) {
       <div className="mfp-page" style={{ maxWidth: 860, margin: "0 auto", padding: mobile ? "20px 14px" : "36px 24px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <style>{`@media (max-width:600px){.mfp-page button{min-height:44px!important;font-size:14px!important;width:100%!important;box-sizing:border-box!important}.mfp-page input,.mfp-page textarea{font-size:16px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}.mfp-page .poster-wrap,.mfp-page .poster-wrap *{max-width:100%!important;box-sizing:border-box!important}}`}</style>
 
+        <h1 style={{ flex: "1 1 100%", fontFamily: SERIF, fontSize: "clamp(2.2rem, 5vw, 3.5rem)", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--color-text)", margin: "0 0 32px" }}>
+          Créer une 🎨 <span style={{ color: "var(--color-accent)" }}>affiche</span>
+        </h1>
+
         {/* LEFT */}
         <div style={{ flex: "1 1 300px", minWidth: 0 }}>
           <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
@@ -519,7 +537,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
         {/* RIGHT */}
         <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", alignItems: mobile ? "stretch" : "center", gap: 14, minWidth: mobile ? "100%" : 280, width: mobile ? "100%" : "auto" }}>
           <div className="poster-wrap" onClick={() => imgSrc && setPreview(true)} style={{ cursor: imgSrc ? "pointer" : "default", maxWidth: "100%" }}>
-            <AfficheFinale data={aData} bc={bc} fmt={fmt} imgSrc={imgSrc} loading={loading} afficheRef={afficheRef} logoUrl={logoUrl} />
+            <AfficheFinale data={aData} bc={bc} fmt={fmt} imgSrc={imgSrc} loading={loading} afficheRef={afficheRef} logoUrl={logoUrl} loadingMsg={AFF_LOAD_MSGS[loadMsgIdx]} loadingTime={loadTime} />
           </div>
           {imgSrc && !loading && <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, marginTop: -8 }}>Cliquez sur l'affiche pour l'aperçu plein écran</div>}
 
