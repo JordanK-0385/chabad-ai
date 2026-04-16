@@ -89,6 +89,10 @@ export default function Admin({ user, profil, headerProps }) {
               getDocs(collection(db, "users", uid, "affiches")),
               getDocs(collection(db, "users", uid, "messages")),
             ]);
+            const sumCost = snap => snap.docs.reduce((acc, x) => acc + (x.data().coutEuros || 0), 0);
+            const coursCost    = sumCost(cSnap);
+            const affichesCost = sumCost(aSnap);
+            const messagesCost = sumCost(mSnap);
             return {
               uid,
               nom: d.displayName || d.nom || "—",
@@ -99,6 +103,10 @@ export default function Admin({ user, profil, headerProps }) {
               cours: cSnap.size,
               affiches: aSnap.size,
               messages: mSnap.size,
+              coursCost,
+              affichesCost,
+              messagesCost,
+              totalCost: coursCost + affichesCost + messagesCost,
             };
           })
         );
@@ -118,12 +126,18 @@ export default function Admin({ user, profil, headerProps }) {
 
   const totals = rows.reduce(
     (acc, r) => ({
-      cours:    acc.cours    + r.cours,
-      affiches: acc.affiches + r.affiches,
-      messages: acc.messages + r.messages,
+      cours:        acc.cours        + r.cours,
+      affiches:     acc.affiches     + r.affiches,
+      messages:     acc.messages     + r.messages,
+      coursCost:    acc.coursCost    + (r.coursCost    || 0),
+      affichesCost: acc.affichesCost + (r.affichesCost || 0),
+      messagesCost: acc.messagesCost + (r.messagesCost || 0),
+      totalCost:    acc.totalCost    + (r.totalCost    || 0),
     }),
-    { cours: 0, affiches: 0, messages: 0 }
+    { cours: 0, affiches: 0, messages: 0, coursCost: 0, affichesCost: 0, messagesCost: 0, totalCost: 0 }
   );
+  const fmtEUR = v => (v > 0 ? v.toFixed(3) + " €" : "—");
+  const totalGenerations = totals.cours + totals.affiches + totals.messages;
 
   const th = {
     textAlign: "left",
@@ -194,7 +208,7 @@ export default function Admin({ user, profil, headerProps }) {
           </div>
         )}
 
-        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, overflow: "hidden" }}>
+        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, overflow: "hidden", marginBottom: 0 }}>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: SANS }}>
               <thead>
@@ -206,13 +220,14 @@ export default function Admin({ user, profil, headerProps }) {
                   <th style={{ ...th, ...num }}>Cours</th>
                   <th style={{ ...th, ...num }}>Affiches</th>
                   <th style={{ ...th, ...num }}>Messages</th>
+                  <th style={{ ...th, ...num }}>Coût €</th>
                   <th style={{ ...th, textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {!loading && rows.length === 0 && (
                   <tr>
-                    <td style={{ ...td, color: "var(--color-text-muted)" }} colSpan={8}>
+                    <td style={{ ...td, color: "var(--color-text-muted)" }} colSpan={9}>
                       Aucun utilisateur.
                     </td>
                   </tr>
@@ -232,6 +247,7 @@ export default function Admin({ user, profil, headerProps }) {
                         <td style={{ ...td, ...num }}>{r.cours}</td>
                         <td style={{ ...td, ...num }}>{r.affiches}</td>
                         <td style={{ ...td, ...num }}>{r.messages}</td>
+                        <td style={{ ...td, ...num }}>{fmtEUR(r.totalCost)}</td>
                         <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}>
                           <button
                             onClick={() => (isEditing ? handleEditCancel() : handleEditStart(r))}
@@ -251,7 +267,7 @@ export default function Admin({ user, profil, headerProps }) {
                       </tr>
                       {isEditing && (
                         <tr>
-                          <td colSpan={8} style={{ padding: "18px 20px", background: "var(--bg-surface-elevated)", borderBottom: "1px solid var(--color-border)" }}>
+                          <td colSpan={9} style={{ padding: "18px 20px", background: "var(--bg-surface-elevated)", borderBottom: "1px solid var(--color-border)" }}>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 14 }}>
                               <div>
                                 <label style={editLabel}>Beth Chabad</label>
@@ -306,9 +322,54 @@ export default function Admin({ user, profil, headerProps }) {
                     <td style={{ ...td, ...num, fontWeight: 700, color: "var(--color-accent)", borderBottom: "none" }}>
                       {totals.messages}
                     </td>
+                    <td style={{ ...td, ...num, fontWeight: 700, color: "var(--color-accent)", borderBottom: "none" }}>
+                      {fmtEUR(totals.totalCost)}
+                    </td>
                     <td style={{ ...td, borderBottom: "none" }} />
                   </tr>
                 )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, overflow: "hidden", marginTop: 32 }}>
+          <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--color-border)" }}>
+            <h2 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, margin: 0, color: "var(--color-text)", letterSpacing: "-0.01em" }}>
+              Coûts de génération
+            </h2>
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: SANS }}>
+              <thead>
+                <tr>
+                  <th style={th}>Module</th>
+                  <th style={{ ...th, ...num }}>Générations</th>
+                  <th style={{ ...th, ...num }}>Coût total</th>
+                  <th style={{ ...th, ...num }}>Coût moyen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { label: "Cours",    count: totals.cours,    cost: totals.coursCost },
+                  { label: "Affiches", count: totals.affiches, cost: totals.affichesCost },
+                  { label: "Messages", count: totals.messages, cost: totals.messagesCost },
+                ].map(m => (
+                  <tr key={m.label}>
+                    <td style={td}>{m.label}</td>
+                    <td style={{ ...td, ...num }}>{m.count}</td>
+                    <td style={{ ...td, ...num }}>{fmtEUR(m.cost)}</td>
+                    <td style={{ ...td, ...num }}>{m.count > 0 && m.cost > 0 ? (m.cost / m.count).toFixed(3) + " €" : "—"}</td>
+                  </tr>
+                ))}
+                <tr style={{ background: "var(--bg-surface-elevated)" }}>
+                  <td style={{ ...td, fontWeight: 700, borderBottom: "none" }}>TOTAL</td>
+                  <td style={{ ...td, ...num, fontWeight: 700, borderBottom: "none" }}>{totalGenerations}</td>
+                  <td style={{ ...td, ...num, fontWeight: 700, color: "var(--color-accent)", borderBottom: "none" }}>{fmtEUR(totals.totalCost)}</td>
+                  <td style={{ ...td, ...num, fontWeight: 700, borderBottom: "none" }}>
+                    {totalGenerations > 0 && totals.totalCost > 0 ? (totals.totalCost / totalGenerations).toFixed(3) + " €" : "—"}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>

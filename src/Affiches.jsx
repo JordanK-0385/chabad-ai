@@ -310,17 +310,23 @@ export default function Affiches({ profil, onBack, headerProps }) {
       const d   = await res.json();
       if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
       const raw = d.content?.find(b => b.type === "text")?.text || "";
+      const inputTokens = d.usage?.input_tokens || 0;
+      const outputTokens = d.usage?.output_tokens || 0;
       if (!raw) throw new Error("Reponse vide de Claude.");
       const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
       setAData(parsed);
 
       try {
         if (profil?.onboardingComplete) {
+          const coutEuros = ((inputTokens / 1000 * 0.003) + (outputTokens / 1000 * 0.015)) * 0.93;
           await addDoc(collection(db, "users", profil.uid, "affiches"), {
             format: fmt,
             illustration: illustSelRef.current,
             betChabad: bc,
             titre: parsed.titre || "",
+            inputTokens: inputTokens,
+            outputTokens: outputTokens,
+            coutEuros: coutEuros,
             createdAt: serverTimestamp()
           });
         }

@@ -87,16 +87,22 @@ export default function Messages({ profil, onBack, headerProps }) {
       const d = await res.json();
       if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
       const text = d.content?.find(b => b.type === "text")?.text || "";
+      const inputTokens = d.usage?.input_tokens || 0;
+      const outputTokens = d.usage?.output_tokens || 0;
       if (!text) throw new Error("Reponse vide de Claude.");
       setResult(text);
 
       try {
         if (profil?.onboardingComplete) {
+          const coutEuros = ((inputTokens / 1000 * 0.003) + (outputTokens / 1000 * 0.015)) * 0.93;
           await addDoc(collection(db, "users", profil.uid, "messages"), {
             type: type,
             ton: ton,
             longueur: taille,
             sujet: sujet.trim(),
+            inputTokens: inputTokens,
+            outputTokens: outputTokens,
+            coutEuros: coutEuros,
             createdAt: serverTimestamp()
           });
         }
