@@ -1,13 +1,8 @@
 /* ─── openai-api.js ─── OpenAI DALL·E 3 API for affiche image generation ─── */
 
-function sizeForFormat(fmt) {
-  // DALL·E 3 only supports: "1024x1024" | "1024x1792" | "1792x1024"
-  if (fmt === "story" || fmt === "a4") return "1024x1792";   // closest tall
-  if (fmt === "paysage") return "1792x1024";                  // closest wide
-  return "1024x1024";                                         // carre
-}
-
-export async function generateAfficheImage(prompt, openaiKey, fmt = "carre") {
+// DALL·E 3 always generates horizontal (1792x1024). The output is then cropped
+// to the user-selected format by the caller (see src/utils/crop-image.js).
+export async function generateAfficheImage(prompt, openaiKey, _fmt) {
   const key = openaiKey?.trim();
   if (!key) return;
   const res = await fetch("https://api.openai.com/v1/images/generations", {
@@ -19,7 +14,7 @@ export async function generateAfficheImage(prompt, openaiKey, fmt = "carre") {
     body: JSON.stringify({
       model: "dall-e-3",
       prompt,
-      size: sizeForFormat(fmt),
+      size: "1792x1024",
       quality: "hd",
       style: "natural",
       response_format: "b64_json",

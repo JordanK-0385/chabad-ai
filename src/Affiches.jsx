@@ -10,6 +10,7 @@ import { CRITICAL_RULE, buildPrompt, buildLogoLine } from "./prompts/affiche-gem
 import { generateAfficheContent } from "./services/claude-api";
 import { generateAfficheImage as generateAfficheImageGemini } from "./services/gemini-api";
 import { generateAfficheImage as generateAfficheImageOpenAI } from "./services/openai-api";
+import { cropImageToRatio, aspectRatioForFormat } from "./utils/crop-image";
 
 /* ─── Poster sizes ─── */
 const SIZES = { carre: { w: 400, ar: "1/1" }, story: { w: 320, ar: "9/16" }, a4: { w: 370, ar: "3/4" }, paysage: { w: 480, ar: "4/3" } };
@@ -145,10 +146,16 @@ export default function Affiches({ profil, onBack, headerProps }) {
     const prompt = buildPrompt(contentData, bcName, format, sel);
     const logoLine = buildLogoLine(!!profil?.logoBase64);
     const fullPrompt = CRITICAL_RULE + "\n\n" + prompt + "\n\n" + logoLine;
-    if (provider === "openai") {
-      return generateAfficheImageOpenAI(fullPrompt, key, format);
+    const rawSrc = provider === "openai"
+      ? await generateAfficheImageOpenAI(fullPrompt, key, format)
+      : await generateAfficheImageGemini(fullPrompt, key);
+    if (!rawSrc) return;
+    // Post-crop to exact target aspect ratio (center crop, no distortion)
+    try {
+      return await cropImageToRatio(rawSrc, aspectRatioForFormat(format));
+    } catch {
+      return rawSrc; // fallback to uncropped if crop fails
     }
-    return generateAfficheImageGemini(fullPrompt, key);
   }, [profil?.logoBase64]);
 
   const generate = useCallback(async (note = "") => {
