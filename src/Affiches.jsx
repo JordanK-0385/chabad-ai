@@ -8,7 +8,8 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { CLAUDE_SYS } from "./prompts/affiche-claude";
 import { CRITICAL_RULE, buildPrompt, buildLogoLine } from "./prompts/affiche-gemini";
 import { generateAfficheContent } from "./services/claude-api";
-import { generateAfficheImage } from "./services/gemini-api";
+import { generateAfficheImage as generateAfficheImageGemini } from "./services/gemini-api";
+import { generateAfficheImage as generateAfficheImageOpenAI } from "./services/openai-api";
 
 /* ─── Poster sizes ─── */
 const SIZES = { carre: { w: 400, ar: "1/1" }, story: { w: 320, ar: "9/16" }, a4: { w: 370, ar: "3/4" }, paysage: { w: 480, ar: "4/3" } };
@@ -94,6 +95,8 @@ export default function Affiches({ profil, onBack, headerProps }) {
   }, []);
 
   const [geminiKey] = useState(import.meta.env.VITE_GEMINI_KEY || "");
+  const [openaiKey] = useState(import.meta.env.VITE_OPENAI_KEY || "");
+  const [imageProvider, setImageProvider] = useState("gemini"); // "gemini" | "openai"
   const [desc,      setDesc]      = useState("");
   const [fmt,       setFmt]       = useState("carre");
   const [illustSelection, setIllustSelection] = useState([]);
@@ -125,17 +128,27 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
   const geminiKeyRef = useRef(geminiKey);
   geminiKeyRef.current = geminiKey;
+  const openaiKeyRef = useRef(openaiKey);
+  openaiKeyRef.current = openaiKey;
+  const imageProviderRef = useRef(imageProvider);
+  imageProviderRef.current = imageProvider;
 
   const illustSelRef = useRef(illustSelection);
   illustSelRef.current = illustSelection;
 
+  const getActiveImageKey = () => (imageProviderRef.current === "openai" ? openaiKeyRef.current : geminiKeyRef.current).trim();
+
   const callGemini = useCallback(async (contentData, bcName, format, sel) => {
-    const key = geminiKeyRef.current.trim();
+    const provider = imageProviderRef.current;
+    const key = (provider === "openai" ? openaiKeyRef.current : geminiKeyRef.current).trim();
     if (!key) return;
     const prompt = buildPrompt(contentData, bcName, format, sel);
     const logoLine = buildLogoLine(!!profil?.logoBase64);
     const fullPrompt = CRITICAL_RULE + "\n\n" + prompt + "\n\n" + logoLine;
-    return generateAfficheImage(fullPrompt, key);
+    if (provider === "openai") {
+      return generateAfficheImageOpenAI(fullPrompt, key, format);
+    }
+    return generateAfficheImageGemini(fullPrompt, key);
   }, [profil?.logoBase64]);
 
   const generate = useCallback(async (note = "") => {
@@ -171,7 +184,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
         }
       } catch (_) {}
 
-      if (geminiKeyRef.current.trim()) {
+      if (getActiveImageKey()) {
         const src = await callGemini(parsed, bc, fmt, illustSelRef.current);
         if (src) setImgSrc(src);
       }
@@ -183,7 +196,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
   }, [desc, fmt, bc, contactDefault, callGemini]);
 
   const regenImage = useCallback(async () => {
-    if (!aData || !geminiKey.trim()) return;
+    if (!aData || !getActiveImageKey()) return;
     setLoading(true); setErrMsg(""); setImgSrc(null);
     try {
       const src = await callGemini(aData, bc, fmt, illustSelection);
@@ -362,7 +375,38 @@ export default function Affiches({ profil, onBack, headerProps }) {
           </Card>
 
           {errMsg && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px", lineHeight: 1.5 }}>{errMsg}</div>}
-          {!geminiKey && <div style={{ color: T.red, fontSize: mobile ? 14 : 11, marginBottom: 10 }}>Configuration requise — clé API manquante</div>}
+          {((imageProvider === "gemini" && !geminiKey) || (imageProvider === "openai" && !openaiKey)) && <div style={{ color: T.red, fontSize: mobile ? 14 : 11, marginBottom: 10 }}>Configuration requise — clé API {imageProvider === "openai" ? "OpenAI" : "Gemini"} manquante</div>}
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, fontSize: mobile ? 14 : 12, fontFamily: SANS }}>
+            <span style={{ color: T.muted }}>Modèle image :</span>
+            {[
+              { id: "gemini", label: "Gemini", available: !!geminiKey },
+              { id: "openai", label: "OpenAI (DALL·E 3)", available: !!openaiKey },
+            ].map(p => {
+              const active = imageProvider === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setImageProvider(p.id)}
+                  style={{
+                    padding: mobile ? "8px 14px" : "5px 12px",
+                    borderRadius: 7,
+                    fontSize: mobile ? 14 : 12,
+                    fontWeight: active ? 700 : 500,
+                    background: active ? T.gold : "transparent",
+                    color: active ? "#1a0510" : (p.available ? T.muted : T.faint),
+                    border: `1px solid ${active ? T.gold : T.border}`,
+                    cursor: "pointer",
+                    fontFamily: SANS,
+                    opacity: p.available ? 1 : 0.55,
+                  }}
+                  title={p.available ? `Utiliser ${p.label}` : `Clé API ${p.label} non configurée`}
+                >
+                  {p.label}{!p.available ? " ⚠" : ""}
+                </button>
+              );
+            })}
+          </div>
 
           <div style={{ position: "sticky", bottom: 16, zIndex: 10, background: T.bg, paddingTop: 8, paddingBottom: 8, ...(mobile ? { minHeight: 52 } : {}) }}>
             <GBtn onClick={() => generate()} disabled={loading} fullWidth>
