@@ -13,7 +13,7 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
   const { titre, sous_titre, date, heure, lieu, accroche, ambiance } = data;
   const ar = fmt === "story" ? "9:16" : fmt === "a4" ? "3:4" : fmt === "paysage" ? "4:3" : "1:1";
   const issolemn = ambiance === "solennelle";
-  const pal = issolemn ? "dark burgundy and charcoal, dignified atmosphere" : "deep Chabad blue #003087 and warm gold #C9971A, festive warm atmosphere";
+  const pal = issolemn ? "dark burgundy and charcoal, dignified atmosphere" : "deep royal blue #003087 and warm gold #C9971A, festive warm atmosphere";
 
   const hasFemale = illustSelection?.some(t => ["filles","rabbanit"].includes(t?.tile));
   const maleOnly = illustSelection?.every(t => ["garcons","rav"].includes(t?.tile)) && illustSelection?.length > 0;
@@ -32,8 +32,8 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
 
     if (tile === "garcons") {
       return isGroup
-        ? `A group of 2-4 Jewish boys (${ageLabel}). Each boy wears a dark navy or black kippah on top of his head. White shirt, tzitzit strings visible at waist, long dark trousers.`
-        : `One Jewish boy (${ageLabel}). He wears a dark navy kippah on top of his head. White shirt, tzitzit strings visible at waist, long dark trousers. Only this one boy, no other characters.`;
+        ? `A group of 2-4 boys (${ageLabel}). Each boy wears a dark navy or black kippah on top of his head. White shirt, tzitzit strings visible at waist, long dark trousers.`
+        : `One boy (${ageLabel}). He wears a dark navy kippah on top of his head. White shirt, tzitzit strings visible at waist, long dark trousers. Only this one boy, no other characters.`;
     }
 
     if (tile === "filles") {
@@ -71,7 +71,7 @@ She wears a long modest dress reaching below the knee, with long sleeves.`;
 
     if (tile === "rav") {
       const beardDesc = ageLabel.includes("elderly") ? "full grey or white beard, wrinkled wise face" : "full dark beard";
-      return `One Chabad Rabbi (${ageLabel}). He has a ${beardDesc} and wears a classic wide-brimmed black felt fedora hat. Dark suit jacket, white shirt, tzitzit strings visible. Wise and warm expression.`;
+      return `One rabbi (${ageLabel}). He has a ${beardDesc} and wears a classic wide-brimmed black felt fedora hat. Dark suit jacket, white shirt, tzitzit strings visible. Wise and warm expression.`;
     }
 
     if (tile === "rabbanit") {
@@ -87,7 +87,7 @@ Elegant modest dress below knee, long sleeves, closed neckline. Warm gracious ex
   // Character section
   let charSection = "";
   if (!illustSelection || illustSelection.length === 0 || illustSelection.every(t => !t?.tile || t?.tile === "decor")) {
-    charSection = `SCENE: NO human characters at all. Beautiful atmospheric Jewish scene only: warm lighting, Chabad blue and gold palette, relevant objects for the event. Cozy and inviting.`;
+    charSection = `SCENE: NO human characters at all. Beautiful atmospheric scene: warm lighting, deep blue and gold palette, relevant objects for the event. Cozy and inviting.`;
   } else if (illustSelection.length === 1) {
     const t = illustSelection[0];
     charSection = `CHARACTER:\n${descTile(t.tile, t.age, t.qty)}\nPixar-meets-storybook illustration style.`;
@@ -137,10 +137,10 @@ Boys and girls are visually different characters. The male character group (boys
 
   const eventDetails = [titre, sous_titre, date, heure, lieu, bc].filter(Boolean).join(" · ");
 
-  return `Warm storybook illustration for a religious community event in France.
+  return `Warm children's storybook illustration for a community event in France.
 Event: ${eventDetails}
 Scene hint: "${accroche || sous_titre}"
-Style: editorial children's book illustration. ${pal}. Warm soft lighting. Max 4 characters. Bottom 20% kept dark and empty for text overlay — no visual elements in bottom 20%.
+Style: editorial children's book illustration in the spirit of modern Pixar and Disney animation — fresh, warm, natural, with simple secular styling for all characters. ${pal}. Warm soft lighting. Max 4 characters. Bottom 20% kept dark and empty for text overlay — no visual elements in bottom 20%.
 
 ${charSection}
 
@@ -148,7 +148,7 @@ MANDATORY RULES:
 - NO TEXT or letters anywhere in the image (any language)
 - Holy books always on table, shelf or in hands — never on the floor
 - FEMALE HAIR: Every female character shows her natural hair on top of the head, with the scalp parting line clearly visible. Male characters wear a dark kippah.
-- No religious symbols (no Star of David, no crosses, no crescents, no hamsa)
+- No symbols such as Star of David, crosses, crescents, or hamsa
 - No Rebbe's face. No non-kosher animals
 - ${feteRules}
 ${maleOnly ? "- Only male characters appear in this scene. Each wears a dark navy kippah." : hasFemale ? "- Female characters have natural visible hair with the scalp parting shown. Male characters wear a dark kippah." : ""}
