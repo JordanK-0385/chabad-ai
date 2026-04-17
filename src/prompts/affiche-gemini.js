@@ -15,7 +15,7 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
   const issolemn = ambiance === "solennelle";
   const pal = issolemn ? "dark burgundy and charcoal, dignified atmosphere" : "deep Chabad blue #003087 and warm gold #C9971A, festive warm atmosphere";
 
-  const hasFemale = illustSelection?.some(t => ["filles","rabbanit","mixte"].includes(t?.tile));
+  const hasFemale = illustSelection?.some(t => ["filles","rabbanit"].includes(t?.tile));
   const maleOnly = illustSelection?.every(t => ["garcons","rav"].includes(t?.tile)) && illustSelection?.length > 0;
 
   function getAgeLabel(age) {
@@ -61,14 +61,6 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
     if (tile === "rabbanit") {
       const hairDesc = ageLabel.includes("elderly") ? "neat silver hair in a bun" : "elegant dark hair styled in a bun or chignon";
       return `One ${ageLabel} woman with ${hairDesc} worn freely and visibly. She wears no hat, cap or head covering. Elegant modest dress below knee, long sleeves, closed neckline. Warm gracious expression.`;
-    }
-
-    if (tile === "mixte") {
-      return `A warm family scene:
-- Father: bearded man, dark navy kippah on his head, dark suit, white shirt, tzitzit strings at waist
-- Son/boy: dark navy kippah on his head, white shirt, dark trousers
-- Mother: a woman with dark hair in an elegant bun, hair fully visible, wearing an elegant modest dress below knee with long sleeves
-- Daughter: a young girl with hair in a braid or ponytail, hair completely visible and free, wearing a modest long dress below knee`;
     }
 
     return "";
