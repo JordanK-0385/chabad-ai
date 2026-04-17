@@ -110,7 +110,7 @@ export default function Dashboard({ user, profil, setProfil, headerProps, onNavi
                 overflow: "hidden",
                 transition: "border-color 0.2s",
               }}
-              onMouseEnter={e => { if (m.key) { e.currentTarget.style.borderColor = "var(--color-border-active)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.4)"; } }}
+              onMouseEnter={e => { if (m.key) { e.currentTarget.style.borderColor = "var(--color-border-active)"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "var(--shadow-card-hover)"; } }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
             >
               {/* Top color bar */}
@@ -120,7 +120,7 @@ export default function Dashboard({ user, profil, setProfil, headerProps, onNavi
                   {m.badge}
                 </span>
               )}
-              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, marginBottom: 16 }}>
+              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--color-icon-circle-bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, marginBottom: 16 }}>
                 {m.icon}
               </div>
               <div style={{ fontSize: 22, fontWeight: 700, color: T.text, marginBottom: 8, fontFamily: SANS }}>{m.title}</div>
@@ -203,7 +203,7 @@ function ProfileModal({ user, profil, onClose, onSave }) {
   }
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "var(--color-modal-backdrop)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 14, padding: "28px 24px", width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <h3 style={{ fontFamily: SERIF, fontSize: 18, color: T.gold, margin: 0 }}>Modifier le profil</h3>

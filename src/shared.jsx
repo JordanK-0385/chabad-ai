@@ -18,8 +18,16 @@ export const T = {
   text:         "var(--color-text)",
   muted:        "var(--color-text-muted)",
   faint:        "var(--color-text-subtle)",
-  red:          "#D94F4F",
-  green:        "#2DCF90",
+  red:                "var(--color-error)",
+  redBg:              "var(--color-error-bg)",
+  redBorder:          "var(--color-error-border)",
+  redBorderStrong:    "var(--color-error-border-strong)",
+  green:              "var(--color-success)",
+  textOnAccent:       "var(--color-text-on-accent)",
+  iconCircleBg:       "var(--color-icon-circle-bg)",
+  modalBackdrop:      "var(--color-modal-backdrop)",
+  shadowDropdown:     "var(--shadow-dropdown)",
+  shadowCardHover:    "var(--shadow-card-hover)",
   /* Semantic */
   brand:        "var(--color-brand)",
   navbarBg:     "var(--navbar-bg)",
@@ -85,7 +93,7 @@ export function GBtn({ onClick, children, disabled = false, outline = false, sm 
       </button>
     );
   return (
-    <button onClick={onClick} disabled={disabled} style={{ ...base, background: disabled ? "var(--color-primary)" : T.gold, color: "#1a0510", border: "none", opacity: disabled ? 0.6 : 1, boxShadow: disabled ? "none" : "0 4px 20px var(--color-accent-soft)" }}>
+    <button onClick={onClick} disabled={disabled} style={{ ...base, background: disabled ? "var(--color-primary)" : T.gold, color: "var(--color-text-on-accent)", border: "none", opacity: disabled ? 0.6 : 1, boxShadow: disabled ? "none" : "0 4px 20px var(--color-accent-soft)" }}>
       {children}
     </button>
   );
@@ -94,7 +102,7 @@ export function GBtn({ onClick, children, disabled = false, outline = false, sm 
 export function StepLabel({ n, children }) {
   return (
     <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-      <span style={{ background: T.gold, color: "#1a0510", borderRadius: 20, width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+      <span style={{ background: T.gold, color: "var(--color-text-on-accent)", borderRadius: 20, width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
         {n}
       </span>
       {children}
@@ -235,7 +243,7 @@ export function AppHeader({ currentScreen, onNavigate, user, onSignOut }) {
             {user?.photoURL ? (
               <img src={user.photoURL} alt="" style={{ width: 30, height: 30, borderRadius: "50%", border: `1.5px solid ${T.gold}` }} />
             ) : (
-              <div style={{ width: 30, height: 30, borderRadius: "50%", background: T.gold, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#1a0510", fontWeight: 700 }}>
+              <div style={{ width: 30, height: 30, borderRadius: "50%", background: T.gold, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--color-text-on-accent)", fontWeight: 700 }}>
                 {prenom[0]}
               </div>
             )}
@@ -243,7 +251,7 @@ export function AppHeader({ currentScreen, onNavigate, user, onSignOut }) {
             <span style={{ fontSize: 10, color: T.navbarMuted }}>▼</span>
           </div>
           {showMenu && (
-            <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 6, background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, overflow: "hidden", zIndex: 100, minWidth: 160, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+            <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 6, background: T.card, border: `1px solid ${T.border}`, borderRadius: 8, overflow: "hidden", zIndex: 100, minWidth: 160, boxShadow: "var(--shadow-dropdown)" }}>
               <div onClick={() => { setShowMenu(false); onNavigate("profile"); }} style={{ padding: "10px 16px", fontSize: 13, color: T.text, cursor: "pointer", borderBottom: `1px solid ${T.border}` }}>
                 Mon profil
               </div>

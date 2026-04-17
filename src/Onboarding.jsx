@@ -170,7 +170,7 @@ export default function Onboarding({ user, onComplete }) {
               </div>
             </Card>
 
-            {err && <div style={{ color: T.red, fontSize: 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px" }}>{err}</div>}
+            {err && <div style={{ color: T.red, fontSize: 12, marginBottom: 12, background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 7, padding: "8px 12px" }}>{err}</div>}
 
             <div style={{ display: "flex", gap: 10 }}>
               <GBtn onClick={() => setStep(1)} outline>

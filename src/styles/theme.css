@@ -27,6 +27,21 @@
   --color-accent-faint:  rgba(242, 119, 48, 0.08);
   --color-accent-soft:   rgba(242, 119, 48, 0.12);
   --color-accent-alpha:  rgba(242, 119, 48, 0.25);
+  /* Semantic status colors */
+  --color-error:             #d94f4f;
+  --color-error-bg:          rgba(217, 79, 79, 0.08);
+  --color-error-border:      rgba(217, 79, 79, 0.25);
+  --color-error-border-strong: rgba(217, 79, 79, 0.35);
+  --color-success:           #2dcf90;
+  /* Contrast foreground on accent-filled surfaces (gold buttons, avatars) */
+  --color-text-on-accent:    #1a0510;
+  /* Circle highlight for icons — adapts to background luminosity */
+  --color-icon-circle-bg:    rgba(255, 255, 255, 0.08);
+  /* Modal / overlay backdrop */
+  --color-modal-backdrop:    rgba(0, 0, 0, 0.7);
+  /* Elevation shadows */
+  --shadow-dropdown:         0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover:       0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 /* ── Light mode — "Torah Blanc" ──────────────────────────────── */
@@ -55,6 +70,21 @@
   --color-accent-faint:  rgba(242, 119, 48, 0.08);
   --color-accent-soft:   rgba(242, 119, 48, 0.12);
   --color-accent-alpha:  rgba(93, 11, 48, 0.20);
+  /* Semantic status colors (darkened for AA contrast on light bg) */
+  --color-error:             #b92c2c;
+  --color-error-bg:          rgba(185, 44, 44, 0.08);
+  --color-error-border:      rgba(185, 44, 44, 0.25);
+  --color-error-border-strong: rgba(185, 44, 44, 0.35);
+  --color-success:           #1b9a65;
+  /* Contrast foreground on accent-filled surfaces */
+  --color-text-on-accent:    #1a0510;
+  /* Circle highlight tinted with burgundy alpha (visible on light cream bg) */
+  --color-icon-circle-bg:    rgba(93, 11, 48, 0.08);
+  /* Modal backdrop uses burgundy tint so light theme isn't jarring */
+  --color-modal-backdrop:    rgba(93, 11, 48, 0.35);
+  /* Softer shadows appropriate for light backgrounds */
+  --shadow-dropdown:         0 8px 24px rgba(93, 11, 48, 0.18);
+  --shadow-card-hover:       0 8px 32px rgba(93, 11, 48, 0.15);
 }
 
 /* ── Base reset ──────────────────────────────────────────────── */

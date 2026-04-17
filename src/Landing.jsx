@@ -41,7 +41,7 @@ export default function Landing({ firebaseReady = false }) {
         <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center", maxWidth: 800, marginBottom: 40 }}>
           {MODULES.map(m => (
             <div key={m.title} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: "28px 20px", width: 220, textAlign: "center", transition: "all 0.2s" }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 14px" }}>{m.icon}</div>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--color-icon-circle-bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 14px" }}>{m.icon}</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: T.text, marginBottom: 8, fontFamily: SERIF }}>{m.title}</div>
               <div style={{ fontSize: 12, color: T.muted, lineHeight: 1.6 }}>{m.desc}</div>
             </div>

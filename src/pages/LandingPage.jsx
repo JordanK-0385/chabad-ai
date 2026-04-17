@@ -184,7 +184,7 @@ function Hero({ onSignIn, authErr, authLoading }) {
           </a>
         </div>
         {authErr && (
-          <div style={{ fontSize: 13, color: "#D94F4F", background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 8, padding: "10px 18px", maxWidth: 480, textAlign: "center", fontFamily: SANS }}>
+          <div style={{ fontSize: 13, color: "var(--color-error)", background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 8, padding: "10px 18px", maxWidth: 480, textAlign: "center", fontFamily: SANS }}>
             ⚠️ {authErr}
           </div>
         )}

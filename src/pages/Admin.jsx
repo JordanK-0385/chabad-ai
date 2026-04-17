@@ -311,13 +311,13 @@ export default function Admin({ user, profil, headerProps }) {
     transition: "all 0.15s",
   };
   const actionBtnDanger = {
-    color: "#D94F4F",
-    borderColor: "rgba(217,79,79,0.35)",
-    background: "rgba(217,79,79,0.06)",
+    color: "var(--color-error)",
+    borderColor: "var(--color-error-border-strong)",
+    background: "var(--color-error-bg)",
   };
   const actionBtnPrimary = {
     background: "var(--color-accent)",
-    color: "#1a0510",
+    color: "var(--color-text-on-accent)",
     borderColor: "var(--color-accent)",
   };
   const editLabel = {
@@ -343,7 +343,7 @@ export default function Admin({ user, profil, headerProps }) {
         </div>
 
         {err && (
-          <div style={{ color: "#D94F4F", fontSize: 13, marginBottom: 16, padding: "10px 14px", background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 8 }}>
+          <div style={{ color: "var(--color-error)", fontSize: 13, marginBottom: 16, padding: "10px 14px", background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 8 }}>
             {err}
           </div>
         )}
@@ -372,7 +372,7 @@ export default function Admin({ user, profil, headerProps }) {
           </div>
 
           {pdfErr && (
-            <div style={{ color: "#D94F4F", fontSize: 13, marginBottom: 12, padding: "10px 14px", background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 8 }}>
+            <div style={{ color: "var(--color-error)", fontSize: 13, marginBottom: 12, padding: "10px 14px", background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 8 }}>
               {pdfErr}
             </div>
           )}

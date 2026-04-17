@@ -197,7 +197,7 @@ export default function Messages({ profil, onBack, headerProps }) {
             </div>
           </Card>
 
-          {err && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px" }}>{err}</div>}
+          {err && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 7, padding: "8px 12px" }}>{err}</div>}
 
           <div style={mobile ? { minHeight: 48 } : {}}>
             <GBtn onClick={generate} disabled={loading} fullWidth>
