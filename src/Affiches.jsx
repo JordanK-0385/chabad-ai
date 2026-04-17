@@ -61,22 +61,22 @@ function AfficheFinale({ data, bc, fmt, imgSrc, loading, afficheRef, logoUrl, lo
   const SH2 = "0 2px 10px rgba(0,0,0,0.9)";
   const SH3 = "0 2px 12px rgba(0,0,0,0.9)";
   return (
-    <div ref={afficheRef} style={{ width: w, aspectRatio: ar, borderRadius: 12, overflow: "hidden", position: "relative", boxShadow: `0 8px 40px rgba(0,0,0,0.5), 0 0 60px var(--color-accent-faint)`, border: `1px solid var(--color-accent-alpha)` }}>
+    <div ref={afficheRef} style={{ width: w, aspectRatio: ar, containerType: "inline-size", borderRadius: 12, overflow: "hidden", position: "relative", boxShadow: `0 8px 40px rgba(0,0,0,0.5), 0 0 60px var(--color-accent-faint)`, border: `1px solid var(--color-accent-alpha)` }}>
       <img src={imgSrc} alt="Affiche" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-        <img src={logo} alt="" style={{ position: "absolute", top: 10, left: 12, width: "clamp(28px, 7%, 44px)", height: "auto", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))", opacity: 0.9 }} />
-        <div style={{ position: "absolute", top: 10, right: 14, fontSize: "clamp(12px, 1.8vw, 15px)", color: "#E8B030", fontFamily: SERIF, textShadow: SH2, fontWeight: 600 }}>{"\u05D1\u05E1\u05F4\u05D3"}</div>
-        {data.texte_hebreu && <div style={{ position: "absolute", top: 14, left: 0, right: 0, fontSize: "clamp(20px, 4vw, 32px)", color: "#E8B030", fontFamily: SERIF, textAlign: "center", direction: "rtl", textShadow: "0 2px 15px rgba(0,0,0,0.95)", fontWeight: 700 }}>{data.texte_hebreu}</div>}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)", padding: "40px 0 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <img src={logo} alt="" style={{ position: "absolute", top: "2%", left: "2.5%", width: "clamp(28px, 7%, 44px)", height: "auto", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))", opacity: 0.9 }} />
+        <div style={{ position: "absolute", top: "2%", right: "2.5%", fontSize: "clamp(12px, 3.75cqw, 30px)", color: "#E8B030", fontFamily: SERIF, textShadow: SH2, fontWeight: 600 }}>{"\u05D1\u05E1\u05F4\u05D3"}</div>
+        {data.texte_hebreu && <div style={{ position: "absolute", top: "3%", left: 0, right: 0, fontSize: "clamp(20px, 8cqw, 80px)", color: "#E8B030", fontFamily: SERIF, textAlign: "center", direction: "rtl", textShadow: "0 2px 15px rgba(0,0,0,0.95)", fontWeight: 700 }}>{data.texte_hebreu}</div>}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)", padding: "8% 0 4%", display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ maxWidth: "90%", display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
-            {data.titre && <div style={{ fontSize: "clamp(26px, 5vw, 38px)", fontWeight: 900, color: "#FFF", textAlign: "center", lineHeight: 1.1, fontFamily: SERIF, textShadow: SH, letterSpacing: -0.5, maxWidth: "90%" }}>{data.titre}</div>}
-            {data.sous_titre && <div style={{ fontSize: "clamp(14px, 2.5vw, 18px)", fontWeight: 400, color: "rgba(255,255,255,0.9)", textAlign: "center", fontFamily: SANS, textShadow: SH2, marginTop: 6 }}>{data.sous_titre}</div>}
-            <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10 }}>
-              {data.date  && <span style={{ fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 800, color: "#E8B030", fontFamily: SANS, textShadow: SH3 }}>{data.date}</span>}
-              {data.heure && <span style={{ fontSize: "clamp(16px, 2.5vw, 20px)", fontWeight: 400, color: "rgba(255,255,255,0.95)", fontFamily: SANS, textShadow: SH3 }}>&middot; {data.heure}</span>}
+            {data.titre && <div style={{ fontSize: "clamp(26px, 9.5cqw, 90px)", fontWeight: 900, color: "#FFF", textAlign: "center", lineHeight: 1.1, fontFamily: SERIF, textShadow: SH, letterSpacing: -0.5, maxWidth: "90%" }}>{data.titre}</div>}
+            {data.sous_titre && <div style={{ fontSize: "clamp(14px, 4.5cqw, 45px)", fontWeight: 400, color: "rgba(255,255,255,0.9)", textAlign: "center", fontFamily: SANS, textShadow: SH2, marginTop: "1.5%" }}>{data.sous_titre}</div>}
+            <div style={{ display: "flex", gap: "2%", alignItems: "center", marginTop: "2.5%" }}>
+              {data.date  && <span style={{ fontSize: "clamp(18px, 6cqw, 60px)", fontWeight: 800, color: "#E8B030", fontFamily: SANS, textShadow: SH3 }}>{data.date}</span>}
+              {data.heure && <span style={{ fontSize: "clamp(16px, 5cqw, 50px)", fontWeight: 400, color: "rgba(255,255,255,0.95)", fontFamily: SANS, textShadow: SH3 }}>&middot; {data.heure}</span>}
             </div>
-            {data.contact && <div style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: SH2 }}>{data.contact}</div>}
-            <div style={{ fontSize: fmt === "story" ? "clamp(8px, 2vw, 11px)" : (fmt === "a4" || fmt === "paysage") ? "clamp(10px, 1.5vw, 13px)" : "clamp(10px, 1.8vw, 13px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: 8, textShadow: SH2, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{bc}</div>
+            {data.contact && <div style={{ fontSize: "clamp(12px, 3.75cqw, 30px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: SH2 }}>{data.contact}</div>}
+            <div style={{ fontSize: fmt === "story" ? "clamp(8px, 3.44cqw, 22px)" : (fmt === "a4" || fmt === "paysage") ? "clamp(10px, 3cqw, 28px)" : "clamp(10px, 3.25cqw, 30px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: "2%", textShadow: SH2, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{bc}</div>
           </div>
         </div>
       </div>
