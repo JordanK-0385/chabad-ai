@@ -87,6 +87,13 @@ export default function Admin({ user, profil, headerProps }) {
   const [pdfErr, setPdfErr] = useState("");
   const [pdfSelection, setPdfSelection] = useState(null);
 
+  const [mobile, setMobile] = useState(typeof window !== "undefined" && window.innerWidth <= 600);
+  useEffect(() => {
+    const h = () => setMobile(window.innerWidth <= 600);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+
   const isAdmin = user?.uid === ADMIN_UID;
 
   async function refreshPdfList() {
@@ -327,8 +334,8 @@ export default function Admin({ user, profil, headerProps }) {
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)", color: "var(--color-text)", fontFamily: SANS }}>
       {headerProps && <AppHeader currentScreen="admin" {...headerProps} />}
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 24px" }}>
-        <h1 style={{ fontFamily: SERIF, fontSize: 32, fontWeight: 700, margin: "0 0 8px", color: "var(--color-text)", letterSpacing: "-0.02em" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: mobile ? "20px 14px" : "36px 24px" }}>
+        <h1 style={{ fontFamily: SERIF, fontSize: mobile ? 24 : 32, fontWeight: 700, margin: "0 0 8px", color: "var(--color-text)", letterSpacing: "-0.02em" }}>
           Admin
         </h1>
         <div style={{ fontSize: 14, color: "var(--color-text-muted)", marginBottom: 28 }}>
@@ -341,24 +348,24 @@ export default function Admin({ user, profil, headerProps }) {
           </div>
         )}
 
-        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, padding: 24, marginBottom: 28 }}>
-          <h2 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, margin: "0 0 16px", color: "var(--color-text)", letterSpacing: "-0.01em" }}>
+        <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, padding: mobile ? 16 : 24, marginBottom: 28 }}>
+          <h2 style={{ fontFamily: SERIF, fontSize: mobile ? 18 : 20, fontWeight: 700, margin: "0 0 16px", color: "var(--color-text)", letterSpacing: "-0.01em" }}>
             Documents de la semaine
           </h2>
 
-          <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: mobile ? "stretch" : "center" }}>
             <input
               id="admin-pdf-input"
               type="file"
               accept="application/pdf"
               multiple
               onChange={e => setPdfSelection(e.target.files)}
-              style={{ flex: "1 1 240px", minWidth: 0, padding: "9px 12px", background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 8, color: "var(--color-text)", fontSize: 13, fontFamily: SANS, cursor: "pointer" }}
+              style={{ flex: "1 1 240px", minWidth: 0, padding: "9px 12px", background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 8, color: "var(--color-text)", fontSize: mobile ? 14 : 13, fontFamily: SANS, cursor: "pointer" }}
             />
             <button
               onClick={handlePdfUpload}
               disabled={pdfBusy || !pdfSelection?.length}
-              style={{ ...actionBtn, ...actionBtnPrimary, opacity: (pdfBusy || !pdfSelection?.length) ? 0.5 : 1 }}
+              style={{ ...actionBtn, ...actionBtnPrimary, padding: mobile ? "12px 16px" : actionBtn.padding, opacity: (pdfBusy || !pdfSelection?.length) ? 0.5 : 1 }}
             >
               {pdfBusy ? "Envoi…" : "Uploader"}
             </button>
@@ -392,6 +399,108 @@ export default function Admin({ user, profil, headerProps }) {
           )}
         </div>
 
+        {mobile ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {!loading && rows.length === 0 && (
+              <div style={{ padding: "16px 18px", background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, color: "var(--color-text-muted)", fontSize: 14 }}>
+                Aucun utilisateur.
+              </div>
+            )}
+            {rows.map(r => {
+              const isEditing = editingUid === r.uid;
+              const isBusy = busyUid === r.uid;
+              return (
+                <div key={r.uid} style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, padding: 16 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "var(--color-text)", marginBottom: 2 }}>{r.nom}</div>
+                  <div style={{ fontSize: 13, color: "var(--color-text-muted)", marginBottom: 4, wordBreak: "break-all" }}>{r.email}</div>
+                  <div style={{ fontSize: 13, color: "var(--color-text)", marginBottom: 10 }}>{r.betChabad}</div>
+                  <div style={{ fontSize: 12, color: "var(--color-text-subtle)", marginBottom: 12 }}>
+                    Inscrit le {r.inscription ? r.inscription.toLocaleDateString("fr-FR") : "—"}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: "10px 0", borderTop: "1px solid var(--color-border)", borderBottom: "1px solid var(--color-border)", marginBottom: 12 }}>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 11, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Cours</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-text)", ...num }}>{r.cours}</div>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 11, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Affiches</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-text)", ...num }}>{r.affiches}</div>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 11, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Messages</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-text)", ...num }}>{r.messages}</div>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 11, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Coût</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-accent)", ...num }}>{fmtEUR(r.totalCost)}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => (isEditing ? handleEditCancel() : handleEditStart(r))}
+                      disabled={isBusy}
+                      style={{ ...actionBtn, flex: 1, padding: "10px 12px", opacity: isBusy ? 0.5 : 1 }}
+                    >
+                      {isEditing ? "Fermer" : "Modifier"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(r.uid)}
+                      disabled={isBusy}
+                      style={{ ...actionBtn, ...actionBtnDanger, flex: 1, padding: "10px 12px", opacity: isBusy ? 0.5 : 1 }}
+                    >
+                      {isBusy ? "…" : "Supprimer"}
+                    </button>
+                  </div>
+                  {isEditing && (
+                    <div style={{ marginTop: 14, padding: "14px 0 0", borderTop: "1px solid var(--color-border)", display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div>
+                        <label style={editLabel}>Beth Chabad</label>
+                        <input value={editData.betChabad} onChange={e => setEditData(s => ({ ...s, betChabad: e.target.value }))} style={INP} />
+                      </div>
+                      <div>
+                        <label style={editLabel}>Email</label>
+                        <input value={editData.email} onChange={e => setEditData(s => ({ ...s, email: e.target.value }))} style={INP} />
+                      </div>
+                      <div>
+                        <label style={editLabel}>Taille communauté</label>
+                        <input value={editData.tailleCommunaute} onChange={e => setEditData(s => ({ ...s, tailleCommunaute: e.target.value }))} style={INP} />
+                      </div>
+                      <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+                        <button onClick={handleEditCancel} disabled={isBusy} style={{ ...actionBtn, flex: 1, padding: "10px 12px" }}>Annuler</button>
+                        <button onClick={() => handleEditSave(r.uid)} disabled={isBusy} style={{ ...actionBtn, ...actionBtnPrimary, flex: 1, padding: "10px 12px", opacity: isBusy ? 0.5 : 1 }}>
+                          {isBusy ? "…" : "Sauvegarder"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {rows.length > 0 && (
+              <div style={{ background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 14, padding: "14px 16px" }}>
+                <div style={{ fontSize: 12, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8, fontWeight: 700 }}>Total</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>Cours</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-accent)", ...num }}>{totals.cours}</div>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>Affiches</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-accent)", ...num }}>{totals.affiches}</div>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>Messages</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-accent)", ...num }}>{totals.messages}</div>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>Coût total</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-accent)", ...num }}>{fmtEUR(totals.totalCost)}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, overflow: "hidden", marginBottom: 0 }}>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: SANS }}>
@@ -516,13 +625,53 @@ export default function Admin({ user, profil, headerProps }) {
             </table>
           </div>
         </div>
+        )}
 
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, overflow: "hidden", marginTop: 32 }}>
-          <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--color-border)" }}>
-            <h2 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, margin: 0, color: "var(--color-text)", letterSpacing: "-0.01em" }}>
+          <div style={{ padding: mobile ? "14px 16px" : "18px 20px", borderBottom: "1px solid var(--color-border)" }}>
+            <h2 style={{ fontFamily: SERIF, fontSize: mobile ? 18 : 20, fontWeight: 700, margin: 0, color: "var(--color-text)", letterSpacing: "-0.01em" }}>
               Coûts de génération
             </h2>
           </div>
+          {mobile ? (
+            <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                { label: "Cours",    count: totals.cours,    cost: totals.coursCost },
+                { label: "Affiches", count: totals.affiches, cost: totals.affichesCost },
+                { label: "Messages", count: totals.messages, cost: totals.messagesCost },
+              ].map(m => (
+                <div key={m.label} style={{ background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 10, padding: "12px 14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text)" }}>{m.label}</span>
+                    <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{m.count} génération{m.count > 1 ? "s" : ""}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                    <span style={{ color: "var(--color-text-muted)" }}>Coût total</span>
+                    <span style={{ color: "var(--color-accent)", fontWeight: 600, ...num }}>{fmtEUR(m.cost)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginTop: 4 }}>
+                    <span style={{ color: "var(--color-text-muted)" }}>Coût moyen</span>
+                    <span style={{ color: "var(--color-text)", ...num }}>{m.count > 0 && m.cost > 0 ? (m.cost / m.count).toFixed(3) + " €" : "—"}</span>
+                  </div>
+                </div>
+              ))}
+              <div style={{ background: "var(--color-accent-faint)", border: "1px solid var(--color-accent-alpha)", borderRadius: 10, padding: "12px 14px" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "var(--color-accent)", marginBottom: 8 }}>Total</div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                  <span style={{ color: "var(--color-text-muted)" }}>Générations</span>
+                  <span style={{ color: "var(--color-text)", fontWeight: 700, ...num }}>{totalGenerations}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginTop: 4 }}>
+                  <span style={{ color: "var(--color-text-muted)" }}>Coût total</span>
+                  <span style={{ color: "var(--color-accent)", fontWeight: 700, ...num }}>{fmtEUR(totals.totalCost)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginTop: 4 }}>
+                  <span style={{ color: "var(--color-text-muted)" }}>Coût moyen</span>
+                  <span style={{ color: "var(--color-text)", fontWeight: 700, ...num }}>{totalGenerations > 0 && totals.totalCost > 0 ? (totals.totalCost / totalGenerations).toFixed(3) + " €" : "—"}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: SANS }}>
               <thead>
@@ -557,6 +706,7 @@ export default function Admin({ user, profil, headerProps }) {
               </tbody>
             </table>
           </div>
+          )}
         </div>
       </div>
     </div>
