@@ -4,6 +4,7 @@ export const CRITICAL_RULE = `ABSOLUTE RULE — NO EXCEPTIONS — READ BEFORE GE
 MALES (men and boys) ONLY wear kippah (dark navy or black, NEVER white).
 FEMALES (women and girls): FORBIDDEN to wear any head covering of any kind.
   → NO kippah, NO hat, NO cap, NO tichel, NO headband, NO scarf, NO hijab, NO snood, NO wig.
+  → NO blue headband, NO blue band, NO blue clip, NO blue accessory of any kind on female heads.
   → ONLY visible natural hair. Any covering on a female head = GENERATION FAILURE.
 MODESTY: All females wear long dress or skirt below knee, long sleeves, closed neckline.
 VERIFY before finalizing: scan every female head — hair only, zero covering.`;
@@ -25,7 +26,7 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
     if (!age || age === "Adulte") return "adult";
     if (age === "Enfants") return "young child aged 5-10";
     if (age === "Adolescents") return "teenager aged 12-17";
-    if (age === "Seniors") return "elderly person aged 65+";
+    if (age === "Seniors" || age === "Âgé" || age === "Âgée") return "elderly person aged 65+";
     return "adult";
   }
 
@@ -40,7 +41,7 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
     }
 
     if (tile === "filles") {
-      const hairDesc = ageLabel.includes("child") ? "two long dark braids hanging freely on both sides of her face. Her scalp and the top of her head are FULLY EXPOSED — only hair follicles and bare scalp visible on top, zero object placed on the head. ⛔ KIPPAH ON THIS GIRL = GENERATION FAILURE." :
+      const hairDesc = ageLabel.includes("child") ? "two long dark braids hanging freely on both sides of her face. The top of her head shows ONLY dark hair and bare scalp — ⛔ NO blue band, NO headband, NO clip, NO kippah, NO cap, NO covering of any kind. The braids start directly from the scalp with no accessory at the parting." :
                        ageLabel.includes("teenager") ? "long hair in a ponytail or loose flowing" :
                        ageLabel.includes("elderly") ? "silver hair in a neat bun" :
                        "long dark hair in a braid or elegant updo";
@@ -52,9 +53,16 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
                                    ageLabel.includes("teenager") ? "teenage girls" :
                                    ageLabel.includes("elderly") ? "elderly women" :
                                    "young women";
+      if (isGroup && ageLabel.includes("child")) {
+        return `A group of young girls (children aged 5-10), each with two long dark braids.
+⛔ CRITICAL: These are GIRLS, NOT boys. Girls NEVER wear kippah. NEVER.
+Every girl's head shows ONLY hair — bare scalp on top, two braids on the sides.
+NO kippah, NO hat, NO cap, NO headband, NO clip, NO blue band, NO blue headband, NO blue clip, NO blue accessory, NO covering of any kind on any girl.
+They wear long modest dresses below the knee, with long sleeves.`;
+      }
       if (isGroup) {
         return `A group of ${femaleAgeLabelPlural} with ${hairDesc} worn freely and visibly.
-⛔ FORBIDDEN on any female head: kippah, hat, cap, tichel, headband, scarf, hijab, snood, any covering.
+⛔ FORBIDDEN on any female head: kippah, hat, cap, tichel, headband, scarf, hijab, snood, blue headband, blue band, blue clip, blue accessory, any covering.
 ✅ REQUIRED: every girl's head shows only natural hair — parted, braided or loose — nothing else.
 They wear long modest dresses below the knee, with long sleeves.`;
       }
@@ -62,24 +70,25 @@ They wear long modest dresses below the knee, with long sleeves.`;
         return `One young girl (child aged 5-10) with two long dark braids.
 ⛔ CRITICAL: She is a GIRL, NOT a boy. Girls NEVER wear kippah. NEVER.
 Her head has ONLY hair — bare scalp on top, two braids on the sides.
-No kippah, no hat, no cap, no headband, no clip, no covering of any kind.
+No kippah, no hat, no cap, no headband, no clip, no blue band, no blue headband, no blue clip, no blue accessory, no covering of any kind.
 She wears a long modest dress reaching below the knee, with long sleeves.`;
       }
       return `One ${femaleAgeLabel} with ${hairDesc}.
-⛔ FORBIDDEN on her head: kippah, hat, cap, tichel, headband, scarf, hijab, snood, any covering whatsoever.
+⛔ FORBIDDEN on her head: kippah, hat, cap, tichel, headband, scarf, hijab, snood, blue headband, blue band, blue clip, blue accessory, any covering whatsoever.
 ✅ REQUIRED: only natural hair, parted in the middle, visible and uncovered.
 Her hair cascades freely — the top of her head shows ONLY hair, nothing else.
 She wears a long modest dress reaching below the knee, with long sleeves.`;
     }
 
     if (tile === "rav") {
-      return `One Chabad Rabbi (${ageLabel}). He has a full dark beard and wears a classic wide-brimmed black felt fedora hat. Dark suit jacket, white shirt, tzitzit strings visible. Wise and warm expression.`;
+      const beardDesc = ageLabel.includes("elderly") ? "full grey or white beard, wrinkled wise face" : "full dark beard";
+      return `One Chabad Rabbi (${ageLabel}). He has a ${beardDesc} and wears a classic wide-brimmed black felt fedora hat. Dark suit jacket, white shirt, tzitzit strings visible. Wise and warm expression.`;
     }
 
     if (tile === "rabbanit") {
       const hairDesc = ageLabel.includes("elderly") ? "neat silver hair in a bun" : "elegant dark hair styled in a bun or chignon";
       return `One ${ageLabel} woman with ${hairDesc} worn freely and visibly.
-⛔ FORBIDDEN on her head: kippah, hat, cap, tichel, headband, scarf, hijab, snood, any covering.
+⛔ FORBIDDEN on her head: kippah, hat, cap, tichel, headband, scarf, hijab, snood, blue headband, blue band, blue clip, blue accessory, any covering.
 ✅ REQUIRED: only natural hair, styled in a bun or chignon, fully visible and uncovered.
 Elegant modest dress below knee, long sleeves, closed neckline. Warm gracious expression.`;
     }
@@ -140,7 +149,7 @@ Do NOT apply the kippah to female characters under any circumstance.`;
     : hasFemale
     ? `FINAL CHECK — MANDATORY SCAN:
 Examine every female character's head.
-If ANY female wears a kippah, hat, cap, tichel, headband, scarf or any covering → REJECT and regenerate.
+If ANY female wears a kippah, hat, cap, tichel, headband, scarf, blue band, blue clip, blue headband or any covering → REJECT and regenerate.
 ONLY natural hair is acceptable on female heads. Zero exceptions.`
     : ``;
 
@@ -156,7 +165,7 @@ ${charSection}
 MANDATORY RULES:
 - NO TEXT or letters anywhere in the image (any language)
 - Holy books always on table, shelf or in hands — never on the floor
-- FEMALE HEAD COVERING: ZERO tolerance — no kippah, hat, tichel, scarf or any covering on any female. Natural hair only.
+- FEMALE HEAD COVERING: ZERO tolerance — no kippah, hat, tichel, scarf, blue headband, blue band, blue clip, blue accessory or any covering on any female. Natural hair only.
 - No religious symbols (no Star of David, no crosses, no crescents, no hamsa)
 - No Rebbe's face. No non-kosher animals
 - ${feteRules}
