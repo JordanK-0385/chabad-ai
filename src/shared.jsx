@@ -153,8 +153,8 @@ export function AppHeader({ currentScreen, onNavigate, user, onSignOut }) {
   const [showMenu, setShowMenu] = useState(false);
   const [theme, setTheme] = useState(() =>
     typeof document !== "undefined"
-      ? (document.documentElement.getAttribute("data-theme") || "dark")
-      : "dark"
+      ? (document.documentElement.getAttribute("data-theme") || "light")
+      : "light"
   );
 
   useEffect(() => {

@@ -33,8 +33,8 @@ export default function Landing({ firebaseReady = false }) {
         <p style={{ fontSize: "clamp(12px, 1.8vw, 15px)", color: T.muted, margin: "0 0 6px", maxWidth: 460, lineHeight: 1.6 }}>
           Créez vos affiches, préparez vos cours, rédigez vos messages — en quelques secondes.
         </p>
-        <p style={{ fontSize: 12, color: T.muted, letterSpacing: 2, margin: "0 0 40px" }}>
-          אצלחה בזמן · Réussir par le temps
+        <p dir="rtl" style={{ fontSize: 12, color: T.muted, letterSpacing: 2, margin: "0 0 40px", direction: "rtl" }}>
+          הצלחה בזמן
         </p>
 
         {/* Module cards */}
