@@ -110,6 +110,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const [showPrompt, setShowPrompt] = useState(false);
   const [copied,     setCopied]     = useState(false);
   const [preview,    setPreview]    = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [loadMsgIdx, setLoadMsgIdx] = useState(0);
   const [loadTime,   setLoadTime]   = useState(AFF_LOAD_START);
 
@@ -216,7 +217,8 @@ export default function Affiches({ profil, onBack, headerProps }) {
   }, [aData, geminiKey, bc, fmt, illustSelection, callGemini]);
 
   async function downloadAffiche() {
-    if (!afficheRef.current) return;
+    if (!afficheRef.current || downloading) return;
+    setDownloading(true);
     const dimensions = {
       carre: { w: 1080, h: 1080 },
       story: { w: 1080, h: 1920 },
@@ -232,21 +234,24 @@ export default function Affiches({ profil, onBack, headerProps }) {
     el.style.width = `${w/2}px`;
     el.style.height = `${h/2}px`;
 
-    const canvas = await html2canvas(el, {
-      useCORS: true,
-      scale: 2,
-      width: w/2,
-      height: h/2,
-      backgroundColor: null
-    });
-
-    // Restore original size
-    el.style.width = originalWidth;
-    el.style.height = originalHeight;
-    const link = document.createElement("a");
-    link.download = `affiche-${(aData?.titre || "chabad").slice(0,20).replace(/\s+/g,"-")}-${fmt}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+    try {
+      const canvas = await html2canvas(el, {
+        useCORS: true,
+        scale: 2,
+        width: w/2,
+        height: h/2,
+        backgroundColor: null
+      });
+      const link = document.createElement("a");
+      link.download = `affiche-${(aData?.titre || "chabad").slice(0,20).replace(/\s+/g,"-")}-${fmt}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } finally {
+      // Always restore size, even on error
+      el.style.width = originalWidth;
+      el.style.height = originalHeight;
+      setDownloading(false);
+    }
   }
 
   function copyPrompt() {
@@ -384,11 +389,11 @@ export default function Affiches({ profil, onBack, headerProps }) {
           {errMsg && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px", lineHeight: 1.5 }}>{errMsg}</div>}
           {((imageProvider === "gemini" && !geminiKey) || (imageProvider === "openai" && !openaiKey)) && <div style={{ color: T.red, fontSize: mobile ? 14 : 11, marginBottom: 10 }}>Configuration requise — clé API {imageProvider === "openai" ? "OpenAI" : "Gemini"} manquante</div>}
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, fontSize: mobile ? 14 : 12, fontFamily: SANS }}>
-            <span style={{ color: T.muted }}>Modèle image :</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10, fontSize: mobile ? 14 : 12, fontFamily: SANS }}>
+            <span style={{ color: T.muted, flexShrink: 0 }}>Modèle image :</span>
             {[
               { id: "gemini", label: "Gemini", available: !!geminiKey },
-              { id: "openai", label: "OpenAI (DALL·E 3)", available: !!openaiKey },
+              { id: "openai", label: "DALL·E 3", available: !!openaiKey },
             ].map(p => {
               const active = imageProvider === p.id;
               return (
@@ -415,7 +420,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
             })}
           </div>
 
-          <div style={{ position: "sticky", bottom: 16, zIndex: 10, background: T.bg, paddingTop: 8, paddingBottom: 8, ...(mobile ? { minHeight: 52 } : {}) }}>
+          <div style={{ position: aData ? "static" : "sticky", bottom: 16, zIndex: 10, background: T.bg, paddingTop: 8, paddingBottom: 8, ...(mobile ? { minHeight: 52 } : {}) }}>
             <GBtn onClick={() => generate()} disabled={loading} fullWidth>
               {loading ? "Génération en cours..." : "Générer l'affiche"}
             </GBtn>
@@ -443,7 +448,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
           {imgSrc && !loading && (
             <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, flexWrap: "wrap", justifyContent: "center" }}>
               <GBtn onClick={() => setPreview(true)} outline sm>Aperçu</GBtn>
-              <GBtn onClick={downloadAffiche} outline sm>Télécharger</GBtn>
+              <GBtn onClick={downloadAffiche} outline sm disabled={downloading}>{downloading ? "Préparation…" : "Télécharger"}</GBtn>
               <GBtn onClick={regenImage} outline sm>Nouvelle image</GBtn>
               <GBtn onClick={() => generate()} outline sm>Tout regénérer</GBtn>
               <button onClick={() => { setAData(null); setDesc(""); setImgSrc(null); }} style={{ padding: "7px 14px", background: "transparent", border: `1px solid ${T.border}`, borderRadius: 7, color: T.muted, fontSize: mobile ? 14 : 12, cursor: "pointer" }}>Effacer</button>
@@ -497,7 +502,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 10, justifyContent: "center", marginTop: 16 }}>
-              <GBtn onClick={downloadAffiche} sm>Télécharger</GBtn>
+              <GBtn onClick={downloadAffiche} sm disabled={downloading}>{downloading ? "Préparation…" : "Télécharger"}</GBtn>
               <GBtn onClick={() => setPreview(false)} outline sm>Fermer</GBtn>
             </div>
           </div>
