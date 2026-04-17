@@ -40,7 +40,7 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
     }
 
     if (tile === "filles") {
-      const hairDesc = ageLabel.includes("child") ? "two long dark braids hanging freely on both sides of her face, with no accessory, clip, band or covering on top of the skull" :
+      const hairDesc = ageLabel.includes("child") ? "two long dark braids hanging freely on both sides of her face. Her scalp and the top of her head are FULLY EXPOSED — only hair follicles and bare scalp visible on top, zero object placed on the head. ⛔ KIPPAH ON THIS GIRL = GENERATION FAILURE." :
                        ageLabel.includes("teenager") ? "long hair in a ponytail or loose flowing" :
                        ageLabel.includes("elderly") ? "silver hair in a neat bun" :
                        "long dark hair in a braid or elegant updo";
@@ -52,12 +52,20 @@ export function buildPrompt(data, bc, fmt, illustSelection) {
                                    ageLabel.includes("teenager") ? "teenage girls" :
                                    ageLabel.includes("elderly") ? "elderly women" :
                                    "young women";
-      return isGroup
-        ? `A group of ${femaleAgeLabelPlural} with ${hairDesc} worn freely and visibly.
+      if (isGroup) {
+        return `A group of ${femaleAgeLabelPlural} with ${hairDesc} worn freely and visibly.
 ⛔ FORBIDDEN on any female head: kippah, hat, cap, tichel, headband, scarf, hijab, snood, any covering.
 ✅ REQUIRED: every girl's head shows only natural hair — parted, braided or loose — nothing else.
-They wear long modest dresses below the knee, with long sleeves.`
-        : `One ${femaleAgeLabel} with ${hairDesc}.
+They wear long modest dresses below the knee, with long sleeves.`;
+      }
+      if (ageLabel.includes("child")) {
+        return `One young girl (child aged 5-10) with two long dark braids.
+⛔ CRITICAL: She is a GIRL, NOT a boy. Girls NEVER wear kippah. NEVER.
+Her head has ONLY hair — bare scalp on top, two braids on the sides.
+No kippah, no hat, no cap, no headband, no clip, no covering of any kind.
+She wears a long modest dress reaching below the knee, with long sleeves.`;
+      }
+      return `One ${femaleAgeLabel} with ${hairDesc}.
 ⛔ FORBIDDEN on her head: kippah, hat, cap, tichel, headband, scarf, hijab, snood, any covering whatsoever.
 ✅ REQUIRED: only natural hair, parted in the middle, visible and uncovered.
 Her hair cascades freely — the top of her head shows ONLY hair, nothing else.
@@ -94,6 +102,15 @@ Elegant modest dress below knee, long sleeves, closed neckline. Warm gracious ex
     });
     charSection += `Pixar-meets-storybook illustration style.`;
     if (maleOnly) charSection += `\nZERO women or girls anywhere in the image, including background.`;
+    const hasBoys = illustSelection.some(t => t?.tile === "garcons");
+    const hasGirls = illustSelection.some(t => t?.tile === "filles");
+    if (hasBoys && hasGirls) {
+      charSection += `\n\n⚠️ GENDER DISTINCTION — MANDATORY:
+Boys (kippah) and girls (no kippah) are visually DIFFERENT characters.
+The kippah rule applies ONLY to the male character group (boys).
+The female character group (girls) has ZERO head covering — only natural hair.
+Do NOT apply the kippah to female characters under any circumstance.`;
+    }
   }
 
   // Holiday-specific objects
