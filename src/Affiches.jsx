@@ -389,38 +389,42 @@ export default function Affiches({ profil, onBack, headerProps }) {
           {errMsg && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "rgba(217,79,79,0.08)", border: "1px solid rgba(217,79,79,0.25)", borderRadius: 7, padding: "8px 12px", lineHeight: 1.5 }}>{errMsg}</div>}
           {((imageProvider === "gemini" && !geminiKey) || (imageProvider === "openai" && !openaiKey)) && <div style={{ color: T.red, fontSize: mobile ? 14 : 11, marginBottom: 10 }}>Configuration requise — clé API {imageProvider === "openai" ? "OpenAI" : "Gemini"} manquante</div>}
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10, fontSize: mobile ? 14 : 12, fontFamily: SANS }}>
-            <span style={{ color: T.muted, flexShrink: 0 }}>Modèle image :</span>
-            {[
-              { id: "gemini", label: "Gemini", available: !!geminiKey },
-              { id: "openai", label: "DALL·E 3", available: !!openaiKey },
-            ].map(p => {
-              const active = imageProvider === p.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => setImageProvider(p.id)}
-                  style={{
-                    padding: mobile ? "8px 14px" : "5px 12px",
-                    borderRadius: 7,
-                    fontSize: mobile ? 14 : 12,
-                    fontWeight: active ? 700 : 500,
-                    background: active ? T.gold : "transparent",
-                    color: active ? "#1a0510" : (p.available ? T.muted : T.faint),
-                    border: `1px solid ${active ? T.gold : T.border}`,
-                    cursor: "pointer",
-                    fontFamily: SANS,
-                    opacity: p.available ? 1 : 0.55,
-                  }}
-                  title={p.available ? `Utiliser ${p.label}` : `Clé API ${p.label} non configurée`}
-                >
-                  {p.label}{!p.available ? " ⚠" : ""}
-                </button>
-              );
-            })}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10, fontFamily: SANS }}>
+            <span style={{ color: T.muted, flexShrink: 0, letterSpacing: 0.6, textTransform: "uppercase", fontSize: mobile ? 11 : 10, fontWeight: 600 }}>Modèle image</span>
+            <div style={{ display: "inline-flex", borderRadius: 9999, border: `1px solid ${T.border}`, padding: 2, background: T.surface }}>
+              {[
+                { id: "gemini", label: "Gemini", available: !!geminiKey },
+                { id: "openai", label: "DALL·E 3", available: !!openaiKey },
+              ].map(p => {
+                const active = imageProvider === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setImageProvider(p.id)}
+                    style={{
+                      padding: mobile ? "6px 14px" : "4px 12px",
+                      borderRadius: 9999,
+                      fontSize: mobile ? 13 : 11,
+                      fontWeight: active ? 600 : 500,
+                      background: active ? T.goldSoft : "transparent",
+                      color: active ? T.gold : (p.available ? T.muted : T.faint),
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: SANS,
+                      opacity: p.available ? 1 : 0.55,
+                      transition: "all 0.15s",
+                      letterSpacing: 0.2,
+                    }}
+                    title={p.available ? `Utiliser ${p.label}` : `Clé API ${p.label} non configurée`}
+                  >
+                    {p.label}{!p.available ? " ⚠" : ""}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div style={{ position: aData ? "static" : "sticky", bottom: 16, zIndex: 10, background: T.bg, paddingTop: 8, paddingBottom: 8, ...(mobile ? { minHeight: 52 } : {}) }}>
+          <div style={{ background: T.bg, paddingTop: 8, paddingBottom: 8, ...(mobile ? { minHeight: 52 } : {}) }}>
             <GBtn onClick={() => generate()} disabled={loading} fullWidth>
               {loading ? "Génération en cours..." : "Générer l'affiche"}
             </GBtn>
