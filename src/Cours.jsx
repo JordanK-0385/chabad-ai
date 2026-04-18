@@ -175,6 +175,7 @@ export default function Cours({ profil, onBack, headerProps }) {
 
   const [pdfList, setPdfList] = useState([]);
   const [pdfListLoading, setPdfListLoading] = useState(true);
+  const [docsOpen, setDocsOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -340,56 +341,114 @@ export default function Cours({ profil, onBack, headerProps }) {
             </div>
           </Card>
 
-          <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
-            <StepLabel n="4">Documents sources</StepLabel>
-            {pdfListLoading ? (
-              <div style={{ fontSize: mobile ? 14 : 12, color: T.muted }}>Chargement des documents…</div>
-            ) : pdfList.length === 0 ? (
-              <div style={{ fontSize: mobile ? 14 : 12, color: T.muted }}>Aucun document disponible.</div>
-            ) : (
-              <>
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-                  {pdfList.map((f, i) => {
-                    const used = i < MAX_PDFS_SENT;
-                    return (
-                      <li
-                        key={f.path}
-                        title={f.uploadDate ? `Uploadé le ${f.uploadDate.toLocaleDateString("fr-FR")}` : ""}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: 8,
-                          padding: "7px 10px",
-                          background: used ? T.goldFaint : T.surface,
-                          border: `1px solid ${used ? T.goldSoft : T.border}`,
-                          borderRadius: 7,
-                          fontSize: mobile ? 13 : 12,
-                          color: used ? T.text : T.muted,
-                          opacity: used ? 1 : 0.65,
-                        }}
-                      >
-                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
-                          📄 {f.name}
-                        </span>
-                        <span style={{ fontSize: 11, color: T.muted, flexShrink: 0 }}>
-                          {f.uploadDate ? f.uploadDate.toLocaleDateString("fr-FR") : "—"}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div style={{ marginTop: 10, fontSize: mobile ? 13 : 11.5, color: T.muted, textAlign: "center" }}>
-                  <strong style={{ color: T.gold }}>{Math.min(pdfList.length, MAX_PDFS_SENT)}</strong> document{Math.min(pdfList.length, MAX_PDFS_SENT) > 1 ? "s" : ""} utilisé{Math.min(pdfList.length, MAX_PDFS_SENT) > 1 ? "s" : ""} sur <strong style={{ color: T.text }}>{pdfList.length}</strong> disponible{pdfList.length > 1 ? "s" : ""}
-                  {pdfList.length > MAX_PDFS_SENT && (
-                    <div style={{ fontSize: 11, color: T.faint, marginTop: 4 }}>
-                      (les {MAX_PDFS_SENT} plus récents)
-                    </div>
+          {(() => {
+            const usedCount = Math.min(pdfList.length, MAX_PDFS_SENT);
+            const isEmpty = !pdfListLoading && pdfList.length === 0;
+            return (
+              <div style={{
+                background: T.card,
+                border: `1px solid ${T.border}`,
+                borderRadius: 14,
+                marginBottom: 28,
+                overflow: "hidden",
+                transition: "border-color 0.2s",
+              }}>
+                <button
+                  type="button"
+                  onClick={() => !isEmpty && !pdfListLoading && setDocsOpen(v => !v)}
+                  disabled={isEmpty || pdfListLoading}
+                  aria-expanded={docsOpen}
+                  style={{
+                    width: "100%",
+                    background: "transparent",
+                    border: "none",
+                    padding: mobile ? "16px 18px" : "18px 22px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    cursor: (isEmpty || pdfListLoading) ? "default" : "pointer",
+                    color: T.text,
+                    fontFamily: SANS,
+                    textAlign: "left",
+                  }}
+                >
+                  <span style={{ fontSize: mobile ? 14 : 13, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: mobile ? 16 : 14 }}>📄</span>
+                    {pdfListLoading ? (
+                      <span style={{ color: T.muted }}>Chargement des documents…</span>
+                    ) : isEmpty ? (
+                      <span style={{ color: T.muted }}>Aucun document disponible.</span>
+                    ) : (
+                      <span>
+                        <strong style={{ color: T.gold, fontWeight: 700 }}>{usedCount}</strong>
+                        <span style={{ color: T.muted }}> document{usedCount > 1 ? "s" : ""} utilisé{usedCount > 1 ? "s" : ""} sur </span>
+                        <strong style={{ color: T.text, fontWeight: 700 }}>{pdfList.length}</strong>
+                        <span style={{ color: T.muted }}> disponible{pdfList.length > 1 ? "s" : ""}</span>
+                      </span>
+                    )}
+                  </span>
+                  {!isEmpty && !pdfListLoading && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        display: "inline-block",
+                        fontSize: 20,
+                        color: T.muted,
+                        transition: "transform 0.2s ease",
+                        transform: docsOpen ? "rotate(90deg)" : "rotate(0deg)",
+                        flexShrink: 0,
+                        lineHeight: 1,
+                      }}
+                    >
+                      ›
+                    </span>
                   )}
-                </div>
-              </>
-            )}
-          </Card>
+                </button>
+
+                {docsOpen && !isEmpty && !pdfListLoading && (
+                  <div style={{ padding: mobile ? "0 18px 18px" : "0 22px 22px", borderTop: `1px solid ${T.border}` }}>
+                    <ul style={{ listStyle: "none", padding: 0, margin: "14px 0 0", display: "flex", flexDirection: "column", gap: 6 }}>
+                      {pdfList.map((f, i) => {
+                        const used = i < MAX_PDFS_SENT;
+                        return (
+                          <li
+                            key={f.path}
+                            title={f.uploadDate ? `Uploadé le ${f.uploadDate.toLocaleDateString("fr-FR")}` : ""}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 8,
+                              padding: "7px 10px",
+                              background: used ? T.goldFaint : T.surface,
+                              border: `1px solid ${used ? T.goldSoft : T.border}`,
+                              borderRadius: 7,
+                              fontSize: mobile ? 13 : 12,
+                              color: used ? T.text : T.muted,
+                              opacity: used ? 1 : 0.65,
+                            }}
+                          >
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
+                              📄 {f.name}
+                            </span>
+                            <span style={{ fontSize: 11, color: T.muted, flexShrink: 0 }}>
+                              {f.uploadDate ? f.uploadDate.toLocaleDateString("fr-FR") : "—"}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    {pdfList.length > MAX_PDFS_SENT && (
+                      <div style={{ fontSize: 11, color: T.faint, marginTop: 8, textAlign: "center" }}>
+                        (les {MAX_PDFS_SENT} plus récents sont utilisés)
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {err && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 7, padding: "8px 12px" }}>{err}</div>}
 
