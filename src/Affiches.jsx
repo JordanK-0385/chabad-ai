@@ -67,7 +67,7 @@ function AfficheFinale({ data, bc, fmt, imgSrc, loading, afficheRef, logoUrl, lo
       <img src={imgSrc} alt="Affiche" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
         <img src={logo} alt="" style={{ position: "absolute", top: "2%", left: "2.5%", width: "clamp(28px, 7%, 44px)", height: "auto", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))", opacity: 0.9 }} />
-        <div style={{ position: "absolute", top: "2%", right: "2.5%", fontSize: "clamp(12px, 3.75cqw, 30px)", color: "#E8B030", fontFamily: SERIF, textShadow: SH2, fontWeight: 600 }}>{"\u05D1\u05E1\u05F4\u05D3"}</div>
+        <div style={{ position: "absolute", top: "2%", right: "2.5%", fontSize: "clamp(12px, 3.75cqw, 30px)", color: "#E8B030", fontFamily: SERIF, textShadow: SH2, fontWeight: 600 }}>{"\u05D1\u05F4\u05D4"}</div>
         {data.texte_hebreu && <div style={{ position: "absolute", top: "3%", left: 0, right: 0, fontSize: "clamp(20px, 8cqw, 80px)", color: "#E8B030", fontFamily: SERIF, textAlign: "center", direction: "rtl", textShadow: "0 2px 15px rgba(0,0,0,0.95)", fontWeight: 700 }}>{data.texte_hebreu}</div>}
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)", padding: "8% 0 4%", display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ maxWidth: "90%", display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
@@ -495,7 +495,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
               <img src={imgSrc} alt="Affiche" style={{ width: "100%", display: "block" }} />
               <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
                 <img src={logoUrl} alt="" style={{ position: "absolute", top: 14, left: 16, width: "clamp(36px, 8%, 56px)", height: "auto", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.7))", opacity: 0.9 }} />
-                <div style={{ position: "absolute", top: 16, right: 20, fontSize: "clamp(14px, 2vw, 18px)", color: "#E8B030", fontFamily: SERIF, textShadow: "0 2px 10px rgba(0,0,0,0.9)", fontWeight: 600 }}>{"\u05D1\u05E1\u05F4\u05D3"}</div>
+                <div style={{ position: "absolute", top: 16, right: 20, fontSize: "clamp(14px, 2vw, 18px)", color: "#E8B030", fontFamily: SERIF, textShadow: "0 2px 10px rgba(0,0,0,0.9)", fontWeight: 600 }}>{"\u05D1\u05F4\u05D4"}</div>
                 {aData.texte_hebreu && <div style={{ position: "absolute", top: 22, left: 0, right: 0, fontSize: "clamp(24px, 5vw, 38px)", color: "#E8B030", fontFamily: SERIF, textAlign: "center", direction: "rtl", textShadow: "0 2px 15px rgba(0,0,0,0.95)", fontWeight: 700 }}>{aData.texte_hebreu}</div>}
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)", padding: "50px 0 28px", display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <div style={{ maxWidth: "90%", display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
