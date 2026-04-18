@@ -111,23 +111,23 @@ Boys and girls are visually different characters. The male character group (boys
   const titleLower = (titre || "").toLowerCase() + " " + (accroche || "").toLowerCase();
   let feteRules = `Use only objects relevant to the specific event. Do not mix holiday symbols.`;
   if (/pessah|pessa[hc]|seder|matsa|matzot/i.test(titleLower))
-    feteRules = `PESSAH ONLY: round hand-made shmura matzah; seder plate with exactly zroa (roasted bone), beitza (hard-boiled egg), maror (whole horseradish root), karpas (celery or potato), charoset (dark paste), and chazeret; separate Eliyahu cup filled with red wine; 4 red wine cups; open Haggadah on the table; spring flowers. FORBIDDEN: menorah, shofar, sukkah, lulav.`;
+    feteRules = `PESSAH ONLY: CENTER of scene = seder table with white tablecloth. ON TABLE MANDATORY: round hand-made shmura matzah (round, beige, with char marks — NOT square crackers), seder plate with exactly 6 items (zroa = roasted lamb bone, beitza = hard-boiled egg, maror = whole horseradish root, karpas = celery stalk, charoset = dark brown paste, chazeret = romaine lettuce), 4 red wine cups, separate large Eliyahu cup filled with red wine, open Haggadah. Family reclining on pillows to the left. FORBIDDEN: menorah, shofar, sukkah, lulav, square industrial matzah.`;
   else if (/hanoukk|hanukkah|chanukah/i.test(titleLower))
-    feteRules = `HANUKKAH ONLY: hanukkiah 9-branch menorah placed at the left side of a doorway or window edge; dreidels; sufganiyot donuts; gelt; small olive oil pitcher (not candles). Books on table or shelf only. FORBIDDEN: matzot, shofar, sukkah.`;
+    feteRules = `HANUKKAH ONLY: CENTER of scene = hanukkiah (9-branch menorah lit with olive oil — small glass cups with oil and wicks, NOT candles) placed at left side of a doorway or on a windowsill visible from outside. Chabad hanukkiah is tall, silver or brass, with straight branches. Small olive oil pitcher nearby. Dreidels and gold foil-wrapped chocolate coins (gelt) on a table. FORBIDDEN: matzot, shofar, sukkah, lulav, wax candles in the hanukkiah.`;
   else if (/pourim|purim/i.test(titleLower))
-    feteRules = `PURIM ONLY: megillah scroll; mishloah manot basket containing at least 2 different foods and a bottle of wine or grape juice; hamantashen cookies; masks; costumes. FORBIDDEN: menorah, matzot, shofar.`;
+    feteRules = `PURIM ONLY: CENTER of scene = colorful mishloah manot gift basket containing at least 2 different foods and a bottle of wine or grape juice, open Megillat Esther scroll (handwritten Hebrew parchment), hamantashen triangular cookies (poppy seed or jam filled), festive costumes and masks. FORBIDDEN: menorah, matzot, shofar.`;
   else if (/souccot|sukkot|soukkot/i.test(titleLower))
-    feteRules = `SUKKOT ONLY: sukkah; lulav (palm branch bound with 3 myrtle branches and 2 willow branches); etrog (yellow citron with intact pitom); schach roof branches. FORBIDDEN: menorah, matzot.`;
+    feteRules = `SUKKOT ONLY: CENTER of scene = sukkah (wooden or fabric walls, roof of schach = palm branches and leaves through which sky is visible, hanging fruits and decorations inside). Man holding lulav set in right hand (tall straight palm frond bound with 3 myrtle branches and 2 willow branches) and etrog (yellow citron fruit with intact green pitom tip) in left hand. FORBIDDEN: menorah, matzot.`;
   else if (/chavouot|shavuot/i.test(titleLower))
-    feteRules = `SHAVUOT ONLY: Torah scroll, flowers, greenery, dairy foods, cheesecake or blintzes on the table. FORBIDDEN: menorah, matzot, sukkah.`;
+    feteRules = `SHAVUOT ONLY: CENTER of scene = table with open Torah scroll, room decorated with fresh green branches and flowers (the synagogue is traditionally decorated with greenery). Dairy foods on table: cheesecake, blintzes (thin crepes folded around white cheese). Tikkun Leil Shavuot book open (night of Torah study). FORBIDDEN: menorah, matzot, sukkah.`;
   else if (/roch.?hachana|rosh.?hashana/i.test(titleLower))
-    feteRules = `ROSH HASHANA ONLY: shofar; red apple slices dipped in golden honey bowl; pomegranate (rimon); round challah dipped in honey; prayer book. FORBIDDEN: menorah, matzot, sukkah.`;
+    feteRules = `ROSH HASHANA ONLY: CENTER of scene = festive table. MANDATORY ITEMS: ram's horn shofar (curved hollow horn from a male sheep, beige/brown color, NOT a straight or metal instrument), round raisin challah dipped in honey, golden honey dish with red apple slices, pomegranate (rimon) cut open showing red seeds, fish or ram's head on a plate. FORBIDDEN: any straight or metal horn, menorah, matzot, sukkah, any musical instrument that is not a curved ram's horn.`;
   else if (/kippour|kippur/i.test(titleLower))
-    feteRules = `YOM KIPPUR: white kittel for men, tallit, white Habad machzor (white cover), white tablecloth, lit memorial candles. Solemn atmosphere. FORBIDDEN: food, festive objects.`;
+    feteRules = `YOM KIPPUR: CENTER of scene = synagogue interior, solemn and white. Married men wear a kittel (long plain white linen robe with white belt, reaching the feet, worn OVER their black suit — this is the most visually dominant garment, like a white angel robe). White Chabad machzor (prayer book with white cover) open in hands. White tallit draped over shoulders. Lit memorial candles (yahrtzeit candles in glass). White tablecloth. Atmosphere: solemn, pure, angelic. FORBIDDEN: food, festive objects, colorful clothing, gold jewelry.`;
   else if (/lag.?baomer/i.test(titleLower))
-    feteRules = `LAG BAOMER: large central bonfire, open Zohar books on a table nearby, families celebrating — no weapons or bows. FORBIDDEN: weapons, bows, arrows, matzot, hanukkiah.`;
+    feteRules = `LAG BAOMER ONLY: CENTER of scene = large central bonfire at night with tall orange flames. Open Zohar book on a nearby table (the Rashbi's hillulah). Families and children celebrating around the fire. Joyful outdoor atmosphere. FORBIDDEN: weapons, bows, arrows, matzot, hanukkiah.`;
   else if (/chabbat|shabbat/i.test(titleLower))
-    feteRules = `SHABBAT ONLY: two challahs covered with an embroidered challah cover; pure white tablecloth; at least 2 white lit candles in silver candlesticks; kiddush cup. FORBIDDEN: 9-branch menorah, matzot.`;
+    feteRules = `SHABBAT ONLY: CENTER of scene = white dining table. MANDATORY: two braided challahs covered with an embroidered challah cover (decorative fabric with Hebrew letters), silver kiddush cup filled with red wine, silver candlesticks with 2 lit white candles, pure white tablecloth. Warm golden candlelight atmosphere. FORBIDDEN: 9-branch menorah, matzot, any chametz.`;
 
   const finalCheck = maleOnly
     ? `FINAL CHECK: Only male characters appear in the scene.`
@@ -137,22 +137,30 @@ Boys and girls are visually different characters. The male character group (boys
 
   const eventDetails = [titre, sous_titre, date, heure, lieu, bc].filter(Boolean).join(" · ");
 
-  return `Warm children's storybook illustration for a community event in France.
+  return `SCENE PRIORITY: The holiday objects listed below are MANDATORY and must dominate the scene. Characters are secondary and must be arranged around the holiday objects, not the opposite.
+
+═══ 1. HOLIDAY OBJECTS (mandatory, must dominate the scene) ═══
+${feteRules}
+
+═══ 2. FORMAT & VISUAL COMPOSITION ═══
+Warm children's storybook illustration for a community event in France.
 Event: ${eventDetails}
 Scene hint: "${accroche || sous_titre}"
 Style: editorial children's book illustration in the spirit of modern Pixar and Disney animation — fresh, warm, natural, with simple secular styling for all characters. ${pal}. Warm soft lighting. Max 4 characters. Bottom 20% kept dark and empty for text overlay — no visual elements in bottom 20%.
+Aspect ratio: ${ar}.
 
+═══ 3. CHARACTERS (arranged around the holiday objects) ═══
 ${charSection}
 
-MANDATORY RULES:
+═══ 4. MANDATORY RULES ═══
+SCENE COMPOSITION PRIORITY: Holiday ritual objects listed below are MANDATORY and visually dominant. Characters are secondary — they must be arranged around and interacting with the holiday objects, never replacing them.
 - NO TEXT or letters anywhere in the image (any language)
 - Holy books always on table, shelf or in hands — never on the floor
 - FEMALE HAIR: Every female character shows her natural hair on top of the head, with the scalp parting line clearly visible. Male characters wear a dark kippah.
 - No symbols such as Star of David, crosses, crescents, or hamsa
 - No Rebbe's face. No non-kosher animals
-- ${feteRules}
 ${maleOnly ? "- Only male characters appear in this scene. Each wears a dark navy kippah." : hasFemale ? "- Female characters have natural visible hair with the scalp parting shown. Male characters wear a dark kippah." : ""}
 
 ${finalCheck}
-Aspect ratio: ${ar}. High quality illustration. Absolutely no text or writing in the image.`;
+High quality illustration. Absolutely no text or writing in the image.`;
 }
