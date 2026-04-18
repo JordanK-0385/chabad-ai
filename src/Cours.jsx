@@ -79,34 +79,63 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
-async function fetchPdfDocuments() {
-  try {
-    const ghHeaders = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
-    if (GH_TOKEN) ghHeaders.Authorization = `Bearer ${GH_TOKEN}`;
-    const listRes = await fetch(
-      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}?ref=${GH_BRANCH}`,
-      { headers: ghHeaders }
-    );
-    if (listRes.status === 404) return [];
-    if (!listRes.ok) throw new Error(`GitHub list failed (${listRes.status})`);
-    const items = await listRes.json();
-    if (!Array.isArray(items) || items.length === 0) return [];
+const MAX_PDFS_SENT = 8;
 
-    const docs = await Promise.all(items.map(async item => {
-      const resp = await fetch(`/pdfs/${encodeURIComponent(item.name)}`);
-      if (!resp.ok) throw new Error(`PDF fetch failed for ${item.name} (${resp.status})`);
-      const buf = await resp.arrayBuffer();
-      return { data: arrayBufferToBase64(buf) };
-    }));
-    return docs.map((d, i) => ({
-      type: "document",
-      source: { type: "base64", media_type: "application/pdf", data: d.data },
-      ...(i < 4 ? { cache_control: { type: "ephemeral" } } : {})
-    }));
-  } catch (e) {
-    console.warn("PDF fetch failed:", e.message);
-    return [];
-  }
+function ghHeadersObj() {
+  const h = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+  if (GH_TOKEN) h.Authorization = `Bearer ${GH_TOKEN}`;
+  return h;
+}
+
+// List PDFs with latest-commit date, sorted most-recent first.
+async function listPdfsSorted() {
+  const headers = ghHeadersObj();
+  const listRes = await fetch(
+    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}?ref=${GH_BRANCH}`,
+    { headers }
+  );
+  if (listRes.status === 404) return [];
+  if (!listRes.ok) throw new Error(`GitHub list failed (${listRes.status})`);
+  const items = await listRes.json();
+  if (!Array.isArray(items) || items.length === 0) return [];
+
+  const withDates = await Promise.all(items.map(async item => {
+    let uploadDate = null;
+    try {
+      const commitRes = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(item.path)}&per_page=1&sha=${GH_BRANCH}`,
+        { headers }
+      );
+      if (commitRes.ok) {
+        const commits = await commitRes.json();
+        const dateStr = commits?.[0]?.commit?.committer?.date || commits?.[0]?.commit?.author?.date;
+        if (dateStr) uploadDate = new Date(dateStr);
+      }
+    } catch (_) { /* silent per-file */ }
+    return { name: item.name, path: item.path, sha: item.sha, uploadDate };
+  }));
+
+  withDates.sort((a, b) => {
+    const ad = a.uploadDate?.getTime?.() || 0;
+    const bd = b.uploadDate?.getTime?.() || 0;
+    return bd - ad;
+  });
+  return withDates;
+}
+
+async function fetchPdfBlocksForItems(items) {
+  if (!Array.isArray(items) || items.length === 0) return [];
+  const docs = await Promise.all(items.map(async item => {
+    const resp = await fetch(`/pdfs/${encodeURIComponent(item.name)}`);
+    if (!resp.ok) throw new Error(`PDF fetch failed for ${item.name} (${resp.status})`);
+    const buf = await resp.arrayBuffer();
+    return { data: arrayBufferToBase64(buf) };
+  }));
+  return docs.map((d, i) => ({
+    type: "document",
+    source: { type: "base64", media_type: "application/pdf", data: d.data },
+    ...(i < 4 ? { cache_control: { type: "ephemeral" } } : {})
+  }));
 }
 
 export default function Cours({ profil, onBack, headerProps }) {
@@ -128,6 +157,25 @@ export default function Cours({ profil, onBack, headerProps }) {
   const [err, setErr] = useState("");
   const [loadMsgIdx, setLoadMsgIdx] = useState(0);
   const [loadTime, setLoadTime] = useState(COURS_LOAD_START);
+
+  const [pdfList, setPdfList] = useState([]);
+  const [pdfListLoading, setPdfListLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const items = await listPdfsSorted();
+        if (!cancelled) setPdfList(items);
+      } catch (e) {
+        console.warn("PDF list failed:", e.message);
+        if (!cancelled) setPdfList([]);
+      } finally {
+        if (!cancelled) setPdfListLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (!loading) return;
@@ -169,7 +217,11 @@ export default function Cours({ profil, onBack, headerProps }) {
         `Institution : ${bc}`,
       ].filter(Boolean).join("\n");
 
-      const pdfBlocks = await fetchPdfDocuments();
+      const selectedPdfs = pdfList.slice(0, MAX_PDFS_SENT);
+      const pdfBlocks = await fetchPdfBlocksForItems(selectedPdfs).catch(e => {
+        console.warn("PDF fetch failed:", e.message);
+        return [];
+      });
       const userContent = pdfBlocks.length > 0
         ? [...pdfBlocks, { type: "text", text: msg }]
         : msg;
@@ -271,6 +323,57 @@ export default function Cours({ profil, onBack, headerProps }) {
                 );
               })}
             </div>
+          </Card>
+
+          <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
+            <StepLabel n="4">Documents sources</StepLabel>
+            {pdfListLoading ? (
+              <div style={{ fontSize: mobile ? 14 : 12, color: T.muted }}>Chargement des documents…</div>
+            ) : pdfList.length === 0 ? (
+              <div style={{ fontSize: mobile ? 14 : 12, color: T.muted }}>Aucun document disponible.</div>
+            ) : (
+              <>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                  {pdfList.map((f, i) => {
+                    const used = i < MAX_PDFS_SENT;
+                    return (
+                      <li
+                        key={f.path}
+                        title={f.uploadDate ? `Uploadé le ${f.uploadDate.toLocaleDateString("fr-FR")}` : ""}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 8,
+                          padding: "7px 10px",
+                          background: used ? T.goldFaint : T.surface,
+                          border: `1px solid ${used ? T.goldSoft : T.border}`,
+                          borderRadius: 7,
+                          fontSize: mobile ? 13 : 12,
+                          color: used ? T.text : T.muted,
+                          opacity: used ? 1 : 0.65,
+                        }}
+                      >
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
+                          📄 {f.name}
+                        </span>
+                        <span style={{ fontSize: 11, color: T.muted, flexShrink: 0 }}>
+                          {f.uploadDate ? f.uploadDate.toLocaleDateString("fr-FR") : "—"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div style={{ marginTop: 10, fontSize: mobile ? 13 : 11.5, color: T.muted, textAlign: "center" }}>
+                  <strong style={{ color: T.gold }}>{Math.min(pdfList.length, MAX_PDFS_SENT)}</strong> document{Math.min(pdfList.length, MAX_PDFS_SENT) > 1 ? "s" : ""} utilisé{Math.min(pdfList.length, MAX_PDFS_SENT) > 1 ? "s" : ""} sur <strong style={{ color: T.text }}>{pdfList.length}</strong> disponible{pdfList.length > 1 ? "s" : ""}
+                  {pdfList.length > MAX_PDFS_SENT && (
+                    <div style={{ fontSize: 11, color: T.faint, marginTop: 4 }}>
+                      (les {MAX_PDFS_SENT} plus récents)
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </Card>
 
           {err && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 7, padding: "8px 12px" }}>{err}</div>}
