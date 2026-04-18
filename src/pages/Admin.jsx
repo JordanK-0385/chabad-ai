@@ -1,7 +1,7 @@
 /* ─── Admin.jsx ─── Protected admin dashboard with user stats ─── */
 
 import { useEffect, useState, Fragment } from "react";
-import { collection, getDocs, deleteDoc, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, updateDoc, doc, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { T, SERIF, SANS, INP, AppHeader } from "../shared";
 
@@ -86,6 +86,12 @@ export default function Admin({ user, profil, headerProps }) {
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfErr, setPdfErr] = useState("");
   const [pdfSelection, setPdfSelection] = useState(null);
+
+  const [adminTab, setAdminTab] = useState("users");
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true);
+  const [suggestionsBusy, setSuggestionsBusy] = useState(null);
+  const [suggestionsErr, setSuggestionsErr] = useState("");
 
   const [mobile, setMobile] = useState(typeof window !== "undefined" && window.innerWidth <= 600);
   useEffect(() => {
@@ -260,9 +266,75 @@ export default function Admin({ user, profil, headerProps }) {
     return () => { cancelled = true; };
   }, [isAdmin]);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        let docs = [];
+        try {
+          const snap = await getDocs(query(collection(db, "suggestions"), orderBy("createdAt", "desc")));
+          docs = snap.docs;
+        } catch {
+          const snap = await getDocs(collection(db, "suggestions"));
+          docs = snap.docs;
+        }
+        const data = docs.map(d => {
+          const v = d.data() || {};
+          return {
+            id: d.id,
+            userId: v.userId || "",
+            userEmail: v.userEmail || "",
+            betChabad: v.betChabad || "—",
+            type: v.type || "—",
+            message: v.message || "",
+            status: v.status || "nouvelle",
+            createdAt: v.createdAt?.toDate?.() || null,
+          };
+        });
+        data.sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0));
+        if (!cancelled) setSuggestions(data);
+      } catch (e) {
+        if (!cancelled) setSuggestionsErr(e.message || "Erreur de chargement des suggestions.");
+      } finally {
+        if (!cancelled) setSuggestionsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isAdmin]);
+
+  async function handleSuggestionStatus(id, newStatus) {
+    setSuggestionsBusy(id);
+    setSuggestionsErr("");
+    try {
+      await updateDoc(doc(db, "suggestions", id), { status: newStatus });
+      setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+    } catch (e) {
+      setSuggestionsErr(e.message || "Erreur de mise à jour.");
+    } finally {
+      setSuggestionsBusy(null);
+    }
+  }
+
+  async function handleSuggestionDelete(id) {
+    if (!window.confirm("Supprimer cette suggestion ?")) return;
+    setSuggestionsBusy(id);
+    setSuggestionsErr("");
+    try {
+      await deleteDoc(doc(db, "suggestions", id));
+      setSuggestions(prev => prev.filter(s => s.id !== id));
+    } catch (e) {
+      setSuggestionsErr(e.message || "Erreur de suppression.");
+    } finally {
+      setSuggestionsBusy(null);
+    }
+  }
+
   if (!isAdmin) {
     return <div style={{ padding: 40 }}>Accès refusé.</div>;
   }
+
+  const unreadSuggestions = suggestions.filter(s => s.status === "nouvelle").length;
 
   const totals = rows.reduce(
     (acc, r) => ({
@@ -348,6 +420,58 @@ export default function Admin({ user, profil, headerProps }) {
           </div>
         )}
 
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 24, borderBottom: "1px solid var(--color-border)" }}>
+          {[
+            { id: "users", label: "Utilisateurs", icon: "👥" },
+            { id: "ideas", label: "Idées",        icon: "💡" },
+          ].map(t => {
+            const active = adminTab === t.id;
+            const badge = t.id === "ideas" && unreadSuggestions > 0 ? unreadSuggestions : 0;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setAdminTab(t.id)}
+                style={{
+                  padding: mobile ? "10px 12px" : "10px 18px",
+                  fontSize: mobile ? 13 : 14,
+                  fontWeight: 600,
+                  fontFamily: SANS,
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: `2px solid ${active ? "var(--color-accent)" : "transparent"}`,
+                  color: active ? "var(--color-accent)" : "var(--color-text-muted)",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: -1,
+                  transition: "all 0.15s",
+                  position: "relative",
+                }}
+              >
+                <span>{t.icon}</span>
+                <span>{t.label}</span>
+                {badge > 0 && (
+                  <span style={{
+                    background: "var(--color-error)",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "2px 7px",
+                    borderRadius: 999,
+                    lineHeight: 1,
+                    minWidth: 18,
+                    textAlign: "center",
+                  }}>{badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {adminTab === "users" && (
+        <>
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, padding: mobile ? 16 : 24, marginBottom: 28 }}>
           <h2 style={{ fontFamily: SERIF, fontSize: mobile ? 18 : 20, fontWeight: 700, margin: "0 0 16px", color: "var(--color-text)", letterSpacing: "-0.01em" }}>
             Documents de la semaine
@@ -708,6 +832,162 @@ export default function Admin({ user, profil, headerProps }) {
           </div>
           )}
         </div>
+        </>
+        )}
+
+        {adminTab === "ideas" && (
+          <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, overflow: "hidden" }}>
+            <div style={{ padding: mobile ? "14px 16px" : "18px 20px", borderBottom: "1px solid var(--color-border)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+              <h2 style={{ fontFamily: SERIF, fontSize: mobile ? 18 : 20, fontWeight: 700, margin: 0, color: "var(--color-text)", letterSpacing: "-0.01em" }}>
+                Boîte à idées
+              </h2>
+              <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+                {suggestionsLoading ? "Chargement…" : `${suggestions.length} suggestion${suggestions.length > 1 ? "s" : ""}`}
+                {unreadSuggestions > 0 && (
+                  <span style={{ marginLeft: 10, padding: "2px 9px", background: "var(--color-error)", color: "#fff", borderRadius: 999, fontSize: 11, fontWeight: 700 }}>
+                    {unreadSuggestions} nouvelle{unreadSuggestions > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {suggestionsErr && (
+              <div style={{ color: "var(--color-error)", fontSize: 13, margin: 16, padding: "10px 14px", background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 8 }}>
+                {suggestionsErr}
+              </div>
+            )}
+
+            {suggestionsLoading ? (
+              <div style={{ padding: 24, fontSize: 13, color: "var(--color-text-muted)" }}>Chargement…</div>
+            ) : suggestions.length === 0 ? (
+              <div style={{ padding: 24, fontSize: 14, color: "var(--color-text-muted)", textAlign: "center" }}>
+                Aucune suggestion pour le moment.
+              </div>
+            ) : mobile ? (
+              <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+                {suggestions.map(s => {
+                  const isBusy = suggestionsBusy === s.id;
+                  const statusColor =
+                    s.status === "nouvelle" ? "var(--color-error)" :
+                    s.status === "en cours" ? "var(--color-accent)" :
+                    "var(--color-success)";
+                  const statusBg =
+                    s.status === "nouvelle" ? "var(--color-error-bg)" :
+                    s.status === "en cours" ? "var(--color-accent-faint)" :
+                    "var(--color-accent-faint)";
+                  const nextStatus =
+                    s.status === "nouvelle" ? "en cours" :
+                    s.status === "en cours" ? "réalisée" :
+                    "nouvelle";
+                  return (
+                    <div key={s.id} style={{ background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 12, padding: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+                        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
+                          {s.createdAt ? s.createdAt.toLocaleDateString("fr-FR") + " · " + s.createdAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "—"}
+                        </div>
+                        <span style={{ padding: "3px 10px", background: statusBg, color: statusColor, borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: "capitalize", flexShrink: 0 }}>
+                          {s.status}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text)", marginBottom: 2 }}>{s.betChabad}</div>
+                      <div style={{ fontSize: 12, color: "var(--color-accent)", marginBottom: 10 }}>{s.type}</div>
+                      <div style={{ fontSize: 13.5, color: "var(--color-text)", lineHeight: 1.5, marginBottom: 12, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                        {s.message}
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          onClick={() => handleSuggestionStatus(s.id, nextStatus)}
+                          disabled={isBusy}
+                          style={{ ...actionBtn, ...actionBtnPrimary, flex: 1, padding: "9px 10px", opacity: isBusy ? 0.5 : 1 }}
+                        >
+                          → {nextStatus}
+                        </button>
+                        <button
+                          onClick={() => handleSuggestionDelete(s.id)}
+                          disabled={isBusy}
+                          style={{ ...actionBtn, ...actionBtnDanger, flex: 1, padding: "9px 10px", opacity: isBusy ? 0.5 : 1 }}
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: SANS }}>
+                  <thead>
+                    <tr>
+                      <th style={th}>Date</th>
+                      <th style={th}>Beth Chabad</th>
+                      <th style={th}>Type</th>
+                      <th style={th}>Message</th>
+                      <th style={th}>Statut</th>
+                      <th style={{ ...th, textAlign: "right" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {suggestions.map(s => {
+                      const isBusy = suggestionsBusy === s.id;
+                      const statusColor =
+                        s.status === "nouvelle" ? "var(--color-error)" :
+                        s.status === "en cours" ? "var(--color-accent)" :
+                        "var(--color-success)";
+                      const statusBg =
+                        s.status === "nouvelle" ? "var(--color-error-bg)" :
+                        s.status === "en cours" ? "var(--color-accent-faint)" :
+                        "var(--color-accent-faint)";
+                      const nextStatus =
+                        s.status === "nouvelle" ? "en cours" :
+                        s.status === "en cours" ? "réalisée" :
+                        "nouvelle";
+                      return (
+                        <tr key={s.id}>
+                          <td style={{ ...td, color: "var(--color-text-muted)", whiteSpace: "nowrap", fontSize: 13 }}>
+                            {s.createdAt ? s.createdAt.toLocaleDateString("fr-FR") : "—"}
+                            {s.createdAt && (
+                              <div style={{ fontSize: 11, color: "var(--color-text-subtle)" }}>
+                                {s.createdAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                              </div>
+                            )}
+                          </td>
+                          <td style={td}>{s.betChabad}</td>
+                          <td style={{ ...td, color: "var(--color-accent)", fontWeight: 600, fontSize: 13 }}>{s.type}</td>
+                          <td style={{ ...td, maxWidth: 380, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 13.5, lineHeight: 1.5 }}>
+                            {s.message}
+                          </td>
+                          <td style={td}>
+                            <span style={{ padding: "3px 10px", background: statusBg, color: statusColor, borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: "capitalize", display: "inline-block", whiteSpace: "nowrap" }}>
+                              {s.status}
+                            </span>
+                          </td>
+                          <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}>
+                            <button
+                              onClick={() => handleSuggestionStatus(s.id, nextStatus)}
+                              disabled={isBusy}
+                              title={`Passer à : ${nextStatus}`}
+                              style={{ ...actionBtn, ...actionBtnPrimary, marginRight: 6, opacity: isBusy ? 0.5 : 1 }}
+                            >
+                              → {nextStatus}
+                            </button>
+                            <button
+                              onClick={() => handleSuggestionDelete(s.id)}
+                              disabled={isBusy}
+                              style={{ ...actionBtn, ...actionBtnDanger, opacity: isBusy ? 0.5 : 1 }}
+                            >
+                              {isBusy ? "…" : "Supprimer"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

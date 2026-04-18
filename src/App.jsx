@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { onAuthChange, doSignOut, firebaseReady } from "./firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
-import { T, SANS } from "./shared";
+import { T, SANS, SuggestionsFAB } from "./shared";
 import LandingPage from "./pages/LandingPage";
 import Onboarding from "./Onboarding";
 import Dashboard from "./Dashboard";
@@ -86,25 +86,32 @@ export default function App() {
       />
     );
 
-  if (screen === "affiches")
-    return <Affiches profil={profil} headerProps={headerProps} />;
-
-  if (screen === "cours")
-    return <Cours profil={profil} headerProps={headerProps} />;
-
-  if (screen === "messages")
-    return <Messages profil={profil} headerProps={headerProps} />;
+  let content;
+  if (screen === "affiches") {
+    content = <Affiches profil={profil} headerProps={headerProps} />;
+  } else if (screen === "cours") {
+    content = <Cours profil={profil} headerProps={headerProps} />;
+  } else if (screen === "messages") {
+    content = <Messages profil={profil} headerProps={headerProps} />;
+  } else {
+    content = (
+      <Dashboard
+        user={user}
+        profil={profil}
+        setProfil={setProfil}
+        headerProps={headerProps}
+        onNavigate={setScreen}
+        onLogout={() => doSignOut()}
+        showProfileModal={screen === "dashboard-profile"}
+        onCloseProfile={() => setScreen("dashboard")}
+      />
+    );
+  }
 
   return (
-    <Dashboard
-      user={user}
-      profil={profil}
-      setProfil={setProfil}
-      headerProps={headerProps}
-      onNavigate={setScreen}
-      onLogout={() => doSignOut()}
-      showProfileModal={screen === "dashboard-profile"}
-      onCloseProfile={() => setScreen("dashboard")}
-    />
+    <>
+      {content}
+      <SuggestionsFAB user={user} profil={profil} />
+    </>
   );
 }

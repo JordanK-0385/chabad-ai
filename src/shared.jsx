@@ -133,6 +133,8 @@ export function BackButton({ onClick }) {
 }
 
 import { useState, useEffect } from "react";
+import { db } from "./firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 // Inject global focus-visible style once
 if (typeof document !== "undefined" && !document.getElementById("shliach-focus-style")) {
@@ -263,5 +265,197 @@ export function AppHeader({ currentScreen, onNavigate, user, onSignOut }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── SuggestionsFAB — Floating "Boîte à idées" button + modal ── */
+const SUGGESTION_TYPES = [
+  { id: "Amélioration",           icon: "✨" },
+  { id: "Bug",                    icon: "🐛" },
+  { id: "Nouvelle fonctionnalité", icon: "💡" },
+];
+
+export function SuggestionsFAB({ user, profil }) {
+  const [open, setOpen]       = useState(false);
+  const [type, setType]       = useState("Amélioration");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent]       = useState(false);
+  const [err, setErr]         = useState("");
+
+  if (!user?.uid) return null;
+
+  async function handleSubmit() {
+    const trimmed = message.trim();
+    if (!trimmed) { setErr("Veuillez saisir votre idée."); return; }
+    setSending(true);
+    setErr("");
+    try {
+      await addDoc(collection(db, "suggestions"), {
+        userId: user.uid,
+        userEmail: user.email || "",
+        betChabad: profil?.betChabad || profil?.ville || "",
+        type,
+        message: trimmed,
+        createdAt: serverTimestamp(),
+        status: "nouvelle",
+      });
+      setSent(true);
+      setMessage("");
+      setTimeout(() => { setOpen(false); setSent(false); }, 1600);
+    } catch (e) {
+      console.error(e);
+      setErr("Erreur d'envoi. Réessayez.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function closeModal() {
+    if (sending) return;
+    setOpen(false);
+    setErr("");
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Boîte à idées"
+        title="Boîte à idées"
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          width: 56,
+          height: 56,
+          borderRadius: "50%",
+          background: T.gold,
+          color: "var(--color-text-on-accent)",
+          border: "none",
+          cursor: "pointer",
+          fontSize: 26,
+          lineHeight: 1,
+          boxShadow: "0 8px 24px var(--color-accent-soft)",
+          zIndex: 998,
+          transition: "transform 0.15s",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+      >
+        💡
+      </button>
+
+      {open && (
+        <div
+          onClick={closeModal}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: T.modalBackdrop,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            zIndex: 999,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: T.card,
+              border: `1px solid ${T.border}`,
+              borderRadius: 14,
+              padding: 24,
+              maxWidth: 480,
+              width: "100%",
+              boxShadow: T.shadowDropdown,
+              fontFamily: SANS,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <span style={{ fontSize: 22 }}>💡</span>
+              <h3 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, color: T.text, margin: 0 }}>
+                Boîte à idées
+              </h3>
+            </div>
+            <p style={{ fontSize: 13, color: T.muted, margin: "0 0 18px" }}>
+              Partagez vos suggestions pour améliorer Habad.ai.
+            </p>
+
+            {sent ? (
+              <div style={{
+                padding: "14px 16px",
+                background: "var(--color-accent-faint)",
+                border: `1px solid ${T.green}`,
+                borderRadius: 10,
+                color: T.green,
+                textAlign: "center",
+                fontSize: 14,
+                fontWeight: 600,
+              }}>
+                ✓ Merci ! Votre suggestion a bien été envoyée.
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 12, fontWeight: 600, color: T.text, marginBottom: 8 }}>Type</div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
+                  {SUGGESTION_TYPES.map(t => {
+                    const active = type === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setType(t.id)}
+                        disabled={sending}
+                        style={{
+                          padding: "8px 14px",
+                          borderRadius: 999,
+                          border: `1px solid ${active ? T.gold : T.border}`,
+                          background: active ? T.goldFaint : "transparent",
+                          color: active ? T.gold : T.muted,
+                          fontFamily: SANS,
+                          fontSize: 12.5,
+                          fontWeight: 500,
+                          cursor: sending ? "not-allowed" : "pointer",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {t.icon} {t.id}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ fontSize: 12, fontWeight: 600, color: T.text, marginBottom: 8 }}>Votre idée</div>
+                <textarea
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  placeholder="Décrivez votre idée..."
+                  rows={5}
+                  disabled={sending}
+                  style={{ ...INP, resize: "vertical", minHeight: 110 }}
+                />
+
+                {err && (
+                  <div style={{ marginTop: 10, padding: "8px 12px", background: T.redBg, border: `1px solid ${T.redBorder}`, borderRadius: 8, color: T.red, fontSize: 12.5 }}>
+                    {err}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: 10, marginTop: 18, justifyContent: "flex-end" }}>
+                  <GBtn outline sm onClick={closeModal} disabled={sending}>Annuler</GBtn>
+                  <GBtn sm onClick={handleSubmit} disabled={sending || !message.trim()}>
+                    {sending ? "Envoi..." : "Envoyer"}
+                  </GBtn>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
