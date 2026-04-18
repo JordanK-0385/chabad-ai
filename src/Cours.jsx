@@ -1,6 +1,7 @@
 /* ─── Cours.jsx ─── Torah course preparation module ─── */
 
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
 import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -481,8 +482,59 @@ export default function Cours({ profil, onBack, headerProps }) {
           )}
           {result && (
             <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28, maxHeight: "75vh", overflowY: "auto" }}>
-              <div style={{ fontSize: mobile ? 14 : 13, color: T.text, lineHeight: 1.8, whiteSpace: "pre-wrap", fontFamily: SANS }}>
-                {result}
+              <div style={{ fontSize: mobile ? 14 : 13, color: T.text, lineHeight: 1.8, fontFamily: SANS }}>
+                <ReactMarkdown
+                  components={{
+                    h1: ({ node, ...props }) => (
+                      <h1 style={{ fontFamily: SERIF, color: T.gold, fontSize: mobile ? 22 : 26, fontWeight: 700, lineHeight: 1.25, letterSpacing: "-0.01em", margin: "0 0 16px" }} {...props} />
+                    ),
+                    h2: ({ node, ...props }) => (
+                      <h2 style={{ fontFamily: SERIF, color: T.gold, fontSize: mobile ? 18 : 20, fontWeight: 700, lineHeight: 1.3, margin: "24px 0 12px" }} {...props} />
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <h3 style={{ fontFamily: SERIF, color: T.text, fontSize: mobile ? 16 : 17, fontWeight: 700, lineHeight: 1.35, margin: "20px 0 10px" }} {...props} />
+                    ),
+                    h4: ({ node, ...props }) => (
+                      <h4 style={{ fontFamily: SANS, color: T.text, fontSize: mobile ? 15 : 15, fontWeight: 700, lineHeight: 1.4, margin: "18px 0 8px", textTransform: "uppercase", letterSpacing: 0.4 }} {...props} />
+                    ),
+                    p: ({ node, ...props }) => (
+                      <p style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 14 : 13.5, lineHeight: 1.8, margin: "0 0 14px" }} {...props} />
+                    ),
+                    strong: ({ node, ...props }) => (
+                      <strong style={{ color: T.text, fontWeight: 700 }} {...props} />
+                    ),
+                    em: ({ node, ...props }) => (
+                      <em style={{ color: T.text, fontStyle: "italic" }} {...props} />
+                    ),
+                    hr: ({ node, ...props }) => (
+                      <hr style={{ border: "none", borderTop: `1px solid ${T.border}`, margin: "22px 0" }} {...props} />
+                    ),
+                    ul: ({ node, ...props }) => (
+                      <ul style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 14 : 13.5, lineHeight: 1.8, margin: "0 0 14px", paddingLeft: 22 }} {...props} />
+                    ),
+                    ol: ({ node, ...props }) => (
+                      <ol style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 14 : 13.5, lineHeight: 1.8, margin: "0 0 14px", paddingLeft: 22 }} {...props} />
+                    ),
+                    li: ({ node, ...props }) => (
+                      <li style={{ marginBottom: 4 }} {...props} />
+                    ),
+                    blockquote: ({ node, ...props }) => (
+                      <blockquote style={{ borderLeft: `3px solid ${T.gold}`, background: T.goldFaint, margin: "16px 0", padding: "10px 16px", color: T.text, fontFamily: SERIF, fontStyle: "italic", fontSize: mobile ? 14 : 13.5, lineHeight: 1.7, borderRadius: "0 6px 6px 0" }} {...props} />
+                    ),
+                    code: ({ node, inline, ...props }) => (
+                      inline ? (
+                        <code style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 4, padding: "1px 6px", fontSize: "0.9em", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: T.gold }} {...props} />
+                      ) : (
+                        <code style={{ display: "block", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: "12px 14px", fontSize: "0.9em", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: T.text, whiteSpace: "pre-wrap", margin: "10px 0" }} {...props} />
+                      )
+                    ),
+                    a: ({ node, ...props }) => (
+                      <a style={{ color: T.gold, textDecoration: "underline", textUnderlineOffset: 2 }} target="_blank" rel="noreferrer" {...props} />
+                    ),
+                  }}
+                >
+                  {result}
+                </ReactMarkdown>
               </div>
               <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, marginTop: 16 }}>
                 <GBtn onClick={() => { navigator.clipboard.writeText(result); }} outline sm>Copier</GBtn>
