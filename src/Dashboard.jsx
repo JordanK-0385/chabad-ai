@@ -37,24 +37,65 @@ export default function Dashboard({ user, profil, setProfil, headerProps, onNavi
   }, [showProfileModal]);
 
   useEffect(() => {
-    fetch("https://www.hebcal.com/shabbat?cfg=json&geonameid=2988507&m=50")
-      .then(r => r.json())
-      .then(data => {
-        const candle   = data.items?.find(i => i.category === "candles");
-        const havdalah = data.items?.find(i => i.category === "havdalah");
-        const parasha  = data.items?.find(i => i.category === "parashat");
-        const toHHMM = item => {
-          if (!item?.date) return null;
-          const d = new Date(item.date);
-          return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-        };
-        setShabbat({
-          candle:   toHHMM(candle),
-          havdalah: toHHMM(havdalah),
-          parasha:  parasha?.title,
-        });
-      })
-      .catch(() => {});
+    let timeoutId;
+    const fetchShabbatFrom = (date) => {
+      const params = date ? `&gy=${date.getFullYear()}&gm=${date.getMonth() + 1}&gd=${date.getDate()}` : "";
+      return fetch(`https://www.hebcal.com/shabbat?cfg=json&geonameid=2988507&m=50${params}`)
+        .then(r => r.json())
+        .catch(() => null);
+    };
+    const parse = (data) => {
+      if (!data?.items) return null;
+      const candle   = data.items.find(i => i.category === "candles");
+      const havdalah = data.items.find(i => i.category === "havdalah");
+      const parasha  = data.items.find(i => i.category === "parashat");
+      const toHHMM = item => {
+        if (!item?.date) return null;
+        return new Date(item.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      };
+      return {
+        candle:       toHHMM(candle),
+        havdalah:     toHHMM(havdalah),
+        parasha:      parasha?.title,
+        havdalahDate: havdalah?.date || null,
+      };
+    };
+
+    (async () => {
+      // Initial fetch — nearest upcoming Shabbat
+      const data = await fetchShabbatFrom();
+      let parsed = parse(data);
+
+      // If current Shabbat's havdalah has already passed, fetch NEXT week's Shabbat
+      if (parsed?.havdalahDate && new Date(parsed.havdalahDate).getTime() < Date.now()) {
+        const nextDay = new Date(parsed.havdalahDate);
+        nextDay.setDate(nextDay.getDate() + 2); // Sunday/Monday after current Shabbat
+        const nextData = await fetchShabbatFrom(nextDay);
+        const nextParsed = parse(nextData);
+        if (nextParsed) parsed = nextParsed;
+      }
+
+      if (!parsed) return;
+      setShabbat({ candle: parsed.candle, havdalah: parsed.havdalah, parasha: parsed.parasha });
+
+      // Schedule auto-refetch 1 min after havdalah passes (if still in session)
+      if (parsed.havdalahDate) {
+        const delay = new Date(parsed.havdalahDate).getTime() - Date.now() + 60_000;
+        if (delay > 0 && delay < 7 * 24 * 3600 * 1000) {
+          timeoutId = setTimeout(async () => {
+            const nextDay = new Date(parsed.havdalahDate);
+            nextDay.setDate(nextDay.getDate() + 2);
+            const nextData = await fetchShabbatFrom(nextDay);
+            const nextParsed = parse(nextData);
+            if (nextParsed) {
+              setShabbat({ candle: nextParsed.candle, havdalah: nextParsed.havdalah, parasha: nextParsed.parasha });
+            }
+          }, delay);
+        }
+      }
+    })();
+
+    return () => { if (timeoutId) clearTimeout(timeoutId); };
   }, []);
 
   const prenom = user?.displayName?.split(" ")[0] || "Rav";
