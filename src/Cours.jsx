@@ -79,7 +79,7 @@ function arrayBufferToBase64(buffer) {
   return btoa(binary);
 }
 
-const MAX_PDFS_SENT = 8;
+const MAX_PDFS_SENT = 10;
 
 function ghHeadersObj() {
   const h = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
@@ -96,8 +96,23 @@ async function listPdfsSorted() {
   );
   if (listRes.status === 404) return [];
   if (!listRes.ok) throw new Error(`GitHub list failed (${listRes.status})`);
-  const items = await listRes.json();
-  if (!Array.isArray(items) || items.length === 0) return [];
+  const raw = await listRes.json();
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+
+  // Keep only .pdf FILES directly in public/pdfs (no dirs, no non-pdf files),
+  // and dedupe by filename (case-insensitive) as a safety net.
+  const seen = new Set();
+  const items = raw.filter(item => {
+    if (!item || item.type !== "file") return false;
+    if (typeof item.name !== "string") return false;
+    if (!item.name.toLowerCase().endsWith(".pdf")) return false;
+    if (item.path !== `${GH_PATH}/${item.name}`) return false;
+    const key = item.name.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  if (items.length === 0) return [];
 
   const withDates = await Promise.all(items.map(async item => {
     let uploadDate = null;
