@@ -147,9 +147,17 @@ export default function Affiches({ profil, onBack, headerProps }) {
     const prompt = buildPrompt(contentData, bcName, format, sel);
     const logoLine = buildLogoLine(!!profil?.logoBase64);
     const fullPrompt = CRITICAL_RULE + "\n\n" + prompt + "\n\n" + logoLine;
+
+    // Detect Hanukkah-related events and attach reference images for Gemini
+    const titleText = ((contentData?.titre || "") + " " + (contentData?.accroche || "")).toLowerCase();
+    const isHanukkah = /hanoukk|hanukkah|chanukah/.test(titleText);
+    const refImages = isHanukkah
+      ? ["/hanukkiah-chabad-ref1.jpg", "/hanukkiah-chabad-ref2.jpg"]
+      : [];
+
     const rawSrc = provider === "openai"
       ? await generateAfficheImageOpenAI(fullPrompt, key, format)
-      : await generateAfficheImageGemini(fullPrompt, key);
+      : await generateAfficheImageGemini(fullPrompt, key, refImages);
     if (!rawSrc) return;
     // Post-crop to exact target aspect ratio (center crop, no distortion)
     try {
