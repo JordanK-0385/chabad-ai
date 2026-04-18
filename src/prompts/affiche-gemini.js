@@ -111,23 +111,23 @@ Boys and girls are visually different characters. The male character group (boys
   const titleLower = (titre || "").toLowerCase() + " " + (accroche || "").toLowerCase();
   let feteRules = `Use only objects relevant to the specific event. Do not mix holiday symbols.`;
   if (/pessah|pessa[hc]|seder|matsa|matzot/i.test(titleLower))
-    feteRules = `PESSAH ONLY: matzot, seder plate, wine cups, Haggadah, spring flowers. FORBIDDEN: menorah, shofar, sukkah, lulav.`;
+    feteRules = `PESSAH ONLY: round hand-made shmura matzah; seder plate with exactly zroa (roasted bone), beitza (hard-boiled egg), maror (whole horseradish root), karpas (celery or potato), charoset (dark paste), and chazeret; separate Eliyahu cup filled with red wine; 4 red wine cups; open Haggadah on the table; spring flowers. FORBIDDEN: menorah, shofar, sukkah, lulav.`;
   else if (/hanoukk|hanukkah|chanukah/i.test(titleLower))
-    feteRules = `HANUKKAH ONLY: hanukkiah 9-branch menorah, dreidels, sufganiyot donuts, gelt, oil jug. Books on table or shelf only. FORBIDDEN: matzot, shofar, sukkah.`;
+    feteRules = `HANUKKAH ONLY: hanukkiah 9-branch menorah placed at the left side of a doorway or window edge; dreidels; sufganiyot donuts; gelt; small olive oil pitcher (not candles). Books on table or shelf only. FORBIDDEN: matzot, shofar, sukkah.`;
   else if (/pourim|purim/i.test(titleLower))
-    feteRules = `PURIM ONLY: megillah scroll, mishloah manot baskets, hamantashen cookies, masks, costumes. FORBIDDEN: menorah, matzot, shofar.`;
+    feteRules = `PURIM ONLY: megillah scroll; mishloah manot basket containing at least 2 different foods and a bottle of wine or grape juice; hamantashen cookies; masks; costumes. FORBIDDEN: menorah, matzot, shofar.`;
   else if (/souccot|sukkot|soukkot/i.test(titleLower))
-    feteRules = `SUKKOT ONLY: sukkah, lulav, etrog, schach roof branches. FORBIDDEN: menorah, matzot.`;
+    feteRules = `SUKKOT ONLY: sukkah; lulav (palm branch bound with 3 myrtle branches and 2 willow branches); etrog (yellow citron with intact pitom); schach roof branches. FORBIDDEN: menorah, matzot.`;
   else if (/chavouot|shavuot/i.test(titleLower))
-    feteRules = `SHAVUOT ONLY: Torah scroll, flowers, greenery, dairy foods. FORBIDDEN: menorah, matzot, sukkah.`;
+    feteRules = `SHAVUOT ONLY: Torah scroll, flowers, greenery, dairy foods, cheesecake or blintzes on the table. FORBIDDEN: menorah, matzot, sukkah.`;
   else if (/roch.?hachana|rosh.?hashana/i.test(titleLower))
-    feteRules = `ROSH HASHANA ONLY: shofar, apple and honey, round challah, prayer book. FORBIDDEN: menorah, matzot, sukkah.`;
+    feteRules = `ROSH HASHANA ONLY: shofar; red apple slices dipped in golden honey bowl; pomegranate (rimon); round challah dipped in honey; prayer book. FORBIDDEN: menorah, matzot, sukkah.`;
   else if (/kippour|kippur/i.test(titleLower))
-    feteRules = `YOM KIPPUR: white garments, tallit, candles, machzor. Solemn atmosphere. FORBIDDEN: food, festive objects.`;
+    feteRules = `YOM KIPPUR: white kittel for men, tallit, white Habad machzor (white cover), white tablecloth, lit memorial candles. Solemn atmosphere. FORBIDDEN: food, festive objects.`;
   else if (/lag.?baomer/i.test(titleLower))
-    feteRules = `LAG BAOMER: large bonfire, string lights, fruits, outdoor park. Families with adults AND children. FORBIDDEN: weapons of any kind, matzot, hanukkiah.`;
+    feteRules = `LAG BAOMER: large central bonfire, open Zohar books on a table nearby, families celebrating — no weapons or bows. FORBIDDEN: weapons, bows, arrows, matzot, hanukkiah.`;
   else if (/chabbat|shabbat/i.test(titleLower))
-    feteRules = `SHABBAT ONLY: two challah loaves, candlesticks, kiddush cup, white tablecloth. FORBIDDEN: 9-branch menorah, matzot.`;
+    feteRules = `SHABBAT ONLY: two challahs covered with an embroidered challah cover; pure white tablecloth; at least 2 white lit candles in silver candlesticks; kiddush cup. FORBIDDEN: 9-branch menorah, matzot.`;
 
   const finalCheck = maleOnly
     ? `FINAL CHECK: Only male characters appear in the scene.`
