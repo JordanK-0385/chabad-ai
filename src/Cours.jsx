@@ -54,7 +54,8 @@ SOUS-TITRE : immédiatement après le H1, une ligne en italique entre parenthès
 
 SÉPARATEUR : après le sous-titre, une ligne avec ---
 
-CORPS : numéroté obligatoirement. Chaque paragraphe commence par son numéro suivi d'un point : "1. texte..." "2. texte..." etc. Prose fluide sans bullet points.
+CORPS : numéroté obligatoirement. Chaque paragraphe commence OBLIGATOIREMENT par son numéro collé au texte sur la même ligne, sans retour à la ligne entre le numéro et le texte. Exemple exact : '1. Le verset central de notre Paracha...' — le numéro et le texte sont sur la même ligne, jamais séparés. Prose fluide sans bullet points.
+INTERDIT : ne jamais mettre un retour à la ligne entre le numéro et le texte du paragraphe. INTERDIT : ne jamais laisser un numéro seul sur sa ligne.
 
 CITATIONS : toute citation directe d'un texte source doit être en blockquote markdown avec > au début de la ligne, suivie de la référence entre parenthèses sur la ligne suivante dans le blockquote :
 > "texte cité"
