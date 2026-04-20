@@ -30,12 +30,12 @@ const ENRICHISSEMENTS = ["Histoires hassidiques", "Tanya", "Halakha pratique", "
 const COURS_LOAD_MSGS = ["Lecture des documents...", "Analyse des sources...", "Construction du plan...", "Rédaction du cours...", "Finalisation..."];
 const COURS_LOAD_START = 45;
 
-const CLAUDE_COURS_SYS = `Tu es un assistant rabbinique qui prépare des cours de Torah pour des Shluchim Chabad.
+const CLAUDE_COURS_SYS = `Tu es un assistant rabbinique qui prépare des cours de Torah pour des Shluhim Chabad.
 
 RÈGLE ABSOLUE — SOURCES UNIQUEMENT :
 Tu travailles EXCLUSIVEMENT avec :
 1. Les documents PDF fournis dans cette conversation
-2. Les résultats de ta recherche web sur chabad.org et loubavitch.fr (le contenu source peut être en anglais — tu dois le traduire dans la langue de sortie demandée)
+2. Les résultats de ta recherche web sur chabad.org et loubavitch.fr
 
 ZÉRO invention. ZÉRO citation de mémoire. ZÉRO source extérieure.
 Si une information nest pas dans les documents ou ta recherche web : tu lecris explicitement.
@@ -45,15 +45,24 @@ Avant de rédiger, lis entièrement chaque document PDF fourni.
 Identifie les sources précises : auteur, oeuvre, chapitre, verset.
 Construis le plan du cours à partir de ce que tu as trouvé dans les documents.
 Chaque paragraphe du cours doit être ancré dans une source identifiée.
-Cite la source entre parenthèses après chaque point : (Likouté Si'hot vol.27, Si'ha Metsora) ou (Rachi sur Tazria 13,46) etc.
 
-STRUCTURE DU COURS :
-Introduction : présenter le fil conducteur trouvé dans les documents
-2-3 points de développement : chacun basé sur des sources précises des documents
-Conclusion : message pratique ancré dans les sources
-Le cours doit se lire comme un discours oral fluide, pas comme une liste.
-Phrases de transition naturelles entre chaque idée.
-Pas de tirets, pas de bullet points, uniquement de la prose.
+FORMAT DE SORTIE OBLIGATOIRE — RESPECTE EXACTEMENT CES RÈGLES :
+
+TITRE : commence toujours par un # H1 avec le titre du cours
+
+SOUS-TITRE : immédiatement après le H1, une ligne en italique entre parenthèses avec la source principale : *(Discours du Rabbi, Likouteï Si'hot tome X, page Y)*
+
+SÉPARATEUR : après le sous-titre, une ligne avec ---
+
+CORPS : numéroté obligatoirement. Chaque paragraphe commence par son numéro suivi d'un point : "1. texte..." "2. texte..." etc. Prose fluide sans bullet points.
+
+CITATIONS : toute citation directe d'un texte source doit être en blockquote markdown avec > au début de la ligne, suivie de la référence entre parenthèses sur la ligne suivante dans le blockquote :
+> "texte cité"
+> *(Nom du livre, chapitre, verset)*
+
+SECTIONS : si le cours a plusieurs parties, utilise ## H2 pour le titre de section. Avant chaque H2, ajoute une ligne vide.
+
+NOTES DE BAS DE PAGE : si tu as des références complémentaires, ajoute à la fin une ligne --- suivie des notes numérotées : (1) référence complète. (2) etc.
 
 LONGUEUR :
 5 min = 600-700 mots
@@ -63,12 +72,9 @@ LONGUEUR :
 45 min = 5000-5500 mots
 
 LANGUE DE SORTIE :
-La langue de sortie du cours est indiquée dans le message utilisateur sous "Langue :" (valeurs possibles : "Français", "Hébreu", ou "Français + Hébreu").
-- "Français" → cours entièrement en français. Traduis toute citation anglaise trouvée dans les sources. Garde les termes techniques hébreux/araméens translittérés (ex: Halakha, Midrash, Si'hot).
-- "Hébreu" → cours entièrement en hébreu. Traduis les sources anglaises et françaises en hébreu rabbinique classique.
-- "Français + Hébreu" → alterne entre les deux langues naturellement ; citations et sources en hébreu original quand elles sont en hébreu, traduction française du contenu explicatif.
-
-Même si les sources web (chabad.org) ou les documents PDF sont en anglais ou hébreu, la rédaction finale respecte STRICTEMENT la langue demandée.`;
+Français → cours entièrement en français, termes hébreux translittérés
+Hébreu → cours entièrement en hébreu rabbinique
+Français + Hébreu → alterne naturellement, citations en hébreu original`;
 
 function arrayBufferToBase64(buffer) {
   let binary = "";
@@ -555,15 +561,20 @@ export default function Cours({ profil, onBack, headerProps }) {
               p: ({ node, children, ...props }) => {
                 // Detect paragraphs starting with "N. " → style the leading number in gold
                 if (Array.isArray(children) && children.length > 0 && typeof children[0] === "string") {
-                  const m = children[0].match(/^(\d+)\.\s+([\s\S]*)/);
+                  const m = children[0].match(/^(\d+)\.\s+(.+)/s);
                   if (m) {
-                    const rest = [m[2], ...children.slice(1)];
-                    return (
-                      <p style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 15 : 14, lineHeight: 1.9, textAlign: "justify", margin: "0 0 18px" }} {...props}>
-                        <span style={{ color: "var(--color-accent)", fontWeight: 700, fontSize: 15, marginRight: 6 }}>{m[1]}.</span>
-                        {rest}
-                      </p>
-                    );
+                    const restFirst = m[2];
+                    const restTrimmed = restFirst.trim();
+                    // Guard: skip if rest is empty, whitespace only, or just a stray "."
+                    if (restTrimmed.length > 0 && !/^\.\s*$/.test(restTrimmed)) {
+                      const rest = [restFirst, ...children.slice(1)];
+                      return (
+                        <p style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 15 : 14, lineHeight: 1.9, textAlign: "justify", margin: "0 0 18px" }} {...props}>
+                          <span style={{ display: "inline", color: "var(--color-accent)", fontWeight: 700, fontSize: 15, marginRight: 6 }}>{m[1]}.</span>
+                          {rest}
+                        </p>
+                      );
+                    }
                   }
                 }
                 return (
