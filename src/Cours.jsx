@@ -57,9 +57,17 @@ SÉPARATEUR : après le sous-titre, une ligne avec ---
 CORPS : numéroté obligatoirement. Chaque paragraphe commence OBLIGATOIREMENT par son numéro collé au texte sur la même ligne, sans retour à la ligne entre le numéro et le texte. Exemple exact : '1. Le verset central de notre Paracha...' — le numéro et le texte sont sur la même ligne, jamais séparés. Prose fluide sans bullet points.
 INTERDIT : ne jamais mettre un retour à la ligne entre le numéro et le texte du paragraphe. INTERDIT : ne jamais laisser un numéro seul sur sa ligne.
 
-CITATIONS : toute citation directe d'un texte source doit être en blockquote markdown avec > au début de la ligne, suivie de la référence entre parenthèses sur la ligne suivante dans le blockquote :
+CITATIONS :
+Deux options — JAMAIS MÉLANGER :
+(a) Citation courte intégrée : inline dans la phrase, entre guillemets, SANS saut de ligne avant ni après. Exemple : "1. La paracha nous enseigne : \"Vous serez saints, car Je suis saint\". Cette sainteté s'atteint dans la joie."
+(b) Citation longue mise en évidence : en blockquote markdown avec > au début de chaque ligne, précédée ET suivie d'une ligne vide. Dans ce cas, la phrase précédente DOIT se terminer par un deux-points ou un point, JAMAIS une virgule qui serait complétée après.
 > "texte cité"
 > *(Nom du livre, chapitre, verset)*
+
+INTERDIT ABSOLU pour les citations :
+- Ne JAMAIS placer un texte entre guillemets seul sur une ligne avec des lignes vides autour. Une citation isolée entre lignes blanches DOIT obligatoirement être convertie en blockquote avec > .
+- Ne JAMAIS commencer un paragraphe par un signe de ponctuation (. , ; : ! ?). Si la suite d'une phrase se trouve après une citation, la phrase entière doit rester sur la même ligne que la citation, sans saut de ligne.
+- Ne JAMAIS laisser un point ou une ponctuation seul sur sa ligne.
 
 SECTIONS : si le cours a plusieurs parties, utilise ## H2 pour le titre de section. Avant chaque H2, ajoute une ligne vide.
 
@@ -263,6 +271,16 @@ export default function Cours({ profil, onBack, headerProps }) {
       const text = rawText
         .replace(/\n{3,}/g, '\n\n')
         .replace(/ {2,}/g, ' ')
+        // Merge standalone quoted paragraph into previous paragraph:
+        // "text :\n\n"quote"\n\n. suite"  →  "text : "quote". suite"
+        .replace(/(\S)\s*\n\n\s*("[^"\n]{3,800}")\s*\n\n/g, '$1 $2\n\n')
+        // Merge paragraph consisting only of punctuation into previous paragraph:
+        // "text\n\n.\n\nnext"  →  "text.\n\nnext"
+        .replace(/\n\n\s*([.,;:!?])\s*\n\n/g, '$1\n\n')
+        // Merge orphan punctuation at start of paragraph into previous paragraph:
+        // "text\n\n. suite"  →  "text. suite"
+        .replace(/(\S)\s*\n\n\s*([.,;:!?])\s+/g, '$1$2 ')
+        .replace(/\n{3,}/g, '\n\n')
         .trim();
       if (!text) throw new Error("Reponse vide de Claude.");
       setResult(text);
