@@ -503,187 +503,75 @@ export default function Cours({ profil, onBack, headerProps }) {
               </div>
             </Card>
           )}
-          {result && (() => {
-            // Split body / footnotes (--- or first "(1) " line)
-            let mainText = result;
-            let footnotesText = "";
-            const hrMatch = result.match(/\n---+\s*\n/);
-            if (hrMatch) {
-              mainText = result.slice(0, hrMatch.index).trim();
-              footnotesText = result.slice(hrMatch.index + hrMatch[0].length).trim();
-            } else {
-              const fnMatch = result.match(/\n\s*\(1\)\s+/);
-              if (fnMatch) {
-                mainText = result.slice(0, fnMatch.index).trim();
-                footnotesText = result.slice(fnMatch.index).trim();
-              }
-            }
-
-            const toFlat = (ch) => {
-              if (ch == null || ch === false) return "";
-              if (typeof ch === "string" || typeof ch === "number") return String(ch);
-              if (Array.isArray(ch)) return ch.map(toFlat).join("");
-              if (ch.props && ch.props.children != null) return toFlat(ch.props.children);
-              return "";
-            };
-
-            // Blockquote source extraction — if the flat text ends with (…), split it out
-            const splitBlockquoteSource = (children) => {
-              const flat = toFlat(children).trim();
-              const m = flat.match(/^([\s\S]+?)\s*(\([^()]{2,}\))\s*$/);
-              if (!m) return { body: children, source: null };
-              return { body: m[1], source: m[2] };
-            };
-
-            const doPrint = () => {
-              const prevTitle = document.title;
-              document.title = "Cours de Torah";
-              window.print();
-              setTimeout(() => { document.title = prevTitle; }, 500);
-            };
-
-            const mdComponents = {
-              h1: ({ node, ...props }) => (
-                <h1 style={{ fontFamily: SERIF, color: "var(--color-accent)", fontSize: mobile ? 22 : 28, fontWeight: 700, lineHeight: 1.2, textAlign: "center", margin: "0 0 8px", letterSpacing: "-0.01em" }} {...props} />
-              ),
-              h2: ({ node, ...props }) => (
-                <div style={{ margin: "32px 0 16px" }}>
-                  <div style={{ textAlign: "center", color: "var(--color-accent)", fontSize: 14, letterSpacing: 8, marginBottom: 8, userSelect: "none" }}>· · ·</div>
-                  <h2 style={{ fontFamily: SERIF, color: "var(--color-accent)", fontSize: 18, fontWeight: 700, textAlign: "center", margin: 0, letterSpacing: "-0.005em" }} {...props} />
-                </div>
-              ),
-              h3: ({ node, ...props }) => (
-                <h3 style={{ fontFamily: SERIF, color: T.text, fontSize: 16, fontWeight: 600, margin: "24px 0 12px" }} {...props} />
-              ),
-              h4: ({ node, ...props }) => (
-                <h4 style={{ fontFamily: SANS, color: T.text, fontSize: 14, fontWeight: 700, margin: "18px 0 8px", textTransform: "uppercase", letterSpacing: 0.5 }} {...props} />
-              ),
-              p: ({ node, children, ...props }) => {
-                // Detect paragraphs starting with "N. " → style the leading number in gold
-                if (Array.isArray(children) && children.length > 0 && typeof children[0] === "string") {
-                  const m = children[0].match(/^(\d+)\.\s+(.+)/s);
-                  if (m) {
-                    const restFirst = m[2];
-                    const restTrimmed = restFirst.trim();
-                    // Guard: skip if rest is empty, whitespace only, or just a stray "."
-                    if (restTrimmed.length > 0 && !/^\.\s*$/.test(restTrimmed)) {
-                      const rest = [restFirst, ...children.slice(1)];
-                      return (
-                        <p style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 15 : 14, lineHeight: 1.9, textAlign: "justify", margin: "0 0 18px" }} {...props}>
-                          <span style={{ display: "inline", color: "var(--color-accent)", fontWeight: 700, fontSize: 15, marginRight: 6 }}>{m[1]}.</span>
-                          {rest}
-                        </p>
-                      );
-                    }
-                  }
-                }
-                return (
-                  <p style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 15 : 14, lineHeight: 1.9, textAlign: "justify", margin: "0 0 18px" }} {...props}>{children}</p>
-                );
-              },
-              strong: ({ node, ...props }) => (
-                <strong style={{ color: T.text, fontWeight: 700 }} {...props} />
-              ),
-              em: ({ node, ...props }) => (
-                <em style={{ color: T.text, fontStyle: "italic" }} {...props} />
-              ),
-              hr: ({ node, ...props }) => (
-                <hr style={{ border: "none", borderTop: `1px solid ${T.border}`, margin: "24px 0" }} {...props} />
-              ),
-              ul: ({ node, ...props }) => (
-                <ul style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 15 : 14, lineHeight: 1.9, margin: "0 0 18px", paddingLeft: 22 }} {...props} />
-              ),
-              ol: ({ node, ...props }) => (
-                <ol className="sicha-list" {...props} />
-              ),
-              li: ({ node, ordered, ...props }) => (
-                <li style={{ marginBottom: 12, color: T.text, fontFamily: SANS, fontSize: mobile ? 15 : 14, lineHeight: 1.9, textAlign: "justify" }} {...props} />
-              ),
-              blockquote: ({ node, children, ...props }) => {
-                const { body, source } = splitBlockquoteSource(children);
-                return (
-                  <blockquote style={{ borderLeft: "3px solid var(--color-accent)", background: "var(--color-accent-faint)", margin: "20px 0", padding: "14px 20px", color: T.text, fontFamily: SERIF, fontStyle: "italic", fontSize: 14, lineHeight: 1.75, borderRadius: "0 8px 8px 0" }} {...props}>
-                    {source ? (
+          {result && (
+            <div className="cours-result-card" style={{
+              background: "var(--bg-surface)",
+              border: `1px solid ${T.border}`,
+              borderRadius: 14,
+              padding: mobile ? "24px 18px" : "48px 44px",
+              maxWidth: 680,
+              marginBottom: 28,
+              maxHeight: "75vh",
+              overflowY: "auto",
+            }}>
+              <div style={{ fontSize: mobile ? 14 : 13.5, color: T.text, lineHeight: 1.9, fontFamily: SANS }}>
+                <ReactMarkdown
+                  components={{
+                    h1: ({ node, ...props }) => (
+                      <h1 style={{ fontFamily: SERIF, color: T.gold, fontSize: mobile ? 22 : 26, fontWeight: 700, lineHeight: 1.3, letterSpacing: "-0.01em", margin: "0 0 8px", textAlign: "center" }} {...props} />
+                    ),
+                    h2: ({ node, ...props }) => (
                       <>
-                        <div>{body}</div>
-                        <span style={{ display: "block", marginTop: 6, fontSize: 12, color: "var(--color-text-muted)", fontStyle: "normal", fontFamily: SANS }}>{source}</span>
+                        <div style={{ textAlign: "center", color: T.gold, fontSize: 13, letterSpacing: 8, margin: "28px 0 12px", userSelect: "none" }}>· · ·</div>
+                        <h2 style={{ fontFamily: SERIF, color: T.gold, fontSize: mobile ? 17 : 19, fontWeight: 700, lineHeight: 1.3, margin: "0 0 18px", textAlign: "center" }} {...props} />
                       </>
-                    ) : body}
-                  </blockquote>
-                );
-              },
-              a: ({ node, ...props }) => (
-                <a style={{ color: "var(--color-accent)", textDecoration: "underline", textUnderlineOffset: 2 }} target="_blank" rel="noreferrer" {...props} />
-              ),
-            };
-
-            // Footnotes components — smaller and muted
-            const footnotesComponents = {
-              ...mdComponents,
-              p: ({ node, children, ...props }) => {
-                if (Array.isArray(children) && children.length > 0 && typeof children[0] === "string") {
-                  const m = children[0].match(/^\((\d+)\)\s*([\s\S]*)/);
-                  if (m) {
-                    const rest = [m[2], ...children.slice(1)];
-                    return (
-                      <p style={{ color: "var(--color-text-muted)", fontFamily: SANS, fontSize: 12, lineHeight: 1.7, margin: "0 0 10px" }} {...props}>
-                        <span style={{ color: "var(--color-accent)", fontWeight: 700, marginRight: 4 }}>({m[1]})</span>
-                        {rest}
-                      </p>
-                    );
-                  }
-                }
-                return <p style={{ color: "var(--color-text-muted)", fontFamily: SANS, fontSize: 12, lineHeight: 1.7, margin: "0 0 10px" }} {...props}>{children}</p>;
-              },
-              h2: ({ node, ...props }) => <h3 style={{ fontFamily: SERIF, color: T.text, fontSize: 13, fontWeight: 700, margin: "14px 0 8px", textTransform: "uppercase", letterSpacing: 0.5 }} {...props} />,
-            };
-
-            return (
-              <>
-                <style>{`
-                  .sicha-list { counter-reset: sicha; list-style: none; padding: 0; margin: 0 0 18px; }
-                  .sicha-list > li { counter-increment: sicha; position: relative; padding-left: 30px; margin-bottom: 18px; }
-                  .sicha-list > li::before { content: counter(sicha) "."; position: absolute; left: 0; top: 0; color: var(--color-accent); font-weight: 700; font-size: 15px; font-family: 'Playfair Display', Georgia, serif; }
-                  @media print {
-                    body * { visibility: hidden !important; }
-                    .cours-result-card, .cours-result-card * { visibility: visible !important; }
-                    .cours-result-actions { visibility: hidden !important; }
-                    .cours-result-card { position: absolute !important; top: 0 !important; left: 50% !important; transform: translateX(-50%) !important; width: 100% !important; max-width: 680px !important; margin: 0 !important; padding: 32px 40px !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; max-height: none !important; overflow: visible !important; }
-                    .cours-result-card h1, .cours-result-card h2 { color: #000 !important; }
-                    .cours-result-card blockquote { background: #faf6ea !important; }
-                  }
-                `}</style>
-                <div className="cours-result-card" style={{
-                  background: "var(--bg-surface)",
-                  maxWidth: 680,
-                  margin: "0 auto 28px",
-                  padding: mobile ? 24 : 48,
-                  borderRadius: 14,
-                  border: `1px solid ${T.border}`,
-                  maxHeight: "75vh",
-                  overflowY: "auto",
-                  boxSizing: "border-box",
-                }}>
-                  <ReactMarkdown components={mdComponents}>{mainText}</ReactMarkdown>
-
-                  {footnotesText && (
-                    <>
-                      <hr style={{ border: "none", borderTop: `1px solid ${T.border}`, margin: "28px 0 16px" }} />
-                      <div>
-                        <ReactMarkdown components={footnotesComponents}>{footnotesText}</ReactMarkdown>
-                      </div>
-                    </>
-                  )}
-
-                  <div className="cours-result-actions" style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: 10, marginTop: 32, paddingTop: 16, borderTop: `1px solid ${T.border}`, justifyContent: mobile ? "stretch" : "flex-end" }}>
-                    <GBtn onClick={() => { navigator.clipboard.writeText(result); }} outline sm>Copier</GBtn>
-                    <GBtn onClick={doPrint} outline sm>📄 Exporter PDF</GBtn>
-                    <GBtn onClick={generate} outline sm>Regénérer</GBtn>
-                  </div>
-                </div>
-              </>
-            );
-          })()}
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <h3 style={{ fontFamily: SERIF, color: T.text, fontSize: mobile ? 15 : 16, fontWeight: 700, lineHeight: 1.4, margin: "20px 0 10px" }} {...props} />
+                    ),
+                    p: ({ node, children, ...props }) => {
+                      const text = typeof children === "string" ? children : (Array.isArray(children) ? children.map(c => typeof c === "string" ? c : (c?.props?.children || "")).join("") : "");
+                      const m = text.match(/^(\d+)\.\s+([\s\S]+)/);
+                      if (m) {
+                        return (
+                          <p style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 14 : 13.5, lineHeight: 1.9, margin: "0 0 16px", textAlign: "justify" }}>
+                            <span style={{ color: T.gold, fontWeight: 700, fontSize: 15, marginRight: 6, fontFamily: SERIF }}>{m[1]}.</span>
+                            {m[2]}
+                          </p>
+                        );
+                      }
+                      return <p style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 14 : 13.5, lineHeight: 1.9, margin: "0 0 16px", textAlign: "justify" }} {...props}>{children}</p>;
+                    },
+                    em: ({ node, ...props }) => (
+                      <em style={{ fontStyle: "italic", color: T.muted, fontSize: "0.95em" }} {...props} />
+                    ),
+                    strong: ({ node, ...props }) => (
+                      <strong style={{ fontWeight: 700, color: T.text }} {...props} />
+                    ),
+                    hr: ({ node, ...props }) => (
+                      <hr style={{ border: "none", borderTop: `1px solid ${T.border}`, margin: "24px 0" }} {...props} />
+                    ),
+                    blockquote: ({ node, children, ...props }) => (
+                      <blockquote style={{ borderLeft: `3px solid ${T.gold}`, background: T.goldFaint, margin: "20px 0", padding: "14px 20px", borderRadius: "0 8px 8px 0" }}>
+                        <div style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: mobile ? 14 : 13.5, color: T.text, lineHeight: 1.75 }}>{children}</div>
+                      </blockquote>
+                    ),
+                    ol: ({ node, ...props }) => <ol style={{ paddingLeft: 20, margin: "0 0 16px", color: T.text, fontSize: mobile ? 14 : 13.5, lineHeight: 1.9 }} {...props} />,
+                    ul: ({ node, ...props }) => <ul style={{ paddingLeft: 20, margin: "0 0 16px", color: T.text, fontSize: mobile ? 14 : 13.5, lineHeight: 1.9 }} {...props} />,
+                    li: ({ node, ...props }) => <li style={{ marginBottom: 6 }} {...props} />,
+                    a: ({ node, ...props }) => <a style={{ color: T.gold, textDecoration: "underline" }} target="_blank" rel="noreferrer" {...props} />,
+                  }}
+                >
+                  {result}
+                </ReactMarkdown>
+              </div>
+              <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, marginTop: 24, paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+                <GBtn onClick={() => navigator.clipboard.writeText(result)} outline sm>Copier</GBtn>
+                <GBtn onClick={() => window.print()} outline sm>Exporter PDF</GBtn>
+                <GBtn onClick={generate} outline sm>Regénérer</GBtn>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
