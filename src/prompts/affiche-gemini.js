@@ -11,11 +11,12 @@ export function buildLogoLine(hasCustomLogo) {
   return `IMPORTANT: Do NOT generate, draw, invent or render any logo, icon, emblem, seal, stamp or watermark anywhere in the image. Leave the bottom 20% of the image as a clean dark area with no visual elements — it will be used for text overlay only.`;
 }
 
-export function buildPrompt(data, bc, fmt, illustSelection) {
+export function buildPrompt(data, bc, fmt, illustSelection, styleSelection = "traditionnel") {
   const { titre, sous_titre, date, heure, lieu, accroche } = data;
   const ar = fmt === "story" ? "9:16" : fmt === "a4" ? "3:4" : fmt === "paysage" ? "4:3" : "1:1";
   const colorDominant = data?.couleur_dominante || "#003087";
   const colorAccent   = data?.couleur_accent   || "#C9971A";
+  const style = ["traditionnel", "illustre", "cinematique"].includes(styleSelection) ? styleSelection : "traditionnel";
 
   const hasFemale = illustSelection?.some(t => ["filles","rabbanit"].includes(t?.tile));
   const maleOnly  = illustSelection?.every(t => ["garcons","rav"].includes(t?.tile)) && illustSelection?.length > 0;
@@ -134,22 +135,64 @@ Boys and girls are visually different characters. The male character group (boys
   else if (/chabbat|shabbat/i.test(titleLower))
     feteRules = `SHABBAT ONLY: CENTER of scene = white dining table. MANDATORY: two braided challahs covered with an embroidered challah cover (decorative fabric with Hebrew letters), silver kiddush cup filled with red wine, silver candlesticks with 2 lit white candles, pure white tablecloth. Warm golden candlelight atmosphere. FORBIDDEN: 9-branch menorah, matzot, any chametz.`;
 
-  /* BLOC B — Style visuel (remplace entièrement l'ancien style Pixar/storybook) */
-  const visualStyle = isDecorOnly
-    ? `═══ VISUAL STYLE ═══
-High-end professional still-life photography.
+  /* BLOC B — Style visuel (3 modes × décor/personnages) */
+  const STYLE_BLOCKS = {
+    traditionnel: {
+      decor: `═══ VISUAL STYLE — TRADITIONAL STILL-LIFE PHOTOGRAPHY ═══
+High-end professional still-life photography, sober and institutional.
 The image must look like a luxury editorial photograph shot in a professional studio — a real photograph, not any form of drawn, painted or rendered illustration.
-Render: photorealistic. Textures: real silver metal, real fabric, real food. Depth of field: shallow, with soft background blur.
-Lighting: warm soft studio light from upper left, gentle shadows.
+Render: strictly photorealistic. Textures: real silver metal, real fabric, real food, authentic surface details.
+Lighting: warm soft studio light from upper left, gentle even shadows, neutral contrast.
 NO human figures, NO silhouettes, NO body parts, NO faces.
 Background: solid flat color — ${colorDominant} — no gradients, no patterns, no textures on the background itself.
-Composition: objects arranged elegantly, slightly off-center, generous negative space. Bottom 20% completely empty and dark (reserved for text and logo overlay).`
-    : `═══ VISUAL STYLE ═══
-High-quality realistic digital painting. Editorial illustration style — the kind found in upscale Jewish family magazines (dignified, warm, mature).
-Render: painterly but realistic. Natural edges without harsh outlines.
-Lighting: warm natural indoor light. Soft shadows.
-Characters feel real and dignified, with mature adult proportions and serious expressions, never stylized or exaggerated.
-Bottom 20% of the image kept dark and empty for text overlay.`;
+Composition: objects arranged elegantly, slightly off-center, generous negative space. Quiet, restrained, institutional feel.
+Bottom 20% completely empty and dark (reserved for text and logo overlay).`,
+      chars: `═══ VISUAL STYLE — TRADITIONAL EDITORIAL PAINTING ═══
+High-quality realistic digital painting, sober and dignified.
+Editorial illustration style — the kind found in upscale Jewish family magazines.
+Render: painterly but strictly realistic. Natural edges without harsh outlines. Muted warm palette.
+Lighting: warm natural indoor light. Soft even shadows, neutral contrast.
+Characters feel real and restrained, with mature adult proportions and serious reserved expressions, never stylized or exaggerated.
+Bottom 20% of the image kept dark and empty for text overlay.`,
+    },
+    illustre: {
+      decor: `═══ VISUAL STYLE — REALISTIC ARTISTIC PAINTING ═══
+High-end realistic still-life oil painting, in the tradition of European gallery still-life (Dutch masters, French academic painting).
+The image must look like a museum-grade painted artwork, visibly hand-crafted but photorealistic in proportions and light — NOT a photograph, NOT a 3D render.
+Render: realistic painterly oil-on-canvas texture. Visible brushwork, warm impasto highlights on metal and fabric. Rich saturated pigments.
+Lighting: dramatic side light from upper left, Rembrandt-style warm glow, pronounced chiaroscuro on objects.
+NO human figures, NO silhouettes, NO body parts, NO faces.
+Background: solid deep color — ${colorDominant} — with the subtle tactile grain of linen canvas, no gradients, no patterns.
+Composition: objects arranged in a classical still-life triangle, warm golden highlights, deep shadows. Artistic, refined, gallery atmosphere.
+Bottom 20% completely empty and dark (reserved for text and logo overlay).`,
+      chars: `═══ VISUAL STYLE — REALISTIC ARTISTIC PAINTING ═══
+High-quality realistic oil painting, in the tradition of European gallery portraiture.
+The image must look like a painted artwork — visibly painterly, with soft brushwork and warm saturated pigments — but anatomically realistic, dignified and mature.
+Render: painterly with visible oil-on-canvas texture. Soft edges, no harsh outlines. Rich warm palette.
+Lighting: warm golden glow, Rembrandt-style side lighting with soft chiaroscuro, museum-grade atmosphere.
+Characters feel real, serious, and statuesque — mature adult proportions, restrained expressions, reserved poise.
+Bottom 20% of the image kept dark and empty for text overlay.`,
+    },
+    cinematique: {
+      decor: `═══ VISUAL STYLE — CINEMATIC FILM STILL ═══
+High-end cinematic still-life, shot like a frame from a prestige film (think Malick, Villeneuve, Deakins cinematography).
+The image must look like a photographic film still — solemn, grandiose, atmospheric. Strong visual drama.
+Render: photorealistic, anamorphic lens feel, shallow depth of field, light haze in the air, volumetric light rays.
+Lighting: dramatic high-contrast directional light from a single warm source (upper left), deep velvety shadows, long specular highlights on silver and metal. Mood: ceremonial, sacred, monumental.
+NO human figures, NO silhouettes, NO body parts, NO faces.
+Background: solid rich color — ${colorDominant} — deepened into near-black at the edges (natural vignette), no gradients, no patterns.
+Composition: objects placed with cinematic framing, large negative space, dramatic scale. Atmosphere of reverence and grandeur.
+Bottom 20% completely empty and dark (reserved for text and logo overlay).`,
+      chars: `═══ VISUAL STYLE — CINEMATIC FILM STILL ═══
+High-end cinematic digital painting, composed and lit like a frame from a prestige film (Malick, Villeneuve, Deakins style).
+The image must feel solemn and grandiose — strong visual drama, ceremonial atmosphere, reverent mood.
+Render: photorealistic rendering with anamorphic lens feel, shallow depth of field, volumetric light rays.
+Lighting: dramatic high-contrast directional light from a single warm source, deep velvety shadows, long specular highlights. Ceremonial golden hour or candlelit interior.
+Characters feel monumental and reverent — mature adult proportions, serious contemplative expressions, statuesque poise. Never stylized or exaggerated.
+Bottom 20% of the image kept dark and empty for text overlay.`,
+    },
+  };
+  const visualStyle = STYLE_BLOCKS[style][isDecorOnly ? "decor" : "chars"];
 
   /* BLOC F — Règles absolues (formulées en positif pour éviter l'effet "éléphant rose") */
   const absoluteRules = `═══ ABSOLUTE RULES — NEVER VIOLATE ═══
