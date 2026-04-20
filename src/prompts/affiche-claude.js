@@ -76,7 +76,7 @@ RÈGLES TYPOGRAPHIQUES :
 CONTENU À GÉNÉRER
 ═══════════════════════════════════════
 - Titre : accrocheur, court, en français. Maximum 6 mots.
-- Sous-titre : précise le contexte ou le public. Maximum 10 mots.
+- Sous-titre : précise le contexte ou le public. Maximum 10 mots. Le sous_titre ne doit JAMAIS être le nom de l'institution ni le nom du Beth Chabad — cette information apparaît déjà en footer sur l'affiche finale. Le sous_titre doit décrire l'événement ou l'occasion.
 - Accroche : phrase d'invitation courte et chaleureuse. Maximum 15 mots.
 - Texte hébreu : formule hébraïque adaptée à l'occasion. Toujours en hébreu authentique.
 - Texte hébreu : formule COURTE et GÉNÉRALE uniquement (ex: ברוכים הבאים, שבת שלום, חג שמח, מזל טוב, ברכה והצלחה). JAMAIS de termes halakhiques intimes, médicaux ou privés. Si le sujet est sensible (pureté familiale, deuil intime, etc.), utilise uniquement ברוכים הבאים ou une formule générale de bienvenue.

@@ -127,7 +127,17 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
   const bc = profil?.betChabad ? `Beth Chabad de ${profil.betChabad}` : "Beth Chabad";
   const logoUrl = profil?.logoBase64 || "/logo-beth-loubavitch.png";
-  const contactDefault = profil?.telephone || "";
+  // Normalise le téléphone : vide, null, ou placeholder type "0123456789" / "1234567890" / "0000000000"
+  // (même après suppression des espaces, tirets et ponctuation) → traité comme vide.
+  const rawTelephone = profil?.telephone || "";
+  const digitsOnly = rawTelephone.replace(/\D/g, "");
+  const isPlaceholderPhone =
+    !digitsOnly ||
+    digitsOnly.length < 6 ||
+    /^0123456789\d*$/.test(digitsOnly) ||
+    /^1234567890\d*$/.test(digitsOnly) ||
+    /^(\d)\1{5,}$/.test(digitsOnly);
+  const contactDefault = isPlaceholderPhone ? "" : rawTelephone;
 
   const geminiKeyRef = useRef(geminiKey);
   geminiKeyRef.current = geminiKey;
@@ -184,6 +194,9 @@ export default function Affiches({ profil, onBack, headerProps }) {
         profil?.logoBase64 ? "Logo personnalisé disponible : utilise-le sur l'affiche." : "Utilise le logo par défaut Habad.ai (double vav doré).",
       ].filter(Boolean).join("\n");
       const { parsed, inputTokens, outputTokens } = await generateAfficheContent(msg, CLAUDE_SYS);
+      // Si le profil n'a pas de vrai téléphone, forcer contact="" pour ne pas afficher
+      // un numéro halluciné par Claude (ex. "0123456789").
+      if (!contactDefault) parsed.contact = "";
       setAData(parsed);
 
       try {
