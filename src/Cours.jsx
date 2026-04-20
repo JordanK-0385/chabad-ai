@@ -54,8 +54,25 @@ SOUS-TITRE : immédiatement après le H1, une ligne en italique entre parenthès
 
 SÉPARATEUR : après le sous-titre, une ligne avec ---
 
-CORPS : numéroté obligatoirement. Chaque paragraphe commence OBLIGATOIREMENT par son numéro collé au texte sur la même ligne, sans retour à la ligne entre le numéro et le texte. Exemple exact : '1. Le verset central de notre Paracha...' — le numéro et le texte sont sur la même ligne, jamais séparés. Prose fluide sans bullet points.
-INTERDIT : ne jamais mettre un retour à la ligne entre le numéro et le texte du paragraphe. INTERDIT : ne jamais laisser un numéro seul sur sa ligne.
+CORPS : numéroté obligatoirement. Chaque paragraphe commence OBLIGATOIREMENT par son numéro collé au texte sur la même ligne, sans retour à la ligne entre le numéro et le texte. Prose fluide sans bullet points.
+
+FORMAT LITTÉRAL D'UN PARAGRAPHE NUMÉROTÉ — REPRODUIS EXACTEMENT CETTE STRUCTURE :
+
+CORRECT (le numéro et le texte sont sur UNE SEULE LIGNE) :
+1. La paracha Kedochim nous enseigne un principe fondamental de sainteté. Cette injonction se déploie à travers les commandements qui suivent.
+
+2. Selon les enseignements du Rabbi, être saint consiste à révéler la présence divine dans le monde concret, non à fuir la matière.
+
+INCORRECT — JAMAIS faire ça — le numéro NE DOIT JAMAIS être seul sur sa ligne :
+1.
+
+La paracha Kedochim nous enseigne...
+
+INCORRECT — JAMAIS faire ça — pas de ligne vide entre le numéro et le texte :
+1.
+La paracha Kedochim nous enseigne...
+
+RÈGLE ABSOLUE : entre le chiffre, le point et la première lettre du texte, il n'y a qu'UN SEUL ESPACE. Aucun retour à la ligne. Aucune ligne vide. Le paragraphe entier, citations et enchaînements inclus, doit se lire comme un seul bloc de prose continu sur la même ligne logique (les sauts visuels sont gérés uniquement par le navigateur en fonction de la largeur).
 
 CITATIONS :
 Deux options — JAMAIS MÉLANGER :
@@ -271,6 +288,9 @@ export default function Cours({ profil, onBack, headerProps }) {
       const text = rawText
         .replace(/\n{3,}/g, '\n\n')
         .replace(/ {2,}/g, ' ')
+        // Merge orphan paragraph number: "1.\n\nText"  →  "1. Text"
+        // Also covers "1.\nText" just in case.
+        .replace(/^(\d+)\.[ \t]*\n+[ \t]*(\S)/gm, '$1. $2')
         // Merge standalone quoted paragraph into previous paragraph:
         // "text :\n\n"quote"\n\n. suite"  →  "text : "quote". suite"
         .replace(/(\S)\s*\n\n\s*("[^"\n]{3,800}")\s*\n\n/g, '$1 $2\n\n')
