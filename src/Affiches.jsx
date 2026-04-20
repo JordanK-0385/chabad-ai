@@ -101,6 +101,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const [desc,      setDesc]      = useState("");
   const [fmt,       setFmt]       = useState("carre");
   const [illustSelection, setIllustSelection] = useState([]);
+  const [styleSelection, setStyleSelection] = useState("traditionnel");
 
   const [loading,   setLoading]   = useState(false);
   const [aData,     setAData]     = useState(null);
@@ -138,13 +139,16 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const illustSelRef = useRef(illustSelection);
   illustSelRef.current = illustSelection;
 
+  const styleSelRef = useRef(styleSelection);
+  styleSelRef.current = styleSelection;
+
   const getActiveImageKey = () => (imageProviderRef.current === "openai" ? openaiKeyRef.current : geminiKeyRef.current).trim();
 
-  const callGemini = useCallback(async (contentData, bcName, format, sel) => {
+  const callGemini = useCallback(async (contentData, bcName, format, sel, styleSel) => {
     const provider = imageProviderRef.current;
     const key = (provider === "openai" ? openaiKeyRef.current : geminiKeyRef.current).trim();
     if (!key) return;
-    const prompt = buildPrompt(contentData, bcName, format, sel);
+    const prompt = buildPrompt(contentData, bcName, format, sel, styleSel);
     const logoLine = buildLogoLine(!!profil?.logoBase64);
     const fullPrompt = CRITICAL_RULE + "\n\n" + prompt + "\n\n" + logoLine;
 
@@ -226,7 +230,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
       } catch (_) {}
 
       if (getActiveImageKey()) {
-        const src = await callGemini(parsed, bc, fmt, illustSelRef.current);
+        const src = await callGemini(parsed, bc, fmt, illustSelRef.current, styleSelRef.current);
         if (src) setImgSrc(src);
       }
     } catch (e) {
@@ -240,14 +244,14 @@ export default function Affiches({ profil, onBack, headerProps }) {
     if (!aData || !getActiveImageKey()) return;
     setLoading(true); setErrMsg(""); setImgSrc(null);
     try {
-      const src = await callGemini(aData, bc, fmt, illustSelection);
+      const src = await callGemini(aData, bc, fmt, illustSelection, styleSelection);
       if (src) setImgSrc(src);
     } catch (e) {
       setErrMsg("Erreur Gemini : " + e.message);
     } finally {
       setLoading(false);
     }
-  }, [aData, geminiKey, bc, fmt, illustSelection, callGemini]);
+  }, [aData, geminiKey, bc, fmt, illustSelection, styleSelection, callGemini]);
 
   async function downloadAffiche() {
     if (!afficheRef.current || downloading) return;
@@ -289,7 +293,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
   function copyPrompt() {
     if (!aData) return;
-    const text = buildPrompt(aData, bc, fmt, illustSelection);
+    const text = buildPrompt(aData, bc, fmt, illustSelection, styleSelection);
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   }
 
@@ -432,6 +436,45 @@ export default function Affiches({ profil, onBack, headerProps }) {
             })()}
           </Card>
 
+          <Card style={{ padding: mobile ? "22px 18px" : "34px 28px", borderRadius: 14, marginBottom: 28 }}>
+            <StepLabel n="4">Style visuel</StepLabel>
+            {(() => {
+              const STYLES = [
+                { v: "traditionnel", e: "\uD83D\uDD6F\uFE0F", l: "Traditionnel", s: "Sobre & photoréaliste" },
+                { v: "illustre",     e: "\uD83C\uDFA8",       l: "Illustré",     s: "Peinture réaliste" },
+                { v: "cinematique",  e: "\u2728",              l: "Cinématique",  s: "Solennel & grandiose" },
+              ];
+              return (
+                <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr 1fr" : "1fr 1fr 1fr", gap: mobile ? 10 : 8 }}>
+                  {STYLES.map(o => {
+                    const active = styleSelection === o.v;
+                    return (
+                      <div
+                        key={o.v}
+                        onClick={() => setStyleSelection(o.v)}
+                        style={{
+                          padding: mobile ? "16px 8px" : "12px 8px",
+                          minHeight: mobile ? 88 : 'auto',
+                          borderRadius: 8,
+                          cursor: "pointer",
+                          textAlign: "center",
+                          border: `1px solid ${active ? T.gold : T.border}`,
+                          background: active ? T.goldFaint : T.surface,
+                          boxSizing: "border-box",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <div style={{ fontSize: 24, marginBottom: 6 }}>{o.e}</div>
+                        <div style={{ fontSize: mobile ? 14 : 13, fontWeight: 600, color: active ? T.gold : T.text }}>{o.l}</div>
+                        <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, marginTop: 2, lineHeight: 1.4 }}>{o.s}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </Card>
+
           {errMsg && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 7, padding: "8px 12px", lineHeight: 1.5 }}>{errMsg}</div>}
           {((imageProvider === "gemini" && !geminiKey) || (imageProvider === "openai" && !openaiKey)) && <div style={{ color: T.red, fontSize: mobile ? 14 : 11, marginBottom: 10 }}>Configuration requise — clé API {imageProvider === "openai" ? "OpenAI" : "Gemini"} manquante</div>}
 
@@ -517,7 +560,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
               </div>
               {showPrompt && (
                 <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: "10px 12px", fontSize: mobile ? 14 : 10.5, color: T.muted, fontFamily: "monospace", lineHeight: 1.6, whiteSpace: "pre-wrap", maxHeight: 180, overflowY: "auto", marginTop: 8 }}>
-                  {buildPrompt(aData, bc, fmt, illustSelection)}
+                  {buildPrompt(aData, bc, fmt, illustSelection, styleSelection)}
                 </div>
               )}
             </div>
