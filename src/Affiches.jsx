@@ -123,6 +123,12 @@ export default function Affiches({ profil, onBack, headerProps }) {
     const t = setInterval(() => setLoadTime(v => Math.max(0, v - 1)), 1000);
     return () => { clearInterval(m); clearInterval(t); };
   }, [loading]);
+
+  // Efface automatiquement les erreurs de validation quand l'utilisateur corrige un champ.
+  // Préserve les erreurs API ("Erreur Gemini…", etc.) — seulement les messages de type "Choisissez…" / "Décrivez…".
+  useEffect(() => {
+    setErrMsg(prev => (prev && /^(Choisissez|Décrivez)/.test(prev) ? "" : prev));
+  }, [desc, fmt, illustSelection, styleSelection]);
   const afficheRef = useRef(null);
 
   const bc = profil?.betChabad ? `Beth Chabad de ${profil.betChabad}` : "Beth Chabad";
@@ -553,9 +559,9 @@ export default function Affiches({ profil, onBack, headerProps }) {
           {imgSrc && !loading && (
             <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, flexWrap: "wrap", justifyContent: "center" }}>
               <GBtn onClick={() => setPreview(true)} outline sm>Aperçu</GBtn>
-              <GBtn onClick={() => { logEvent("telecharge"); downloadAffiche(); }} outline sm disabled={downloading}>{downloading ? "Préparation…" : "Télécharger"}</GBtn>
-              <GBtn onClick={regenImage} outline sm>Nouvelle image</GBtn>
-              <GBtn onClick={() => { logEvent("regenere"); generate(); }} outline sm>Tout regénérer</GBtn>
+              <GBtn onClick={async () => { await downloadAffiche(); logEvent("telecharge"); }} outline sm disabled={downloading}>{downloading ? "Préparation…" : "Télécharger"}</GBtn>
+              <GBtn onClick={async () => { await regenImage(); logEvent("regenere"); }} outline sm>Nouvelle image</GBtn>
+              <GBtn onClick={async () => { await generate(); logEvent("regenere"); }} outline sm>Tout regénérer</GBtn>
               <button onClick={() => { setAData(null); setDesc(""); setImgSrc(null); }} style={{ padding: "7px 14px", background: "transparent", border: `1px solid ${T.border}`, borderRadius: 7, color: T.muted, fontSize: mobile ? 14 : 12, cursor: "pointer" }}>Effacer</button>
             </div>
           )}
