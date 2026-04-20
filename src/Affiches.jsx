@@ -241,7 +241,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
     } finally {
       setLoading(false);
     }
-  }, [desc, fmt, bc, contactDefault, callGemini]);
+  }, [desc, fmt, bc, contactDefault, callGemini, illustSelection, styleSelection]);
 
   const regenImage = useCallback(async () => {
     if (!aData || !getActiveImageKey()) return;
