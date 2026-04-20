@@ -87,7 +87,9 @@ export default function Admin({ user, profil, headerProps }) {
   const [pdfErr, setPdfErr] = useState("");
   const [pdfSelection, setPdfSelection] = useState(null);
 
-  const [adminTab, setAdminTab] = useState("users");
+  const [adminTab, setAdminTab] = useState("dashboard");
+  const [dashStats, setDashStats] = useState(null);
+  const [dashLoading, setDashLoading] = useState(true);
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [suggestionsBusy, setSuggestionsBusy] = useState(null);
@@ -304,6 +306,72 @@ export default function Admin({ user, profil, headerProps }) {
     return () => { cancelled = true; };
   }, [isAdmin]);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const snap = await getDocs(collection(db, "generations"));
+        const docs = snap.docs.map(d => ({ ...d.data(), createdAt: d.data().createdAt?.toDate?.() || null }));
+
+        const totalGenerations = docs.length;
+
+        const byModule = { cours: 0, affiches: 0, messages: 0 };
+        for (const dd of docs) {
+          if (dd.module && byModule[dd.module] !== undefined) byModule[dd.module] += 1;
+        }
+
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const last7days = docs.filter(dd => dd.createdAt && dd.createdAt >= sevenDaysAgo).length;
+
+        // last7daysByDay — 7 buckets ending today (today = last), labels "lun".."dim"
+        const dayLabels = ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"]; // JS getDay()
+        const last7daysByDay = [];
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        for (let i = 6; i >= 0; i--) {
+          const start = new Date(todayStart.getTime() - i * 24 * 60 * 60 * 1000);
+          const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+          const count = docs.filter(dd => dd.createdAt && dd.createdAt >= start && dd.createdAt < end).length;
+          last7daysByDay.push({ label: dayLabels[start.getDay()], count });
+        }
+
+        // topUsers — aggregate by uid
+        const userAgg = new Map();
+        for (const dd of docs) {
+          if (!dd.uid) continue;
+          const prev = userAgg.get(dd.uid) || { uid: dd.uid, userName: dd.userName || "", betChabad: dd.betChabad || "", count: 0 };
+          prev.count += 1;
+          if (!prev.userName && dd.userName) prev.userName = dd.userName;
+          if (!prev.betChabad && dd.betChabad) prev.betChabad = dd.betChabad;
+          userAgg.set(dd.uid, prev);
+        }
+        const topUsers = Array.from(userAgg.values()).sort((a, b) => b.count - a.count).slice(0, 5);
+
+        // byBetChabad — top 8 non-empty
+        const bcAgg = new Map();
+        for (const dd of docs) {
+          const bc = (dd.betChabad || "").trim();
+          if (!bc) continue;
+          bcAgg.set(bc, (bcAgg.get(bc) || 0) + 1);
+        }
+        const byBetChabad = Array.from(bcAgg.entries())
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 8);
+
+        const totalCost = docs.reduce((acc, dd) => acc + (Number(dd.coutEuros) || 0), 0);
+
+        if (!cancelled) setDashStats({ totalGenerations, byModule, last7days, last7daysByDay, topUsers, byBetChabad, totalCost });
+      } catch (e) {
+        if (!cancelled) setDashStats({ totalGenerations: 0, byModule: { cours: 0, affiches: 0, messages: 0 }, last7days: 0, last7daysByDay: [], topUsers: [], byBetChabad: [], totalCost: 0 });
+      } finally {
+        if (!cancelled) setDashLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isAdmin]);
+
   async function handleSuggestionStatus(id, newStatus) {
     setSuggestionsBusy(id);
     setSuggestionsErr("");
@@ -443,6 +511,7 @@ export default function Admin({ user, profil, headerProps }) {
         {/* Tabs */}
         <div style={{ display: "flex", gap: 6, marginBottom: 24, borderBottom: "1px solid var(--color-border)" }}>
           {[
+            { id: "dashboard", label: "Dashboard",    icon: "📊" },
             { id: "users",     label: "Utilisateurs", icon: "👥" },
             { id: "documents", label: "Documents",   icon: "📄" },
             { id: "ideas",     label: "Idées",       icon: "💡" },
@@ -490,6 +559,150 @@ export default function Admin({ user, profil, headerProps }) {
             );
           })}
         </div>
+
+        {adminTab === "dashboard" && (() => {
+          if (dashLoading) {
+            return <div style={{ padding: 24, fontSize: 14, color: "var(--color-text-muted)", textAlign: "center" }}>Chargement du dashboard…</div>;
+          }
+          if (!dashStats || dashStats.totalGenerations === 0) {
+            return <div style={{ padding: 24, fontSize: 14, color: "var(--color-text-muted)", textAlign: "center", background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14 }}>Aucune donnée.</div>;
+          }
+          const { totalGenerations, byModule, last7days, last7daysByDay, topUsers, byBetChabad, totalCost } = dashStats;
+          const moduleEntries = Object.entries(byModule);
+          const moduleTopEntry = moduleEntries.reduce((best, cur) => cur[1] > best[1] ? cur : best, ["—", 0]);
+          const maxDayCount = Math.max(1, ...last7daysByDay.map(x => x.count));
+          const maxModuleCount = Math.max(1, ...moduleEntries.map(x => x[1]));
+          const maxBcCount = Math.max(1, ...byBetChabad.map(x => x.count));
+          const moduleLabels = { cours: "Cours", affiches: "Affiches", messages: "Messages" };
+
+          const kpiCard = { background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 12, padding: 16, fontFamily: SANS };
+          const kpiLabel = { fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 };
+          const kpiValue = { fontSize: mobile ? 24 : 28, fontWeight: 800, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em", lineHeight: 1 };
+          const kpiSub = { fontSize: 12, color: "var(--color-text-muted)", marginTop: 6 };
+
+          const sectionCard = { background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, padding: mobile ? 16 : 20, fontFamily: SANS };
+          const sectionTitle = { fontFamily: SERIF, fontSize: mobile ? 16 : 17, fontWeight: 700, margin: "0 0 16px", color: "var(--color-text)", letterSpacing: "-0.01em" };
+
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* ROW 1 — KPI cards */}
+              <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12 }}>
+                <div style={kpiCard}>
+                  <div style={kpiLabel}>📊 Générations totales</div>
+                  <div style={kpiValue}>{totalGenerations}</div>
+                </div>
+                <div style={kpiCard}>
+                  <div style={kpiLabel}>🗓 Cette semaine</div>
+                  <div style={kpiValue}>{last7days}</div>
+                  <div style={kpiSub}>7 derniers jours</div>
+                </div>
+                <div style={kpiCard}>
+                  <div style={kpiLabel}>💰 Coût total API</div>
+                  <div style={{ ...kpiValue, color: "var(--color-accent)" }}>{totalCost.toFixed(3)} €</div>
+                </div>
+                <div style={kpiCard}>
+                  <div style={kpiLabel}>🏆 Module top</div>
+                  <div style={kpiValue}>{moduleLabels[moduleTopEntry[0]] || moduleTopEntry[0]}</div>
+                  <div style={kpiSub}>{moduleTopEntry[1]} génération{moduleTopEntry[1] > 1 ? "s" : ""}</div>
+                </div>
+              </div>
+
+              {/* ROW 2 — Activité + Répartition */}
+              <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+                <div style={sectionCard}>
+                  <h3 style={sectionTitle}>Activité 7 derniers jours</h3>
+                  <div style={{ height: 120, display: "flex", alignItems: "flex-end", gap: 8, paddingBottom: 2 }}>
+                    {last7daysByDay.map((d, i) => (
+                      <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "stretch", height: "100%" }}>
+                        <div style={{ fontSize: 10, color: "var(--color-text-muted)", textAlign: "center", marginBottom: 4, fontVariantNumeric: "tabular-nums" }}>{d.count || ""}</div>
+                        <div style={{
+                          flex: "none",
+                          height: `${Math.max(4, (d.count / maxDayCount) * 100)}%`,
+                          minHeight: 4,
+                          background: "var(--color-accent)",
+                          borderRadius: "4px 4px 0 0",
+                          transition: "height 0.3s",
+                        }} />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                    {last7daysByDay.map((d, i) => (
+                      <div key={i} style={{ flex: 1, fontSize: 11, color: "var(--color-text-muted)", textAlign: "center", textTransform: "capitalize" }}>
+                        {d.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={sectionCard}>
+                  <h3 style={sectionTitle}>Répartition modules</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {moduleEntries.map(([key, count]) => (
+                      <div key={key} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 80, fontSize: 13, color: "var(--color-text)", fontWeight: 600 }}>{moduleLabels[key] || key}</div>
+                        <div style={{ flex: 1, height: 10, background: "var(--bg-surface-elevated)", borderRadius: 5, overflow: "hidden" }}>
+                          <div style={{ width: `${(count / maxModuleCount) * 100}%`, height: "100%", background: "var(--color-accent)", borderRadius: 5, transition: "width 0.3s" }} />
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", minWidth: 32, textAlign: "right" }}>{count}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* ROW 3 — Villes actives + Top utilisateurs */}
+              <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+                <div style={sectionCard}>
+                  <h3 style={sectionTitle}>Villes actives</h3>
+                  {byBetChabad.length === 0 ? (
+                    <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>Aucune ville.</div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {byBetChabad.map(b => (
+                        <div key={b.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div style={{ flex: 1, fontSize: 13, color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
+                          <div style={{ flex: 1, height: 8, background: "var(--bg-surface-elevated)", borderRadius: 4, overflow: "hidden" }}>
+                            <div style={{ width: `${(b.count / maxBcCount) * 100}%`, height: "100%", background: "var(--color-accent)", borderRadius: 4, transition: "width 0.3s" }} />
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", minWidth: 28, textAlign: "right" }}>{b.count}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div style={sectionCard}>
+                  <h3 style={sectionTitle}>Top utilisateurs</h3>
+                  {topUsers.length === 0 ? (
+                    <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>Aucun utilisateur actif.</div>
+                  ) : (
+                    <div style={{ overflowX: "auto", margin: mobile ? "0 -16px" : 0 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: SANS }}>
+                        <thead>
+                          <tr>
+                            <th style={th}>Utilisateur</th>
+                            <th style={th}>Beth Chabad</th>
+                            <th style={{ ...th, textAlign: "right" }}>Générations</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {topUsers.map(u => (
+                            <tr key={u.uid}>
+                              <td style={{ ...td, fontSize: 13 }}>{u.userName || <span style={{ color: "var(--color-text-muted)" }}>—</span>}</td>
+                              <td style={{ ...td, fontSize: 13, color: "var(--color-text-muted)" }}>{u.betChabad || "—"}</td>
+                              <td style={{ ...td, textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 700 }}>{u.count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {adminTab === "documents" && (
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, padding: mobile ? 16 : 24, marginBottom: 28 }}>
