@@ -1,22 +1,27 @@
 /* ─── affiche-gemini.js ─── */
 
+/* BLOC A — Règles d'apparence personnages (inchangé) */
 export const CRITICAL_RULE = `CHARACTER APPEARANCE RULES:
 Male characters (men and boys) wear a dark navy or black kippah resting on the crown of the head.
 Female characters (women and girls) have natural visible hair on the head. The scalp and hair parting are clearly shown, with hair as the only element on top of the head.
 All female characters wear long dresses or skirts reaching below the knee, with long sleeves and closed necklines.`;
 
+/* BLOC G — Zone logo (inchangé) */
 export function buildLogoLine(hasCustomLogo) {
   return `IMPORTANT: Do NOT generate, draw, invent or render any logo, icon, emblem, seal, stamp or watermark anywhere in the image. Leave the bottom 20% of the image as a clean dark area with no visual elements — it will be used for text overlay only.`;
 }
 
 export function buildPrompt(data, bc, fmt, illustSelection) {
-  const { titre, sous_titre, date, heure, lieu, accroche, ambiance } = data;
+  const { titre, sous_titre, date, heure, lieu, accroche } = data;
   const ar = fmt === "story" ? "9:16" : fmt === "a4" ? "3:4" : fmt === "paysage" ? "4:3" : "1:1";
-  const issolemn = ambiance === "solennelle";
-  const pal = issolemn ? "dark burgundy and charcoal, dignified atmosphere" : "deep royal blue #003087 and warm gold #C9971A, festive warm atmosphere";
+  const colorDominant = data?.couleur_dominante || "#003087";
+  const colorAccent   = data?.couleur_accent   || "#C9971A";
 
   const hasFemale = illustSelection?.some(t => ["filles","rabbanit"].includes(t?.tile));
-  const maleOnly = illustSelection?.every(t => ["garcons","rav"].includes(t?.tile)) && illustSelection?.length > 0;
+  const maleOnly  = illustSelection?.every(t => ["garcons","rav"].includes(t?.tile)) && illustSelection?.length > 0;
+  const isDecorOnly = !illustSelection
+    || illustSelection.length === 0
+    || illustSelection.every(t => !t?.tile || t?.tile === "decor");
 
   function getAgeLabel(age) {
     if (!age || age === "Adulte") return "adult";
@@ -84,20 +89,20 @@ Elegant modest dress below knee, long sleeves, closed neckline. Warm gracious ex
     return "";
   }
 
-  // Character section
+  /* BLOC E — Personnages (sans mention style cartoon) */
   let charSection = "";
-  if (!illustSelection || illustSelection.length === 0 || illustSelection.every(t => !t?.tile || t?.tile === "decor")) {
-    charSection = `SCENE: NO human characters at all. Beautiful atmospheric scene: warm lighting, deep blue and gold palette, relevant objects for the event. Cozy and inviting.`;
+  if (isDecorOnly) {
+    charSection = ``; // aucun bloc personnages pour un décor seul
   } else if (illustSelection.length === 1) {
     const t = illustSelection[0];
-    charSection = `CHARACTER:\n${descTile(t.tile, t.age, t.qty)}\nPixar-meets-storybook illustration style.`;
+    charSection = `CHARACTER:\n${descTile(t.tile, t.age, t.qty)}\nRendered as a realistic digital painting, dignified, editorial magazine style, warm natural light, no stylized rendering.`;
     if (maleOnly) charSection += `\nZERO women or girls anywhere in the image, including background.`;
   } else {
     charSection = `CHARACTERS — Two groups:\n`;
     illustSelection.forEach((t, i) => {
       charSection += `Group ${i+1}:\n${descTile(t.tile, t.age, t.qty)}\n\n`;
     });
-    charSection += `Pixar-meets-storybook illustration style.`;
+    charSection += `Rendered as a realistic digital painting, dignified, editorial magazine style, warm natural light, no stylized rendering.`;
     if (maleOnly) charSection += `\nZERO women or girls anywhere in the image, including background.`;
     const hasBoys = illustSelection.some(t => t?.tile === "garcons");
     const hasGirls = illustSelection.some(t => t?.tile === "filles");
@@ -107,7 +112,7 @@ Boys and girls are visually different characters. The male character group (boys
     }
   }
 
-  // Holiday-specific objects
+  /* BLOC C — Objets rituels par fête (inchangé — 9 règles + fallback) */
   const titleLower = (titre || "").toLowerCase() + " " + (accroche || "").toLowerCase();
   let feteRules = `Use only objects relevant to the specific event. Do not mix holiday symbols.`;
   if (/pessah|pessa[hc]|seder|matsa|matzot/i.test(titleLower))
@@ -129,6 +134,33 @@ Boys and girls are visually different characters. The male character group (boys
   else if (/chabbat|shabbat/i.test(titleLower))
     feteRules = `SHABBAT ONLY: CENTER of scene = white dining table. MANDATORY: two braided challahs covered with an embroidered challah cover (decorative fabric with Hebrew letters), silver kiddush cup filled with red wine, silver candlesticks with 2 lit white candles, pure white tablecloth. Warm golden candlelight atmosphere. FORBIDDEN: 9-branch menorah, matzot, any chametz.`;
 
+  /* BLOC B — Style visuel (remplace entièrement l'ancien style Pixar/storybook) */
+  const visualStyle = isDecorOnly
+    ? `═══ VISUAL STYLE ═══
+High-end professional still-life photography.
+The image must look like a luxury editorial photograph shot in a professional studio — a real photograph, not any form of drawn, painted or rendered illustration.
+Render: photorealistic. Textures: real silver metal, real fabric, real food. Depth of field: shallow, with soft background blur.
+Lighting: warm soft studio light from upper left, gentle shadows.
+NO human figures, NO silhouettes, NO body parts, NO faces.
+Background: solid flat color — ${colorDominant} — no gradients, no patterns, no textures on the background itself.
+Composition: objects arranged elegantly, slightly off-center, generous negative space. Bottom 20% completely empty and dark (reserved for text and logo overlay).`
+    : `═══ VISUAL STYLE ═══
+High-quality realistic digital painting. Editorial illustration style — the kind found in upscale Jewish family magazines (dignified, warm, mature).
+Render: painterly but realistic. Natural edges without harsh outlines.
+Lighting: warm natural indoor light. Soft shadows.
+Characters feel real and dignified, with mature adult proportions and serious expressions, never stylized or exaggerated.
+Bottom 20% of the image kept dark and empty for text overlay.`;
+
+  /* BLOC F — Règles absolues (formulées en positif pour éviter l'effet "éléphant rose") */
+  const absoluteRules = `═══ ABSOLUTE RULES — NEVER VIOLATE ═══
+- NO text, letters, words or numbers anywhere in the image (in any language, including Hebrew or Arabic numerals)
+- NO Star of David, cross, crescent moon, hamsa, or any religious symbol whatsoever
+- NO portrait or face of the Rebbe
+- NO non-kosher animals
+- Style is strictly realistic: editorial photography or realistic digital painting only. Any stylized, simplified, flat, clipart, or exaggerated rendering is strictly forbidden.
+- Holy books always on a table, shelf or held in hands — never placed on the floor${isDecorOnly ? "\n- NO human figures of any kind — not even hands, shadows or silhouettes" : ""}
+High-end studio photography quality. Absolutely no text in image.`;
+
   const finalCheck = maleOnly
     ? `FINAL CHECK: Only male characters appear in the scene.`
     : hasFemale
@@ -137,30 +169,24 @@ Boys and girls are visually different characters. The male character group (boys
 
   const eventDetails = [titre, sous_titre, date, heure, lieu, bc].filter(Boolean).join(" · ");
 
-  return `SCENE PRIORITY: The holiday objects listed below are MANDATORY and must dominate the scene. Characters are secondary and must be arranged around the holiday objects, not the opposite.
+  /* Assemblage final dans l'ordre : B → C → D → E → F */
+  return `${visualStyle}
 
-═══ 1. HOLIDAY OBJECTS (mandatory, must dominate the scene) ═══
+═══ HOLIDAY OBJECTS (mandatory, must dominate the scene) ═══
 ${feteRules}
 
-═══ 2. FORMAT & VISUAL COMPOSITION ═══
-Warm children's storybook illustration for a community event in France.
-Event: ${eventDetails}
-Scene hint: "${accroche || sous_titre}"
-Style: editorial children's book illustration in the spirit of modern Pixar and Disney animation — fresh, warm, natural, with simple secular styling for all characters. ${pal}. Warm soft lighting. Max 4 characters. Bottom 20% kept dark and empty for text overlay — no visual elements in bottom 20%.
+═══ COMPOSITION ═══
+Event: ${titre || ""} — ${sous_titre || ""}
+Occasion hint: ${accroche || ""}
+Event details: ${eventDetails}
+Color palette: ${colorDominant} as background, ${colorAccent} as accent. Warm, harmonious, elegant.
 Aspect ratio: ${ar}.
+The bottom 20% of the image must be completely empty and dark — absolutely no objects, no characters, no decorative elements. This zone is reserved for text and logo overlay in post-production.
 
-═══ 3. CHARACTERS (arranged around the holiday objects) ═══
+${isDecorOnly ? "" : `═══ CHARACTERS (arranged around the holiday objects) ═══
 ${charSection}
 
-═══ 4. MANDATORY RULES ═══
-SCENE COMPOSITION PRIORITY: Holiday ritual objects listed below are MANDATORY and visually dominant. Characters are secondary — they must be arranged around and interacting with the holiday objects, never replacing them.
-- NO TEXT or letters anywhere in the image (any language)
-- Holy books always on table, shelf or in hands — never on the floor
-- FEMALE HAIR: Every female character shows her natural hair on top of the head, with the scalp parting line clearly visible. Male characters wear a dark kippah.
-- No symbols such as Star of David, crosses, crescents, or hamsa
-- No Rebbe's face. No non-kosher animals
-${maleOnly ? "- Only male characters appear in this scene. Each wears a dark navy kippah." : hasFemale ? "- Female characters have natural visible hair with the scalp parting shown. Male characters wear a dark kippah." : ""}
+`}${absoluteRules}
 
-${finalCheck}
-High quality illustration. Absolutely no text or writing in the image.`;
+${finalCheck}`.trim();
 }
