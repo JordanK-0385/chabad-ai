@@ -515,6 +515,19 @@ export default function Cours({ profil, onBack, headerProps }) {
               maxHeight: "75vh",
               overflowY: "auto",
             }}>
+              <style>{`
+                .cours-result-card { hyphens: manual; -webkit-hyphens: manual; }
+                .cours-result-card p, .cours-result-card li {
+                  text-wrap: pretty;
+                  overflow-wrap: break-word;
+                  word-break: normal;
+                  orphans: 2;
+                  widows: 2;
+                }
+                .cours-result-card h1, .cours-result-card h2, .cours-result-card h3 { text-wrap: balance; }
+                .cours-result-card blockquote > p { margin: 0 !important; text-align: left !important; font-family: 'Playfair Display', Georgia, serif !important; font-style: italic !important; color: var(--color-text) !important; line-height: 1.75 !important; }
+                .cours-result-card blockquote > p + p { margin-top: 6px !important; }
+              `}</style>
               <div style={{ fontSize: mobile ? 14 : 13.5, color: T.text, lineHeight: 1.9, fontFamily: SANS }}>
                 <ReactMarkdown
                   components={{
@@ -531,17 +544,21 @@ export default function Cours({ profil, onBack, headerProps }) {
                       <h3 style={{ fontFamily: SERIF, color: T.text, fontSize: mobile ? 15 : 16, fontWeight: 700, lineHeight: 1.4, margin: "20px 0 10px" }} {...props} />
                     ),
                     p: ({ node, children, ...props }) => {
-                      const text = typeof children === "string" ? children : (Array.isArray(children) ? children.map(c => typeof c === "string" ? c : (c?.props?.children || "")).join("") : "");
-                      const m = text.match(/^(\d+)\.\s+([\s\S]+)/);
-                      if (m) {
-                        return (
-                          <p style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 14 : 13.5, lineHeight: 1.9, margin: "0 0 16px", textAlign: "justify" }}>
-                            <span style={{ color: T.gold, fontWeight: 700, fontSize: 15, marginRight: 6, fontFamily: SERIF }}>{m[1]}.</span>
-                            {m[2]}
-                          </p>
-                        );
+                      const pStyle = { color: T.text, fontFamily: SANS, fontSize: mobile ? 14 : 13.5, lineHeight: 1.9, margin: "0 0 16px", textAlign: "left" };
+                      // Preserve inline children (strong/em/etc) — only strip the "N. " prefix from the first string child
+                      const childrenArr = Array.isArray(children) ? children : (children != null ? [children] : []);
+                      if (childrenArr.length > 0 && typeof childrenArr[0] === "string") {
+                        const m = childrenArr[0].match(/^(\d+)\.\s+([\s\S]*)/);
+                        if (m && m[2].trim().length > 0 && !/^\.\s*$/.test(m[2].trim())) {
+                          return (
+                            <p style={pStyle}>
+                              <span style={{ color: T.gold, fontWeight: 700, fontSize: 15, marginRight: 6, fontFamily: SERIF, display: "inline" }}>{m[1]}.</span>
+                              {[m[2], ...childrenArr.slice(1)]}
+                            </p>
+                          );
+                        }
                       }
-                      return <p style={{ color: T.text, fontFamily: SANS, fontSize: mobile ? 14 : 13.5, lineHeight: 1.9, margin: "0 0 16px", textAlign: "justify" }} {...props}>{children}</p>;
+                      return <p style={pStyle} {...props}>{children}</p>;
                     },
                     em: ({ node, ...props }) => (
                       <em style={{ fontStyle: "italic", color: T.muted, fontSize: "0.95em" }} {...props} />
@@ -553,13 +570,13 @@ export default function Cours({ profil, onBack, headerProps }) {
                       <hr style={{ border: "none", borderTop: `1px solid ${T.border}`, margin: "24px 0" }} {...props} />
                     ),
                     blockquote: ({ node, children, ...props }) => (
-                      <blockquote style={{ borderLeft: `3px solid ${T.gold}`, background: T.goldFaint, margin: "20px 0", padding: "14px 20px", borderRadius: "0 8px 8px 0" }}>
-                        <div style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: mobile ? 14 : 13.5, color: T.text, lineHeight: 1.75 }}>{children}</div>
+                      <blockquote style={{ borderLeft: `3px solid ${T.gold}`, background: T.goldFaint, margin: "20px 0", padding: "14px 20px", borderRadius: "0 8px 8px 0", fontFamily: SERIF, fontStyle: "italic", fontSize: mobile ? 14 : 13.5, color: T.text, lineHeight: 1.75 }} {...props}>
+                        {children}
                       </blockquote>
                     ),
                     ol: ({ node, ...props }) => <ol style={{ paddingLeft: 20, margin: "0 0 16px", color: T.text, fontSize: mobile ? 14 : 13.5, lineHeight: 1.9 }} {...props} />,
                     ul: ({ node, ...props }) => <ul style={{ paddingLeft: 20, margin: "0 0 16px", color: T.text, fontSize: mobile ? 14 : 13.5, lineHeight: 1.9 }} {...props} />,
-                    li: ({ node, ...props }) => <li style={{ marginBottom: 6 }} {...props} />,
+                    li: ({ node, ...props }) => <li style={{ marginBottom: 6, textAlign: "left" }} {...props} />,
                     a: ({ node, ...props }) => <a style={{ color: T.gold, textDecoration: "underline" }} target="_blank" rel="noreferrer" {...props} />,
                   }}
                 >
