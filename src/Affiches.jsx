@@ -488,38 +488,47 @@ export default function Affiches({ profil, onBack, headerProps }) {
       </div>
 
       {/* Preview overlay */}
-      {preview && imgSrc && aData && (
+      {preview && imgSrc && aData && (() => {
+        const { ar: previewAr } = SIZES[fmt] || SIZES.carre;
+        const [arW, arH] = String(previewAr || "1/1").split("/").map(Number);
+        const arNum = (arW && arH) ? (arW / arH) : 1;
+        // Reserve ~80px under the image for the action buttons row.
+        // Image height = width / arNum, so: (vw or 700px) / arNum + 80 ≤ 92vh
+        // → imgWidth ≤ (92vh - 80px) × arNum. This guarantees the full poster fits.
+        const imgWidth = `min(92vw, calc((92vh - 80px) * ${arNum}), 700px)`;
+        return (
         <div onClick={() => setPreview(false)} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? 12 : 24, cursor: "zoom-out", boxSizing: "border-box" }}>
-          <div onClick={e => e.stopPropagation()} style={{ position: "relative", maxWidth: "min(90vw, 700px)", maxHeight: "90vh", cursor: "default" }}>
-            <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", boxShadow: `0 20px 80px rgba(0,0,0,0.7), 0 0 100px var(--color-accent-faint)`, border: `1px solid var(--color-accent-soft)` }}>
-              <img src={imgSrc} alt="Affiche" style={{ width: "100%", display: "block" }} />
+          <div onClick={e => e.stopPropagation()} style={{ position: "relative", width: imgWidth, display: "flex", flexDirection: "column", alignItems: "center", cursor: "default" }}>
+            <div style={{ position: "relative", width: "100%", aspectRatio: previewAr, containerType: "inline-size", borderRadius: 16, overflow: "hidden", boxShadow: `0 20px 80px rgba(0,0,0,0.7), 0 0 100px var(--color-accent-faint)`, border: `1px solid var(--color-accent-soft)` }}>
+              <img src={imgSrc} alt="Affiche" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-                <img src={logoUrl} alt="" style={{ position: "absolute", top: 14, left: 16, width: "clamp(36px, 8%, 56px)", height: "auto", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.7))", opacity: 0.9 }} />
-                <div style={{ position: "absolute", top: 16, right: 20, fontSize: "clamp(14px, 2vw, 18px)", color: "#E8B030", fontFamily: SERIF, textShadow: "0 2px 10px rgba(0,0,0,0.9)", fontWeight: 600 }}>{"\u05D1\u05F4\u05D4"}</div>
-                {aData.texte_hebreu && <div style={{ position: "absolute", top: 22, left: 0, right: 0, fontSize: "clamp(24px, 5vw, 38px)", color: "#E8B030", fontFamily: SERIF, textAlign: "center", direction: "rtl", textShadow: "0 2px 15px rgba(0,0,0,0.95)", fontWeight: 700 }}>{aData.texte_hebreu}</div>}
-                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)", padding: "50px 0 28px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <img src={logoUrl} alt="" style={{ position: "absolute", top: "2%", left: "2.5%", width: "clamp(28px, 7%, 44px)", height: "auto", filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.7))", opacity: 0.9 }} />
+                <div style={{ position: "absolute", top: "2%", right: "2.5%", fontSize: "clamp(12px, 3.75cqw, 30px)", color: "#E8B030", fontFamily: SERIF, textShadow: "0 2px 10px rgba(0,0,0,0.9)", fontWeight: 600 }}>{"\u05D1\u05F4\u05D4"}</div>
+                {aData.texte_hebreu && <div style={{ position: "absolute", top: "3%", left: 0, right: 0, fontSize: "clamp(20px, 8cqw, 80px)", color: "#E8B030", fontFamily: SERIF, textAlign: "center", direction: "rtl", textShadow: "0 2px 15px rgba(0,0,0,0.95)", fontWeight: 700 }}>{aData.texte_hebreu}</div>}
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)", padding: "8% 0 4%", display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <div style={{ maxWidth: "90%", display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
-                    {aData.titre && <div style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, color: "#FFF", textAlign: "center", lineHeight: 1.1, fontFamily: SERIF, textShadow: "0 2px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7)", letterSpacing: -0.5, maxWidth: "90%" }}>{aData.titre}</div>}
-                    {aData.sous_titre && <div style={{ fontSize: "clamp(15px, 2.5vw, 20px)", fontWeight: 400, color: "rgba(255,255,255,0.9)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)", marginTop: 6 }}>{aData.sous_titre}</div>}
-                    <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12 }}>
-                      {aData.date  && <span style={{ fontSize: "clamp(20px, 3.5vw, 28px)", fontWeight: 800, color: "#E8B030", fontFamily: SANS, textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}>{aData.date}</span>}
-                      {aData.heure && <span style={{ fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 400, color: "rgba(255,255,255,0.95)", fontFamily: SANS, textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}>&middot; {aData.heure}</span>}
+                    {aData.titre && <div style={{ fontSize: "clamp(26px, 9.5cqw, 90px)", fontWeight: 900, color: "#FFF", textAlign: "center", lineHeight: 1.1, fontFamily: SERIF, textShadow: "0 2px 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.7)", letterSpacing: -0.5, maxWidth: "90%" }}>{aData.titre}</div>}
+                    {aData.sous_titre && <div style={{ fontSize: "clamp(14px, 4.5cqw, 45px)", fontWeight: 400, color: "rgba(255,255,255,0.9)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)", marginTop: "1.5%" }}>{aData.sous_titre}</div>}
+                    <div style={{ display: "flex", gap: "2%", alignItems: "center", marginTop: "2.5%" }}>
+                      {aData.date  && <span style={{ fontSize: "clamp(18px, 6cqw, 60px)", fontWeight: 800, color: "#E8B030", fontFamily: SANS, textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}>{aData.date}</span>}
+                      {aData.heure && <span style={{ fontSize: "clamp(16px, 5cqw, 50px)", fontWeight: 400, color: "rgba(255,255,255,0.95)", fontFamily: SANS, textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}>&middot; {aData.heure}</span>}
                     </div>
-                    {aData.lieu    && <div style={{ fontSize: "clamp(15px, 2.2vw, 20px)", fontWeight: 600, color: "#FFF", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)", marginTop: 6 }}>{aData.lieu}</div>}
-                    {aData.adresse && <div style={{ fontSize: "clamp(13px, 2vw, 17px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}>{aData.adresse}</div>}
-                    {aData.contact && <div style={{ fontSize: "clamp(13px, 2vw, 17px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}>{aData.contact}</div>}
-                    <div style={{ fontSize: "clamp(12px, 1.8vw, 16px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: 10, textShadow: "0 2px 10px rgba(0,0,0,0.9)", textTransform: "uppercase" }}>{bc}</div>
+                    {aData.lieu    && <div style={{ fontSize: "clamp(13px, 4cqw, 38px)", fontWeight: 600, color: "#FFF", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)", marginTop: "1.5%" }}>{aData.lieu}</div>}
+                    {aData.adresse && <div style={{ fontSize: "clamp(11px, 3.25cqw, 30px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}>{aData.adresse}</div>}
+                    {aData.contact && <div style={{ fontSize: "clamp(12px, 3.75cqw, 30px)", color: "rgba(255,255,255,0.8)", textAlign: "center", fontFamily: SANS, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}>{aData.contact}</div>}
+                    <div style={{ fontSize: fmt === "story" ? "clamp(8px, 3.44cqw, 22px)" : (fmt === "a4" || fmt === "paysage") ? "clamp(10px, 3cqw, 28px)" : "clamp(10px, 3.25cqw, 30px)", color: "#E8B030", textAlign: "center", letterSpacing: 3, fontFamily: SERIF, marginTop: "2%", textShadow: "0 2px 10px rgba(0,0,0,0.9)", textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{bc}</div>
                   </div>
                 </div>
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 10, justifyContent: "center", marginTop: 16 }}>
+            <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 10, justifyContent: "center", marginTop: 16, width: "100%" }}>
               <GBtn onClick={downloadAffiche} sm disabled={downloading}>{downloading ? "Préparation…" : "Télécharger"}</GBtn>
               <GBtn onClick={() => setPreview(false)} outline sm>Fermer</GBtn>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
