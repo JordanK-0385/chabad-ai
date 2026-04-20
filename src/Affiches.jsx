@@ -100,7 +100,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const [imageProvider, setImageProvider] = useState("gemini"); // "gemini" | "openai"
   const [desc,      setDesc]      = useState("");
   const [fmt,       setFmt]       = useState("");
-  const [illustSelection, setIllustSelection] = useState([]);
+  const [illustSelection, setIllustSelection] = useState(null);
   const [styleSelection, setStyleSelection] = useState("");
 
   const [loading,   setLoading]   = useState(false);
@@ -174,6 +174,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const generate = useCallback(async (note = "") => {
     if (!desc.trim()) { setErrMsg("Décrivez l'événement d'abord."); return; }
     if (!fmt) { setErrMsg("Choisissez un format."); return; }
+    if (illustSelection === null) { setErrMsg("Choisissez une illustration."); return; }
     if (!styleSelection) { setErrMsg("Choisissez un style visuel."); return; }
     setLoading(true); setErrMsg(""); setAData(null); setImgSrc(null);
     try {
@@ -363,29 +364,38 @@ export default function Affiches({ profil, onBack, headerProps }) {
               const CHIPS = { garcons: ["Enfants","Adolescents","Adultes","Seniors"], filles: ["Enfants","Adolescentes","Adultes","Seniors"], rav: ["Adulte","\u00C2g\u00E9"], rabbanit: ["Adulte","\u00C2g\u00E9e"] };
               const LABELS = { garcons: "Garçons", filles: "Filles", rav: "Rav", rabbanit: "Rabbanit" };
 
+              const arr = illustSelection || [];
+
               function toggleTile(tid) {
                 if (tid === "decor") { setIllustSelection([]); return; }
-                const exists = illustSelection.find(s => s.tile === tid);
-                if (exists) { setIllustSelection(illustSelection.filter(s => s.tile !== tid)); }
-                else if (illustSelection.length >= 2) { setIllustSelection([illustSelection[1], { tile: tid, age: null, qty: null }]); }
-                else { setIllustSelection([...illustSelection, { tile: tid, age: null, qty: null }]); }
+                const current = illustSelection || [];
+                const exists = current.find(s => s.tile === tid);
+                if (exists) { setIllustSelection(current.filter(s => s.tile !== tid)); }
+                else if (current.length >= 2) { setIllustSelection([current[1], { tile: tid, age: null, qty: null }]); }
+                else { setIllustSelection([...current, { tile: tid, age: null, qty: null }]); }
               }
-              function setAge(tid, age) { setIllustSelection(illustSelection.map(s => s.tile === tid ? { ...s, age: s.age === age ? null : age } : s)); }
-              function setQty(tid, q) { setIllustSelection(illustSelection.map(s => s.tile === tid ? { ...s, qty: s.qty === q ? null : q } : s)); }
+              function setAge(tid, age) { if (!illustSelection) return; setIllustSelection(illustSelection.map(s => s.tile === tid ? { ...s, age: s.age === age ? null : age } : s)); }
+              function setQty(tid, q) { if (!illustSelection) return; setIllustSelection(illustSelection.map(s => s.tile === tid ? { ...s, qty: s.qty === q ? null : q } : s)); }
               const HAS_QTY = ["garcons", "filles"];
 
-              const isDecor = !illustSelection.length;
-              const selTiles = illustSelection.map(s => s.tile);
-              const hasMixed = illustSelection.length === 2 && ((MALE_T.includes(selTiles[0]) && FEMALE_T.includes(selTiles[1])) || (FEMALE_T.includes(selTiles[0]) && MALE_T.includes(selTiles[1])));
+              // Décor highlighté UNIQUEMENT si l'utilisateur l'a explicitement sélectionné (tableau vide),
+              // pas à l'état initial (null).
+              const isDecor = illustSelection !== null && arr.length === 0;
+              const selTiles = arr.map(s => s.tile);
+              const hasMixed = arr.length === 2 && ((MALE_T.includes(selTiles[0]) && FEMALE_T.includes(selTiles[1])) || (FEMALE_T.includes(selTiles[0]) && MALE_T.includes(selTiles[1])));
 
-              let summary = "Décor uniquement \u2014 aucun personnage";
-              if (illustSelection.length === 1) {
-                const s = illustSelection[0];
+              let summary;
+              if (illustSelection === null) {
+                summary = "Choisissez une illustration";
+              } else if (arr.length === 0) {
+                summary = "D\u00E9cor uniquement \u2014 aucun personnage";
+              } else if (arr.length === 1) {
+                const s = arr[0];
                 summary = s.age ? `${LABELS[s.tile]} \u00B7 ${s.age}` : `Choisissez une tranche d'âge`;
-              } else if (illustSelection.length === 2) {
-                const noAge = illustSelection.find(s => !s.age);
+              } else {
+                const noAge = arr.find(s => !s.age);
                 if (noAge) summary = `Complétez la tranche d'âge pour ${LABELS[noAge.tile]}`;
-                else summary = illustSelection.map(s => `${LABELS[s.tile]} ${s.age}`).join(" \u00B7 ");
+                else summary = arr.map(s => `${LABELS[s.tile]} ${s.age}`).join(" \u00B7 ");
               }
 
               return (
@@ -398,7 +408,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
                       const idx = selTiles.indexOf(o.v);
                       return (
                         <div key={o.v} onClick={() => toggleTile(o.v)} style={{ padding: mobile ? "16px 8px" : "12px 8px", minHeight: mobile ? 88 : 'auto', borderRadius: 8, cursor: "pointer", textAlign: "center", position: "relative", border: `1px solid ${active ? T.gold : T.border}`, background: active ? T.goldFaint : T.surface, boxSizing: "border-box" }}>
-                          {sel && illustSelection.length === 2 && <div style={{ position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: "50%", background: T.gold, color: "#05100C", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{idx + 1}</div>}
+                          {sel && arr.length === 2 && <div style={{ position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: "50%", background: T.gold, color: "#05100C", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{idx + 1}</div>}
                           <div style={{ fontSize: 24, marginBottom: 6 }}>{o.e}</div>
                           <div style={{ fontSize: mobile ? 14 : 13, fontWeight: 600, color: active ? T.gold : T.text }}>{o.l}</div>
                           <div style={{ fontSize: mobile ? 14 : 10, color: T.muted, marginTop: 2, lineHeight: 1.4 }}>{o.s}</div>
@@ -406,7 +416,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
                       );
                     })}
                   </div>
-                  {illustSelection.map(s => {
+                  {arr.map(s => {
                     const opts = CHIPS[s.tile] || [];
                     if (!opts.length) return null;
                     const showQty = HAS_QTY.includes(s.tile);
