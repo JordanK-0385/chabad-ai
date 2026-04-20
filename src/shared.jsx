@@ -294,6 +294,7 @@ export function SuggestionsFAB({ user, profil }) {
       await addDoc(collection(db, "suggestions"), {
         userId: user.uid,
         userEmail: user.email || "",
+        userName: user.displayName || profil?.nom || "",
         betChabad: profil?.betChabad || profil?.ville || "",
         type,
         message: trimmed,

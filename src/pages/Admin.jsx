@@ -285,6 +285,7 @@ export default function Admin({ user, profil, headerProps }) {
             id: d.id,
             userId: v.userId || "",
             userEmail: v.userEmail || "",
+            userName: v.userName || "",
             betChabad: v.betChabad || "—",
             type: v.type || "—",
             message: v.message || "",
@@ -407,11 +408,57 @@ export default function Admin({ user, profil, headerProps }) {
       {headerProps && <AppHeader currentScreen="admin" {...headerProps} />}
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: mobile ? "20px 14px" : "36px 24px" }}>
-        <h1 style={{ fontFamily: SERIF, fontSize: mobile ? 24 : 32, fontWeight: 700, margin: "0 0 8px", color: "var(--color-text)", letterSpacing: "-0.02em" }}>
+        <h1 style={{ fontFamily: SERIF, fontSize: mobile ? 24 : 32, fontWeight: 700, margin: "0 0 16px", color: "var(--color-text)", letterSpacing: "-0.02em" }}>
           Admin
         </h1>
-        <div style={{ fontSize: 14, color: "var(--color-text-muted)", marginBottom: 28 }}>
-          {loading ? "Chargement…" : `${rows.length} utilisateur${rows.length > 1 ? "s" : ""}`}
+        <div style={{ display: "flex", gap: mobile ? 10 : 12, marginBottom: 28, flexWrap: "wrap" }}>
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 10,
+            padding: mobile ? "10px 14px" : "12px 18px",
+            background: "var(--color-accent-faint)",
+            border: "1px solid var(--color-accent-alpha)",
+            borderRadius: 12,
+            fontFamily: SANS,
+          }}>
+            <span style={{ fontSize: mobile ? 20 : 22 }}>👥</span>
+            <span>
+              <span style={{ fontSize: mobile ? 20 : 24, fontWeight: 800, color: "var(--color-accent)", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
+                {loading ? "…" : rows.length}
+              </span>
+              <span style={{ fontSize: mobile ? 12 : 13, color: "var(--color-text-muted)", marginLeft: 6, fontWeight: 600 }}>
+                {rows.length > 1 ? "inscrits" : "inscrit"}
+              </span>
+            </span>
+          </div>
+          {!loading && suggestions.length > 0 && (
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              padding: mobile ? "10px 14px" : "12px 18px",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: 12,
+              fontFamily: SANS,
+            }}>
+              <span style={{ fontSize: mobile ? 20 : 22 }}>💡</span>
+              <span>
+                <span style={{ fontSize: mobile ? 20 : 24, fontWeight: 800, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
+                  {suggestions.length}
+                </span>
+                <span style={{ fontSize: mobile ? 12 : 13, color: "var(--color-text-muted)", marginLeft: 6, fontWeight: 600 }}>
+                  {suggestions.length > 1 ? "suggestions" : "suggestion"}
+                </span>
+                {unreadSuggestions > 0 && (
+                  <span style={{ marginLeft: 8, padding: "2px 8px", background: "var(--color-error)", color: "#fff", borderRadius: 999, fontSize: 11, fontWeight: 700 }}>
+                    {unreadSuggestions} nouvelle{unreadSuggestions > 1 ? "s" : ""}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
         </div>
 
         {err && (
@@ -879,6 +926,8 @@ export default function Admin({ user, profil, headerProps }) {
                     s.status === "nouvelle" ? "en cours" :
                     s.status === "en cours" ? "réalisée" :
                     "nouvelle";
+                  const authorFromRows = rows.find(r => r.uid === s.userId);
+                  const authorName = s.userName || (authorFromRows?.nom !== "—" ? authorFromRows?.nom : "") || "";
                   return (
                     <div key={s.id} style={{ background: "var(--bg-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 12, padding: 14 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
@@ -891,17 +940,35 @@ export default function Admin({ user, profil, headerProps }) {
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text)", marginBottom: 2 }}>{s.betChabad}</div>
                       <div style={{ fontSize: 12, color: "var(--color-accent)", marginBottom: 10 }}>{s.type}</div>
+                      {(authorName || s.userEmail) && (
+                        <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 10, display: "flex", flexDirection: "column", gap: 2 }}>
+                          {authorName && <span style={{ color: "var(--color-text)", fontWeight: 600 }}>👤 {authorName}</span>}
+                          {s.userEmail && (
+                            <a href={`mailto:${s.userEmail}`} style={{ color: "var(--color-accent)", textDecoration: "none", wordBreak: "break-all" }}>
+                              ✉️ {s.userEmail}
+                            </a>
+                          )}
+                        </div>
+                      )}
                       <div style={{ fontSize: 13.5, color: "var(--color-text)", lineHeight: 1.5, marginBottom: 12, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                         {s.message}
                       </div>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button
                           onClick={() => handleSuggestionStatus(s.id, nextStatus)}
                           disabled={isBusy}
-                          style={{ ...actionBtn, ...actionBtnPrimary, flex: 1, padding: "9px 10px", opacity: isBusy ? 0.5 : 1 }}
+                          style={{ ...actionBtn, ...actionBtnPrimary, flex: "1 1 100%", padding: "9px 10px", opacity: isBusy ? 0.5 : 1 }}
                         >
                           → {nextStatus}
                         </button>
+                        {s.userEmail && (
+                          <a
+                            href={`mailto:${s.userEmail}?subject=${encodeURIComponent("Re: Votre suggestion — Habad.ai")}&body=${encodeURIComponent(`Bonjour${authorName ? " " + authorName : ""},\n\nMerci pour votre suggestion :\n\n> ${s.message.split("\n").join("\n> ")}\n\n`)}`}
+                            style={{ ...actionBtn, flex: 1, padding: "9px 10px", textAlign: "center", textDecoration: "none" }}
+                          >
+                            ✉️ Répondre
+                          </a>
+                        )}
                         <button
                           onClick={() => handleSuggestionDelete(s.id)}
                           disabled={isBusy}
@@ -920,6 +987,7 @@ export default function Admin({ user, profil, headerProps }) {
                   <thead>
                     <tr>
                       <th style={th}>Date</th>
+                      <th style={th}>Auteur</th>
                       <th style={th}>Beth Chabad</th>
                       <th style={th}>Type</th>
                       <th style={th}>Message</th>
@@ -942,6 +1010,11 @@ export default function Admin({ user, profil, headerProps }) {
                         s.status === "nouvelle" ? "en cours" :
                         s.status === "en cours" ? "réalisée" :
                         "nouvelle";
+                      const authorFromRows = rows.find(r => r.uid === s.userId);
+                      const authorName = s.userName || (authorFromRows?.nom !== "—" ? authorFromRows?.nom : "") || "";
+                      const mailtoHref = s.userEmail
+                        ? `mailto:${s.userEmail}?subject=${encodeURIComponent("Re: Votre suggestion — Habad.ai")}&body=${encodeURIComponent(`Bonjour${authorName ? " " + authorName : ""},\n\nMerci pour votre suggestion :\n\n> ${s.message.split("\n").join("\n> ")}\n\n`)}`
+                        : null;
                       return (
                         <tr key={s.id}>
                           <td style={{ ...td, color: "var(--color-text-muted)", whiteSpace: "nowrap", fontSize: 13 }}>
@@ -952,9 +1025,19 @@ export default function Admin({ user, profil, headerProps }) {
                               </div>
                             )}
                           </td>
+                          <td style={{ ...td, fontSize: 13 }}>
+                            {authorName && <div style={{ color: "var(--color-text)", fontWeight: 600 }}>{authorName}</div>}
+                            {s.userEmail ? (
+                              <a href={`mailto:${s.userEmail}`} style={{ color: "var(--color-accent)", textDecoration: "none", fontSize: 12, wordBreak: "break-all" }}>
+                                {s.userEmail}
+                              </a>
+                            ) : (
+                              !authorName && <span style={{ color: "var(--color-text-muted)" }}>—</span>
+                            )}
+                          </td>
                           <td style={td}>{s.betChabad}</td>
                           <td style={{ ...td, color: "var(--color-accent)", fontWeight: 600, fontSize: 13 }}>{s.type}</td>
-                          <td style={{ ...td, maxWidth: 380, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 13.5, lineHeight: 1.5 }}>
+                          <td style={{ ...td, maxWidth: 340, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 13.5, lineHeight: 1.5 }}>
                             {s.message}
                           </td>
                           <td style={td}>
@@ -971,6 +1054,15 @@ export default function Admin({ user, profil, headerProps }) {
                             >
                               → {nextStatus}
                             </button>
+                            {mailtoHref && (
+                              <a
+                                href={mailtoHref}
+                                title={`Répondre à ${s.userEmail}`}
+                                style={{ ...actionBtn, marginRight: 6, textDecoration: "none", display: "inline-block" }}
+                              >
+                                ✉️ Répondre
+                              </a>
+                            )}
                             <button
                               onClick={() => handleSuggestionDelete(s.id)}
                               disabled={isBusy}
