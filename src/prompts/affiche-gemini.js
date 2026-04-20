@@ -139,22 +139,48 @@ Boys and girls are visually different characters. The male character group (boys
   const STYLE_BLOCKS = {
     traditionnel: {
       decor: `═══ VISUAL STYLE — TRADITIONNEL ═══
-High-end editorial still-life photograph, shot in soft natural daylight — NOT a dark or dramatic scene.
-Background: solid flat muted warm tone — taupe, sage, dusty rose, warm beige or muted gold depending on the holiday palette. NEVER dark, NEVER near-black, NEVER dramatic. The background must be a mid-to-light matte solid color, similar to a painted studio backdrop.
+High-end editorial still-life photograph.
 
-Objects: silver Judaica items (candlesticks, kiddush cup, challah board), fresh challot with seeds, small fresh flowers or branches as natural decoration — arranged on a wooden board or linen cloth. All objects photorealistic, luxurious, warm silver and gold tones.
+BACKGROUND & GEOMETRY:
+Pure white or near-white background. One single bold geometric panel — tall vertical strip, horizontal band, or centered block — filled with a flat muted color (warm taupe, dusty sage, warm sand, muted teal, soft burgundy) chosen to match the holiday palette.
+This colored panel is the ONLY non-white zone. Clean edges. No gradients, no textures on the panel itself.
+The panel placement adapts to the aspect ratio:
+- Portrait / Story (9:16) → vertical strip on right or left third
+- Square (1:1) → vertical strip on right or left third, OR horizontal band across upper or lower third
+- Landscape (4:3) → horizontal band across upper or lower third, OR vertical strip on one side
 
-Lighting: soft diffused natural light from the right side. No harsh shadows. No dramatic chiaroscuro. Gentle, clean, serene. The overall mood is calm, elegant, institutional — like a high-end Jewish community bulletin or a luxury kosher magazine editorial.
+OBJECTS:
+Silver Judaica items (tall elegant candlesticks, kiddush cup), fresh challot with seeds, small delicate flowers or branches. Objects arranged naturally, spilling slightly outside the geometric panel onto the white background — this overlap is intentional and artistic. All objects photorealistic, warm silver and ivory tones. Soft diffused natural light from one side. No harsh shadows. No dramatic darkness whatsoever.
 
-Composition: objects fill the RIGHT 55% of the frame. LEFT 45% is intentionally lighter and emptier — soft background color only, no objects — to allow text overlay. Bottom 20% kept empty and slightly darker for logo overlay.
-NO human figures, NO silhouettes, NO body parts whatsoever.`,
+COMPOSITION:
+Colored panel = 35-40% of the frame. Rest = clean white space reserved for text overlay.
+Bottom 20% completely empty (white or muted color, no objects).
+NO human figures, NO silhouettes, NO body parts.
+
+COMMON RULE:
+The geometric panel + white space split must remain clearly visible regardless of format. The white empty zone is as important as the colored zone — it is structural, not accidental.
+MOOD: elegant, geometric, modern-institutional. Clean lines, generous white space. Like a luxury French Jewish community publication. NOT dark, NOT dramatic, NOT rustic, NOT cartoon.`,
       chars: `═══ VISUAL STYLE — TRADITIONNEL ═══
 Realistic digital painting, sober and institutional.
-Style: editorial illustration from a high-end French Jewish community magazine — warm, dignified, never cartoonish.
-Soft warm indoor lighting. Muted warm palette.
-Characters rendered with natural proportions, serious and welcoming expressions. No stylization, no exaggeration.
-Background: warm muted solid tone matching the holiday palette.
-Bottom 20% kept dark and empty for text and logo overlay.`,
+
+BACKGROUND & GEOMETRY:
+Same geometric panel approach as the decor mode — one bold flat-color geometric shape against a white or near-white background. Panel color matches the holiday palette (muted taupe, dusty sage, warm sand, muted teal, soft burgundy). Clean edges. No gradients.
+Panel placement adapts to the aspect ratio:
+- Portrait / Story (9:16) → vertical strip on right or left third
+- Square (1:1) → vertical strip on right or left third, OR horizontal band across upper or lower third
+- Landscape (4:3) → horizontal band across upper or lower third, OR vertical strip on one side
+
+CHARACTERS:
+1 to 3 characters maximum, positioned naturally in or around the colored panel, partially overlapping with the white zone. Characters rendered realistically — dignified, warm, editorial magazine style. Natural proportions. No stylization, no cartoon. Soft warm indoor lighting consistent with the panel lighting. Characters interact naturally with the holiday objects present.
+
+COMPOSITION:
+White zone (40-50% of frame) left intentionally empty for text.
+Bottom 20% kept empty for logo overlay.
+Characters never placed in the bottom 20% zone.
+
+COMMON RULE:
+The geometric panel + white space split must remain clearly visible regardless of format. The white empty zone is as important as the colored zone — it is structural, not accidental.
+MOOD: elegant, geometric, modern-institutional. Clean lines, generous white space. Like a luxury French Jewish community publication. NOT dark, NOT dramatic, NOT rustic, NOT cartoon.`,
     },
     illustre: {
       decor: `═══ VISUAL STYLE — REALISTIC ARTISTIC PAINTING ═══
