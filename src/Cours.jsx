@@ -593,6 +593,33 @@ export default function Cours({ profil, onBack, headerProps }) {
                 .cours-result-card h1, .cours-result-card h2, .cours-result-card h3 { text-wrap: balance; }
                 .cours-result-card blockquote > p { margin: 0 !important; text-align: left !important; font-family: 'Playfair Display', Georgia, serif !important; font-style: italic !important; color: var(--color-text) !important; line-height: 1.75 !important; }
                 .cours-result-card blockquote > p + p { margin-top: 6px !important; }
+                @media print {
+                  @page { margin: 16mm; }
+                  body * { visibility: hidden !important; }
+                  .cours-result-card, .cours-result-card * { visibility: visible !important; }
+                  .cours-print-hide { visibility: hidden !important; display: none !important; }
+                  .cours-result-card {
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    margin: 0 auto !important;
+                    width: 100% !important;
+                    max-width: 680px !important;
+                    padding: 0 !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    max-height: none !important;
+                    overflow: visible !important;
+                    background: white !important;
+                    color: #000 !important;
+                  }
+                  .cours-result-card h1, .cours-result-card h2, .cours-result-card h3 { color: #000 !important; }
+                  .cours-result-card p, .cours-result-card li { color: #000 !important; }
+                  .cours-result-card blockquote { background: #faf6ea !important; border-color: #c9971a !important; break-inside: avoid; }
+                  .cours-result-card p, .cours-result-card li, .cours-result-card blockquote, .cours-result-card h2, .cours-result-card h3 { break-inside: avoid; }
+                }
               `}</style>
               <div style={{ fontSize: mobile ? 14 : 13.5, color: T.text, lineHeight: 1.9, fontFamily: SANS }}>
                 <ReactMarkdown
@@ -649,7 +676,7 @@ export default function Cours({ profil, onBack, headerProps }) {
                   {result}
                 </ReactMarkdown>
               </div>
-              <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, marginTop: 24, paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+              <div className="cours-print-hide" style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, marginTop: 24, paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
                 <GBtn onClick={() => { navigator.clipboard.writeText(result); logEvent("copie"); }} outline sm>Copier</GBtn>
                 <GBtn onClick={() => { window.print(); logEvent("pdf_exporte"); }} outline sm>Exporter PDF</GBtn>
                 <GBtn onClick={() => { logEvent("regenere"); generate(); }} outline sm>Regénérer</GBtn>
