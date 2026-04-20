@@ -99,9 +99,9 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const [openaiKey] = useState(import.meta.env.VITE_OPENAI_KEY || "");
   const [imageProvider, setImageProvider] = useState("gemini"); // "gemini" | "openai"
   const [desc,      setDesc]      = useState("");
-  const [fmt,       setFmt]       = useState("carre");
+  const [fmt,       setFmt]       = useState("");
   const [illustSelection, setIllustSelection] = useState([]);
-  const [styleSelection, setStyleSelection] = useState("traditionnel");
+  const [styleSelection, setStyleSelection] = useState("");
 
   const [loading,   setLoading]   = useState(false);
   const [aData,     setAData]     = useState(null);
@@ -173,6 +173,8 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
   const generate = useCallback(async (note = "") => {
     if (!desc.trim()) { setErrMsg("Décrivez l'événement d'abord."); return; }
+    if (!fmt) { setErrMsg("Choisissez un format."); return; }
+    if (!styleSelection) { setErrMsg("Choisissez un style visuel."); return; }
     setLoading(true); setErrMsg(""); setAData(null); setImgSrc(null);
     try {
       const msg = [
