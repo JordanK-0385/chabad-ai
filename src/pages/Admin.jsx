@@ -432,33 +432,6 @@ export default function Admin({ user, profil, headerProps }) {
               </span>
             </span>
           </div>
-          {!loading && suggestions.length > 0 && (
-            <div style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              padding: mobile ? "10px 14px" : "12px 18px",
-              background: "var(--bg-surface)",
-              border: "1px solid var(--color-border)",
-              borderRadius: 12,
-              fontFamily: SANS,
-            }}>
-              <span style={{ fontSize: mobile ? 20 : 22 }}>💡</span>
-              <span>
-                <span style={{ fontSize: mobile ? 20 : 24, fontWeight: 800, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
-                  {suggestions.length}
-                </span>
-                <span style={{ fontSize: mobile ? 12 : 13, color: "var(--color-text-muted)", marginLeft: 6, fontWeight: 600 }}>
-                  {suggestions.length > 1 ? "suggestions" : "suggestion"}
-                </span>
-                {unreadSuggestions > 0 && (
-                  <span style={{ marginLeft: 8, padding: "2px 8px", background: "var(--color-error)", color: "#fff", borderRadius: 999, fontSize: 11, fontWeight: 700 }}>
-                    {unreadSuggestions} nouvelle{unreadSuggestions > 1 ? "s" : ""}
-                  </span>
-                )}
-              </span>
-            </div>
-          )}
         </div>
 
         {err && (
