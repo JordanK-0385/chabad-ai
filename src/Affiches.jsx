@@ -205,6 +205,15 @@ export default function Affiches({ profil, onBack, headerProps }) {
             betChabad: profil?.betChabad || "",
             userName: profil?.displayName || profil?.nom || "",
             subType: fmt,
+            sujet: "",
+            occasion: fmt,
+            enrichissements: [],
+            duree: "",
+            langue: "",
+            pdfsEnvoyes: [],
+            nbPdfs: 0,
+            nbRecherchesWeb: 0,
+            recherchesWeb: false,
             inputTokens: inputTokens,
             outputTokens: outputTokens,
             coutEuros: coutEuros,
@@ -286,6 +295,19 @@ export default function Affiches({ profil, onBack, headerProps }) {
 
   const FMTS   = [{ v: "carre", l: "Carré", s: "1:1" }, { v: "story", l: "Story", s: "9:16" }, { v: "a4", l: "A4", s: "Impression" }, { v: "paysage", l: "Paysage", s: "4:3" }];
   const TWEAKS = ["Plus chaleureux", "Plus solennel", "Sans personnages", "Ajoute un verset", "Plus festif", "Simplifie"];
+
+  async function logEvent(action) {
+    if (!profil?.uid) return;
+    try {
+      await addDoc(collection(db, "events"), {
+        uid: profil.uid,
+        module: "affiches",
+        action: action,
+        betChabad: profil?.betChabad || "",
+        createdAt: serverTimestamp(),
+      });
+    } catch (_) {}
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: SANS }}>
@@ -476,9 +498,9 @@ export default function Affiches({ profil, onBack, headerProps }) {
           {imgSrc && !loading && (
             <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, flexWrap: "wrap", justifyContent: "center" }}>
               <GBtn onClick={() => setPreview(true)} outline sm>Aperçu</GBtn>
-              <GBtn onClick={downloadAffiche} outline sm disabled={downloading}>{downloading ? "Préparation…" : "Télécharger"}</GBtn>
+              <GBtn onClick={() => { logEvent("telecharge"); downloadAffiche(); }} outline sm disabled={downloading}>{downloading ? "Préparation…" : "Télécharger"}</GBtn>
               <GBtn onClick={regenImage} outline sm>Nouvelle image</GBtn>
-              <GBtn onClick={() => generate()} outline sm>Tout regénérer</GBtn>
+              <GBtn onClick={() => { logEvent("regenere"); generate(); }} outline sm>Tout regénérer</GBtn>
               <button onClick={() => { setAData(null); setDesc(""); setImgSrc(null); }} style={{ padding: "7px 14px", background: "transparent", border: `1px solid ${T.border}`, borderRadius: 7, color: T.muted, fontSize: mobile ? 14 : 12, cursor: "pointer" }}>Effacer</button>
             </div>
           )}
@@ -538,7 +560,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 10, justifyContent: "center", marginTop: 16, width: "100%" }}>
-              <GBtn onClick={downloadAffiche} sm disabled={downloading}>{downloading ? "Préparation…" : "Télécharger"}</GBtn>
+              <GBtn onClick={() => { logEvent("telecharge"); downloadAffiche(); }} sm disabled={downloading}>{downloading ? "Préparation…" : "Télécharger"}</GBtn>
               <GBtn onClick={() => setPreview(false)} outline sm>Fermer</GBtn>
             </div>
           </div>

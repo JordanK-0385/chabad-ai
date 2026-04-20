@@ -128,6 +128,15 @@ export default function Messages({ profil, onBack, headerProps }) {
             betChabad: profil?.betChabad || "",
             userName: profil?.displayName || profil?.nom || "",
             subType: type,
+            sujet: sujet.trim(),
+            occasion: type,
+            enrichissements: [],
+            duree: taille,
+            langue: formulation,
+            pdfsEnvoyes: [],
+            nbPdfs: 0,
+            nbRecherchesWeb: 0,
+            recherchesWeb: false,
             inputTokens: inputTokens,
             outputTokens: outputTokens,
             coutEuros: coutEuros,
@@ -143,6 +152,19 @@ export default function Messages({ profil, onBack, headerProps }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function logEvent(action) {
+    if (!profil?.uid) return;
+    try {
+      await addDoc(collection(db, "events"), {
+        uid: profil.uid,
+        module: "messages",
+        action: action,
+        betChabad: profil?.betChabad || "",
+        createdAt: serverTimestamp(),
+      });
+    } catch (_) {}
   }
 
   return (
@@ -249,8 +271,8 @@ export default function Messages({ profil, onBack, headerProps }) {
                 {result}
               </div>
               <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, marginTop: 16 }}>
-                <GBtn onClick={() => { navigator.clipboard.writeText(result); }} outline sm>Copier</GBtn>
-                <GBtn onClick={generate} outline sm>Regénérer</GBtn>
+                <GBtn onClick={() => { navigator.clipboard.writeText(result); logEvent("copie"); }} outline sm>Copier</GBtn>
+                <GBtn onClick={() => { logEvent("regenere"); generate(); }} outline sm>Regénérer</GBtn>
               </div>
             </Card>
           )}

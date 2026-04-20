@@ -50,7 +50,13 @@ FORMAT DE SORTIE OBLIGATOIRE — RESPECTE EXACTEMENT CES RÈGLES :
 
 TITRE : commence toujours par un # H1 avec le titre du cours
 
-SOUS-TITRE : immédiatement après le H1, une ligne en italique entre parenthèses avec la source principale : *(Discours du Rabbi, Likouteï Si'hot tome X, page Y)*
+SOUS-TITRE : immédiatement après le H1, une ligne en italique entre parenthèses avec la source principale. Utilise une formulation qui reflète le fait que le cours est une adaptation pédagogique, PAS une transcription directe du Rabbi. Formulations acceptées :
+*(Adaptation libre d'un Si'ha du Rabbi, Likouteï Si'hot tome X, page Y)*
+*(Inspiré d'un discours du Rabbi, Likouteï Si'hot tome X, p. Y)*
+*(D'après les enseignements du Rabbi dans Likouteï Si'hot tome X)*
+*(Basé sur Likouteï Si'hot tome X, Parashat …)*
+
+INTERDIT : ne JAMAIS écrire "Discours du Rabbi de Loubavitch", "Si'ha du Rabbi" seul, ni aucune formulation qui laisserait croire que le texte est une transcription littérale du Rabbi. Utilise toujours un marqueur d'adaptation ("Adaptation libre", "Inspiré de", "D'après", "Basé sur").
 
 SÉPARATEUR : après le sous-titre, une ligne avec ---
 
@@ -322,6 +328,15 @@ export default function Cours({ profil, onBack, headerProps }) {
             betChabad: profil?.betChabad || "",
             userName: profil?.displayName || profil?.nom || "",
             subType: occasion,
+            sujet: sujet.trim(),
+            occasion: occasion,
+            enrichissements: enrichissements,
+            duree: duree,
+            langue: langue,
+            pdfsEnvoyes: selectedPdfs.map(p => p.name),
+            nbPdfs: selectedPdfs.length,
+            nbRecherchesWeb: searches,
+            recherchesWeb: searches > 0,
             inputTokens: inputTokens,
             outputTokens: outputTokens,
             coutEuros: coutEuros,
@@ -337,6 +352,19 @@ export default function Cours({ profil, onBack, headerProps }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function logEvent(action) {
+    if (!profil?.uid) return;
+    try {
+      await addDoc(collection(db, "events"), {
+        uid: profil.uid,
+        module: "cours",
+        action: action,
+        betChabad: profil?.betChabad || "",
+        createdAt: serverTimestamp(),
+      });
+    } catch (_) {}
   }
 
   return (
@@ -622,9 +650,9 @@ export default function Cours({ profil, onBack, headerProps }) {
                 </ReactMarkdown>
               </div>
               <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: mobile ? 10 : 8, marginTop: 24, paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
-                <GBtn onClick={() => navigator.clipboard.writeText(result)} outline sm>Copier</GBtn>
-                <GBtn onClick={() => window.print()} outline sm>Exporter PDF</GBtn>
-                <GBtn onClick={generate} outline sm>Regénérer</GBtn>
+                <GBtn onClick={() => { navigator.clipboard.writeText(result); logEvent("copie"); }} outline sm>Copier</GBtn>
+                <GBtn onClick={() => { window.print(); logEvent("pdf_exporte"); }} outline sm>Exporter PDF</GBtn>
+                <GBtn onClick={() => { logEvent("regenere"); generate(); }} outline sm>Regénérer</GBtn>
               </div>
             </div>
           )}

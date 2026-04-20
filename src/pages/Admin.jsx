@@ -311,8 +311,12 @@ export default function Admin({ user, profil, headerProps }) {
     let cancelled = false;
     (async () => {
       try {
-        const snap = await getDocs(collection(db, "generations"));
-        const docs = snap.docs.map(d => ({ ...d.data(), createdAt: d.data().createdAt?.toDate?.() || null }));
+        const [genSnap, eventsSnap] = await Promise.all([
+          getDocs(collection(db, "generations")),
+          getDocs(collection(db, "events")),
+        ]);
+        const docs = genSnap.docs.map(d => ({ ...d.data(), createdAt: d.data().createdAt?.toDate?.() || null }));
+        const events = eventsSnap.docs.map(d => ({ ...d.data(), createdAt: d.data().createdAt?.toDate?.() || null }));
 
         const totalGenerations = docs.length;
 
@@ -362,9 +366,60 @@ export default function Admin({ user, profil, headerProps }) {
 
         const totalCost = docs.reduce((acc, dd) => acc + (Number(dd.coutEuros) || 0), 0);
 
-        if (!cancelled) setDashStats({ totalGenerations, byModule, last7days, last7daysByDay, topUsers, byBetChabad, totalCost });
+        // Engagement events
+        const totalCopies      = events.filter(e => e.action === "copie").length;
+        const totalPdfExports  = events.filter(e => e.action === "pdf_exporte").length;
+        const totalRegenerations = events.filter(e => e.action === "regenere").length;
+        const totalDownloads   = events.filter(e => e.action === "telecharge").length;
+        const satisfactionRate = Math.round(((totalCopies + totalPdfExports + totalDownloads) / Math.max(totalGenerations, 1)) * 100);
+
+        // Top occasions — top 5 non-empty
+        const occAgg = new Map();
+        for (const dd of docs) {
+          const v = (dd.occasion || "").trim();
+          if (!v) continue;
+          occAgg.set(v, (occAgg.get(v) || 0) + 1);
+        }
+        const topOccasions = Array.from(occAgg.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+
+        // Top sujets — top 5 (min 3 chars)
+        const sujAgg = new Map();
+        for (const dd of docs) {
+          const v = (dd.sujet || "").trim();
+          if (v.length < 3) continue;
+          sujAgg.set(v, (sujAgg.get(v) || 0) + 1);
+        }
+        const topSujets = Array.from(sujAgg.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+
+        // Top enrichissements — flatten arrays, top 5
+        const enrAgg = new Map();
+        for (const dd of docs) {
+          const arr = Array.isArray(dd.enrichissements) ? dd.enrichissements : [];
+          for (const v of arr) {
+            const s = typeof v === "string" ? v.trim() : "";
+            if (!s) continue;
+            enrAgg.set(s, (enrAgg.get(s) || 0) + 1);
+          }
+        }
+        const topEnrichissements = Array.from(enrAgg.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+
+        // Top pdfs — flatten pdfsEnvoyes arrays, top 5 non-empty
+        const pdfAgg = new Map();
+        for (const dd of docs) {
+          const arr = Array.isArray(dd.pdfsEnvoyes) ? dd.pdfsEnvoyes : [];
+          for (const v of arr) {
+            const s = typeof v === "string" ? v.trim() : "";
+            if (!s) continue;
+            pdfAgg.set(s, (pdfAgg.get(s) || 0) + 1);
+          }
+        }
+        const topPdfs = Array.from(pdfAgg.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
+
+        const recherchesWebPct = Math.round((docs.filter(dd => dd.recherchesWeb).length / Math.max(docs.length, 1)) * 100);
+
+        if (!cancelled) setDashStats({ totalGenerations, byModule, last7days, last7daysByDay, topUsers, byBetChabad, totalCost, totalCopies, totalPdfExports, totalRegenerations, totalDownloads, satisfactionRate, topOccasions, topSujets, topEnrichissements, topPdfs, recherchesWebPct });
       } catch (e) {
-        if (!cancelled) setDashStats({ totalGenerations: 0, byModule: { cours: 0, affiches: 0, messages: 0 }, last7days: 0, last7daysByDay: [], topUsers: [], byBetChabad: [], totalCost: 0 });
+        if (!cancelled) setDashStats({ totalGenerations: 0, byModule: { cours: 0, affiches: 0, messages: 0 }, last7days: 0, last7daysByDay: [], topUsers: [], byBetChabad: [], totalCost: 0, totalCopies: 0, totalPdfExports: 0, totalRegenerations: 0, totalDownloads: 0, satisfactionRate: 0, topOccasions: [], topSujets: [], topEnrichissements: [], topPdfs: [], recherchesWebPct: 0 });
       } finally {
         if (!cancelled) setDashLoading(false);
       }
@@ -567,7 +622,7 @@ export default function Admin({ user, profil, headerProps }) {
           if (!dashStats || dashStats.totalGenerations === 0) {
             return <div style={{ padding: 24, fontSize: 14, color: "var(--color-text-muted)", textAlign: "center", background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14 }}>Aucune donnée.</div>;
           }
-          const { totalGenerations, byModule, last7days, last7daysByDay, topUsers, byBetChabad, totalCost } = dashStats;
+          const { totalGenerations, byModule, last7days, last7daysByDay, topUsers, byBetChabad, totalCost, totalCopies = 0, totalPdfExports = 0, totalRegenerations = 0, totalDownloads = 0, satisfactionRate = 0, topOccasions = [], topSujets = [], topEnrichissements = [], topPdfs = [], recherchesWebPct = 0 } = dashStats;
           const moduleEntries = Object.entries(byModule);
           const moduleTopEntry = moduleEntries.reduce((best, cur) => cur[1] > best[1] ? cur : best, ["—", 0]);
           const maxDayCount = Math.max(1, ...last7daysByDay.map(x => x.count));
@@ -696,6 +751,122 @@ export default function Admin({ user, profil, headerProps }) {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ROW 4 — Engagement + Tendances */}
+              <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+                <div style={sectionCard}>
+                  <h3 style={sectionTitle}>Engagement utilisateurs</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {[
+                      { label: "Cours copiés",     value: totalCopies },
+                      { label: "PDFs exportés",    value: totalPdfExports },
+                      { label: "Regénérations",    value: totalRegenerations },
+                      { label: "Téléchargements",  value: totalDownloads },
+                    ].map(r => (
+                      <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ flex: 1, fontSize: 13, color: "var(--color-text)" }}>{r.label}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", minWidth: 32, textAlign: "right" }}>{r.value}</div>
+                      </div>
+                    ))}
+                    <div style={{ marginTop: 6, paddingTop: 10, borderTop: "1px solid var(--color-border)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                        <div style={{ flex: 1, fontSize: 13, color: "var(--color-text)", fontWeight: 600 }}>Taux de satisfaction</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--color-accent)", fontVariantNumeric: "tabular-nums", minWidth: 44, textAlign: "right" }}>{satisfactionRate}%</div>
+                      </div>
+                      <div style={{ height: 8, background: "var(--bg-surface-elevated)", borderRadius: 4, overflow: "hidden" }}>
+                        <div style={{ width: `${Math.min(100, satisfactionRate)}%`, height: "100%", background: "var(--color-accent)", borderRadius: 4, transition: "width 0.3s" }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={sectionCard}>
+                  <h3 style={sectionTitle}>Tendances des demandes</h3>
+                  {(() => {
+                    const maxOcc = Math.max(1, ...topOccasions.slice(0, 3).map(x => x.count));
+                    const maxEnr = Math.max(1, ...topEnrichissements.slice(0, 3).map(x => x.count));
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Occasions populaires</div>
+                          {topOccasions.length === 0 ? (
+                            <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Aucune donnée.</div>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                              {topOccasions.slice(0, 3).map(o => (
+                                <div key={o.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                  <div style={{ width: 80, fontSize: 13, color: "var(--color-text)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textTransform: "capitalize" }}>{o.name}</div>
+                                  <div style={{ flex: 1, height: 10, background: "var(--bg-surface-elevated)", borderRadius: 5, overflow: "hidden" }}>
+                                    <div style={{ width: `${(o.count / maxOcc) * 100}%`, height: "100%", background: "var(--color-accent)", borderRadius: 5, transition: "width 0.3s" }} />
+                                  </div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", minWidth: 28, textAlign: "right" }}>{o.count}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Enrichissements favoris</div>
+                          {topEnrichissements.length === 0 ? (
+                            <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Aucune donnée.</div>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                              {topEnrichissements.slice(0, 3).map(e => (
+                                <div key={e.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                  <div style={{ width: 80, fontSize: 13, color: "var(--color-text)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</div>
+                                  <div style={{ flex: 1, height: 10, background: "var(--bg-surface-elevated)", borderRadius: 5, overflow: "hidden" }}>
+                                    <div style={{ width: `${(e.count / maxEnr) * 100}%`, height: "100%", background: "var(--color-accent)", borderRadius: 5, transition: "width 0.3s" }} />
+                                  </div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", minWidth: 28, textAlign: "right" }}>{e.count}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ paddingTop: 8, borderTop: "1px solid var(--color-border)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                          <span style={{ fontSize: 13, color: "var(--color-text)" }}>🔎 Recherches web Claude</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--color-accent)", fontVariantNumeric: "tabular-nums" }}>{recherchesWebPct}% des générations</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* ROW 5 — Thèmes + Documents */}
+              <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+                <div style={sectionCard}>
+                  <h3 style={sectionTitle}>Thèmes demandés</h3>
+                  {topSujets.length === 0 ? (
+                    <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>Aucun sujet identifié.</div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {topSujets.map(s => (
+                        <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--color-border)" }}>
+                          <div style={{ flex: 1, fontSize: 12, color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={s.name}>{s.name.length > 40 ? s.name.slice(0, 40) + "…" : s.name}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", minWidth: 24, textAlign: "right" }}>{s.count}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div style={sectionCard}>
+                  <h3 style={sectionTitle}>Documents les plus utilisés</h3>
+                  {topPdfs.length === 0 ? (
+                    <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>Aucune donnée — générez des cours avec des documents.</div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {topPdfs.map(p => (
+                        <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--color-border)" }}>
+                          <div style={{ flex: 1, fontSize: 12, color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={p.name}>📄 {p.name.length > 35 ? p.name.slice(0, 35) + "…" : p.name}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--color-text)", fontVariantNumeric: "tabular-nums", minWidth: 24, textAlign: "right" }}>{p.count}</div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
