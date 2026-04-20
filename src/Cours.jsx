@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
 import { db } from "./firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 
 const GH_OWNER  = "JordanK-0385";
 const GH_REPO   = "chabad-ai";
@@ -267,7 +267,24 @@ export default function Cours({ profil, onBack, headerProps }) {
           const coutEuros = ((inputTokens / 1000 * 0.003) + (outputTokens / 1000 * 0.015) + (searches * 0.01)) * 0.93;
           await addDoc(collection(db, "users", profil.uid || "anon", "cours"), {
             occasion, duree, langue, sujet: sujet.trim(), enrichissements, result: text, inputTokens: inputTokens, outputTokens: outputTokens, searches: searches, coutEuros: coutEuros, createdAt: serverTimestamp(),
+            betChabad: profil?.betChabad || "",
+            module: "cours",
+            userName: profil?.displayName || profil?.nom || "",
           });
+          await addDoc(collection(db, "generations"), {
+            uid: profil?.uid || "",
+            module: "cours",
+            betChabad: profil?.betChabad || "",
+            userName: profil?.displayName || profil?.nom || "",
+            subType: occasion,
+            inputTokens: inputTokens,
+            outputTokens: outputTokens,
+            coutEuros: coutEuros,
+            createdAt: serverTimestamp(),
+          });
+          if (profil?.uid) {
+            await updateDoc(doc(db, "users", profil.uid), { lastActiveAt: serverTimestamp() }).catch(_ => {});
+          }
         } catch (_) { /* silent */ }
       }
     } catch (e) {

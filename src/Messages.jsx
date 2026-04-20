@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
 import { db } from "./firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 
 const TYPES = [
   { v: "invitation",  l: "Invitation",    e: "\uD83D\uDCE9" },
@@ -117,8 +117,25 @@ export default function Messages({ profil, onBack, headerProps }) {
             inputTokens: inputTokens,
             outputTokens: outputTokens,
             coutEuros: coutEuros,
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
+            betChabad: profil?.betChabad || "",
+            module: "messages",
+            userName: profil?.displayName || profil?.nom || "",
           });
+          await addDoc(collection(db, "generations"), {
+            uid: profil?.uid || "",
+            module: "messages",
+            betChabad: profil?.betChabad || "",
+            userName: profil?.displayName || profil?.nom || "",
+            subType: type,
+            inputTokens: inputTokens,
+            outputTokens: outputTokens,
+            coutEuros: coutEuros,
+            createdAt: serverTimestamp(),
+          });
+          if (profil?.uid) {
+            await updateDoc(doc(db, "users", profil.uid), { lastActiveAt: serverTimestamp() }).catch(_ => {});
+          }
         }
       } catch (_) {}
     } catch (e) {

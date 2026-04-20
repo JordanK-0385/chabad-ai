@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
 import { T, SERIF, SANS, INP, ChabadLogo, Card, GBtn, StepLabel, BackButton, AppHeader } from "./shared";
 import { db } from "./firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { CLAUDE_SYS } from "./prompts/affiche-claude";
 import { CRITICAL_RULE, buildPrompt, buildLogoLine } from "./prompts/affiche-gemini";
 import { generateAfficheContent } from "./services/claude-api";
@@ -195,8 +195,24 @@ export default function Affiches({ profil, onBack, headerProps }) {
             inputTokens: inputTokens,
             outputTokens: outputTokens,
             coutEuros: coutEuros,
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
+            module: "affiches",
+            userName: profil?.displayName || profil?.nom || "",
           });
+          await addDoc(collection(db, "generations"), {
+            uid: profil?.uid || "",
+            module: "affiches",
+            betChabad: profil?.betChabad || "",
+            userName: profil?.displayName || profil?.nom || "",
+            subType: fmt,
+            inputTokens: inputTokens,
+            outputTokens: outputTokens,
+            coutEuros: coutEuros,
+            createdAt: serverTimestamp(),
+          });
+          if (profil?.uid) {
+            await updateDoc(doc(db, "users", profil.uid), { lastActiveAt: serverTimestamp() }).catch(_ => {});
+          }
         }
       } catch (_) {}
 
