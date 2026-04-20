@@ -443,8 +443,9 @@ export default function Admin({ user, profil, headerProps }) {
         {/* Tabs */}
         <div style={{ display: "flex", gap: 6, marginBottom: 24, borderBottom: "1px solid var(--color-border)" }}>
           {[
-            { id: "users", label: "Utilisateurs", icon: "👥" },
-            { id: "ideas", label: "Idées",        icon: "💡" },
+            { id: "users",     label: "Utilisateurs", icon: "👥" },
+            { id: "documents", label: "Documents",   icon: "📄" },
+            { id: "ideas",     label: "Idées",       icon: "💡" },
           ].map(t => {
             const active = adminTab === t.id;
             const badge = t.id === "ideas" && unreadSuggestions > 0 ? unreadSuggestions : 0;
@@ -490,12 +491,14 @@ export default function Admin({ user, profil, headerProps }) {
           })}
         </div>
 
-        {adminTab === "users" && (
-        <>
+        {adminTab === "documents" && (
         <div style={{ background: "var(--bg-surface)", border: "1px solid var(--color-border)", borderRadius: 14, padding: mobile ? 16 : 24, marginBottom: 28 }}>
-          <h2 style={{ fontFamily: SERIF, fontSize: mobile ? 18 : 20, fontWeight: 700, margin: "0 0 16px", color: "var(--color-text)", letterSpacing: "-0.01em" }}>
+          <h2 style={{ fontFamily: SERIF, fontSize: mobile ? 18 : 20, fontWeight: 700, margin: "0 0 8px", color: "var(--color-text)", letterSpacing: "-0.01em" }}>
             Documents de la semaine
           </h2>
+          <p style={{ fontSize: 13, color: "var(--color-text-muted)", margin: "0 0 18px" }}>
+            PDFs consultés par l'assistant pour la génération des cours de Torah.
+          </p>
 
           <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: mobile ? "stretch" : "center" }}>
             <input
@@ -542,7 +545,10 @@ export default function Admin({ user, profil, headerProps }) {
             </ul>
           )}
         </div>
+        )}
 
+        {adminTab === "users" && (
+        <>
         {mobile ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {!loading && rows.length === 0 && (
