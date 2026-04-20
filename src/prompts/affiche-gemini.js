@@ -138,22 +138,23 @@ Boys and girls are visually different characters. The male character group (boys
   /* BLOC B — Style visuel (3 modes × décor/personnages) */
   const STYLE_BLOCKS = {
     traditionnel: {
-      decor: `═══ VISUAL STYLE — TRADITIONAL STILL-LIFE PHOTOGRAPHY ═══
-High-end professional still-life photography, sober and institutional.
-The image must look like a luxury editorial photograph shot in a professional studio — a real photograph, not any form of drawn, painted or rendered illustration.
-Render: strictly photorealistic. Textures: real silver metal, real fabric, real food, authentic surface details.
-Lighting: warm soft studio light from upper left, gentle even shadows, neutral contrast.
-NO human figures, NO silhouettes, NO body parts, NO faces.
-Background: solid flat color — ${colorDominant} — no gradients, no patterns, no textures on the background itself.
-Composition: objects arranged elegantly, slightly off-center, generous negative space. Quiet, restrained, institutional feel.
-Bottom 20% completely empty and dark (reserved for text and logo overlay).`,
-      chars: `═══ VISUAL STYLE — TRADITIONAL EDITORIAL PAINTING ═══
-High-quality realistic digital painting, sober and dignified.
-Editorial illustration style — the kind found in upscale Jewish family magazines.
-Render: painterly but strictly realistic. Natural edges without harsh outlines. Muted warm palette.
-Lighting: warm natural indoor light. Soft even shadows, neutral contrast.
-Characters feel real and restrained, with mature adult proportions and serious reserved expressions, never stylized or exaggerated.
-Bottom 20% of the image kept dark and empty for text overlay.`,
+      decor: `═══ VISUAL STYLE — TRADITIONNEL ═══
+High-end editorial still-life photograph, shot in soft natural daylight — NOT a dark or dramatic scene.
+Background: solid flat muted warm tone — taupe, sage, dusty rose, warm beige or muted gold depending on the holiday palette. NEVER dark, NEVER near-black, NEVER dramatic. The background must be a mid-to-light matte solid color, similar to a painted studio backdrop.
+
+Objects: silver Judaica items (candlesticks, kiddush cup, challah board), fresh challot with seeds, small fresh flowers or branches as natural decoration — arranged on a wooden board or linen cloth. All objects photorealistic, luxurious, warm silver and gold tones.
+
+Lighting: soft diffused natural light from the right side. No harsh shadows. No dramatic chiaroscuro. Gentle, clean, serene. The overall mood is calm, elegant, institutional — like a high-end Jewish community bulletin or a luxury kosher magazine editorial.
+
+Composition: objects fill the RIGHT 55% of the frame. LEFT 45% is intentionally lighter and emptier — soft background color only, no objects — to allow text overlay. Bottom 20% kept empty and slightly darker for logo overlay.
+NO human figures, NO silhouettes, NO body parts whatsoever.`,
+      chars: `═══ VISUAL STYLE — TRADITIONNEL ═══
+Realistic digital painting, sober and institutional.
+Style: editorial illustration from a high-end French Jewish community magazine — warm, dignified, never cartoonish.
+Soft warm indoor lighting. Muted warm palette.
+Characters rendered with natural proportions, serious and welcoming expressions. No stylization, no exaggeration.
+Background: warm muted solid tone matching the holiday palette.
+Bottom 20% kept dark and empty for text and logo overlay.`,
     },
     illustre: {
       decor: `═══ VISUAL STYLE — REALISTIC ARTISTIC PAINTING ═══
