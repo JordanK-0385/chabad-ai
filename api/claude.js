@@ -28,7 +28,7 @@ const ALLOWED_MODELS = new Set([
   "claude-haiku-4-20250514",
 ]);
 const MAX_BODY_BYTES = 1 * 1024 * 1024; // 1 MB — les PDFs sont récupérés serveur-side via pdfIds
-const FIREBASE_STORAGE_BUCKET = "shliach-ai-9ff9d.appspot.com";
+const FIREBASE_STORAGE_BUCKET = "shliach-ai-9ff9d.firebasestorage.app";
 const MAX_PDFS = 5;
 
 async function fetchPdfFromStorage(pdfId) {
