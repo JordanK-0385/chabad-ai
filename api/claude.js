@@ -19,6 +19,7 @@
  * Réponse : passthrough JSON d'Anthropic + status code original.
  * ──────────────────────────────────────────────────────────────────────── */
 
+import admin from "firebase-admin";
 import { withAuth } from "./_lib/auth.js";
 
 const ALLOWED_MODELS = new Set([
@@ -28,6 +29,19 @@ const ALLOWED_MODELS = new Set([
 ]);
 const MAX_BODY_BYTES = 1 * 1024 * 1024; // 1 MB — les PDFs sont récupérés serveur-side via pdfIds
 const FIREBASE_STORAGE_BUCKET = "shliach-ai-9ff9d.appspot.com";
+const MAX_PDFS = 5;
+
+async function fetchPdfFromStorage(pdfId) {
+  try {
+    const bucket = admin.storage().bucket(FIREBASE_STORAGE_BUCKET);
+    const file = bucket.file(`pdfs/${pdfId}`);
+    const [buffer] = await file.download();
+    return buffer.toString("base64");
+  } catch (e) {
+    console.warn(`[api/claude] PDF skip: ${pdfId}`, e?.message);
+    return null;
+  }
+}
 
 function sanitize(s) {
   if (!s) return "";
@@ -96,43 +110,21 @@ async function handler(req, res) {
   }
 
   // Inject PDFs from Firebase Storage if pdfIds was provided
-  if (Array.isArray(body.pdfIds) && body.pdfIds.length > 0) {
-    const storageToken = process.env.FIREBASE_STORAGE_TOKEN;
-    const pdfBlocks = [];
-    for (const id of body.pdfIds) {
-      if (typeof id !== "string" || !id) continue;
-      try {
-        const encodedId = encodeURIComponent(id);
-        const url =
-          `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET}` +
-          `/o/pdfs%2F${encodedId}?alt=media` +
-          (storageToken ? `&token=${storageToken}` : "");
-        const resp = await fetch(url);
-        if (!resp.ok) {
-          console.warn(`[api/claude] PDF fetch failed for ${id}: HTTP ${resp.status}`);
-          continue;
-        }
-        const buf = Buffer.from(await resp.arrayBuffer());
-        const base64 = buf.toString("base64");
-        pdfBlocks.push({
-          type: "document",
-          source: { type: "base64", media_type: "application/pdf", data: base64 },
-          ...(pdfBlocks.length < 4 ? { cache_control: { type: "ephemeral" } } : {}),
-        });
-      } catch (e) {
-        console.warn(`[api/claude] PDF fetch failed for ${id}: ${e?.message || e}`);
-      }
+  const pdfIds = Array.isArray(body.pdfIds) ? body.pdfIds.slice(0, MAX_PDFS) : [];
+  const pdfBlocks = [];
+  for (const id of pdfIds) {
+    const b64 = await fetchPdfFromStorage(id);
+    if (b64) {
+      pdfBlocks.push({
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: b64 },
+      });
     }
-    if (pdfBlocks.length > 0) {
-      const first = body.messages[0] || {};
-      let content = first.content;
-      if (typeof content === "string") {
-        content = [{ type: "text", text: content }];
-      } else if (!Array.isArray(content)) {
-        content = [];
-      }
-      body.messages[0] = { ...first, role: first.role || "user", content: [...pdfBlocks, ...content] };
-    }
+  }
+  if (pdfBlocks.length > 0 && Array.isArray(body.messages[0]?.content)) {
+    body.messages[0].content = [...pdfBlocks, ...body.messages[0].content];
+  } else if (pdfBlocks.length > 0) {
+    body.messages[0].content = [...pdfBlocks, { type: "text", text: body.messages[0].content }];
   }
 
   try {
