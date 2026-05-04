@@ -45,3 +45,15 @@ export function onAuthChange(cb) {
   if (!auth) { cb(null); return () => {}; }
   return onAuthStateChanged(auth, cb);
 }
+
+/**
+ * Récupère l'ID token Firebase de l'utilisateur courant pour l'envoyer
+ * en `Authorization: Bearer <token>` aux Vercel Functions de proxy.
+ * Throw si aucun utilisateur connecté.
+ */
+export async function getIdToken() {
+  if (!auth?.currentUser) {
+    throw new Error("Non authentifié");
+  }
+  return await auth.currentUser.getIdToken();
+}

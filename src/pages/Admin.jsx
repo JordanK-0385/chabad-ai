@@ -4,6 +4,7 @@ import { useEffect, useState, Fragment } from "react";
 import { collection, getDocs, deleteDoc, updateDoc, doc, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 import { T, SERIF, SANS, INP, AppHeader } from "../shared";
+import { sanitizeError } from "../utils/sanitize-error";
 
 const GH_OWNER  = "JordanK-0385";
 const GH_REPO   = "chabad-ai";
@@ -130,7 +131,7 @@ export default function Admin({ user, profil, headerProps }) {
       const input = document.getElementById("admin-pdf-input");
       if (input) input.value = "";
     } catch (e) {
-      setPdfErr(e.message || "Erreur d'upload.");
+      setPdfErr(sanitizeError(e) || "Erreur d'upload.");
     } finally {
       setPdfBusy(false);
     }
@@ -143,7 +144,7 @@ export default function Admin({ user, profil, headerProps }) {
       await ghDelete(name);
       setPdfFiles(prev => prev.filter(f => f.name !== name));
     } catch (e) {
-      setPdfErr(e.message || "Erreur de suppression.");
+      setPdfErr(sanitizeError(e) || "Erreur de suppression.");
     } finally {
       setPdfBusy(false);
     }
@@ -162,7 +163,7 @@ export default function Admin({ user, profil, headerProps }) {
       setRows(prev => prev.filter(r => r.uid !== uid));
       if (editingUid === uid) setEditingUid(null);
     } catch (e) {
-      setErr(e.message || "Erreur de suppression.");
+      setErr(sanitizeError(e) || "Erreur de suppression.");
     } finally {
       setBusyUid(null);
     }
@@ -200,7 +201,7 @@ export default function Admin({ user, profil, headerProps }) {
       } : r));
       setEditingUid(null);
     } catch (e) {
-      setErr(e.message || "Erreur de sauvegarde.");
+      setErr(sanitizeError(e) || "Erreur de sauvegarde.");
     } finally {
       setBusyUid(null);
     }
@@ -244,7 +245,7 @@ export default function Admin({ user, profil, headerProps }) {
         );
         if (!cancelled) setRows(data);
       } catch (e) {
-        if (!cancelled) setErr(e.message || "Erreur de chargement.");
+        if (!cancelled) setErr(sanitizeError(e) || "Erreur de chargement.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -260,7 +261,7 @@ export default function Admin({ user, profil, headerProps }) {
         const items = await ghList();
         if (!cancelled) setPdfFiles(items);
       } catch (e) {
-        if (!cancelled) setPdfErr(e.message || "Erreur de chargement PDF.");
+        if (!cancelled) setPdfErr(sanitizeError(e) || "Erreur de chargement PDF.");
       } finally {
         if (!cancelled) setPdfLoading(false);
       }
@@ -298,7 +299,7 @@ export default function Admin({ user, profil, headerProps }) {
         data.sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0));
         if (!cancelled) setSuggestions(data);
       } catch (e) {
-        if (!cancelled) setSuggestionsErr(e.message || "Erreur de chargement des suggestions.");
+        if (!cancelled) setSuggestionsErr(sanitizeError(e) || "Erreur de chargement des suggestions.");
       } finally {
         if (!cancelled) setSuggestionsLoading(false);
       }
@@ -434,7 +435,7 @@ export default function Admin({ user, profil, headerProps }) {
       await updateDoc(doc(db, "suggestions", id), { status: newStatus });
       setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
     } catch (e) {
-      setSuggestionsErr(e.message || "Erreur de mise à jour.");
+      setSuggestionsErr(sanitizeError(e) || "Erreur de mise à jour.");
     } finally {
       setSuggestionsBusy(null);
     }
@@ -448,7 +449,7 @@ export default function Admin({ user, profil, headerProps }) {
       await deleteDoc(doc(db, "suggestions", id));
       setSuggestions(prev => prev.filter(s => s.id !== id));
     } catch (e) {
-      setSuggestionsErr(e.message || "Erreur de suppression.");
+      setSuggestionsErr(sanitizeError(e) || "Erreur de suppression.");
     } finally {
       setSuggestionsBusy(null);
     }

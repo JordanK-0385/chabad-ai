@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
 import { db } from "./firebase";
+import { generateMessage } from "./services/claude-api";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 
 const TYPES = [
@@ -93,17 +94,7 @@ export default function Messages({ profil, onBack, headerProps }) {
         profil?.siteWeb ? `Site web : ${profil.siteWeb}` : "",
       ].filter(Boolean).join("\n");
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, system: CLAUDE_MSG_SYS, messages: [{ role: "user", content: msg }] }),
-      });
-      const d = await res.json();
-      if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
-      const text = d.content?.find(b => b.type === "text")?.text || "";
-      const inputTokens = d.usage?.input_tokens || 0;
-      const outputTokens = d.usage?.output_tokens || 0;
-      if (!text) throw new Error("Reponse vide de Claude.");
+      const { text, inputTokens, outputTokens } = await generateMessage(msg, CLAUDE_MSG_SYS);
       setResult(text);
 
       try {
@@ -148,7 +139,8 @@ export default function Messages({ profil, onBack, headerProps }) {
         }
       } catch (_) {}
     } catch (e) {
-      setErr("Erreur : " + e.message);
+      console.error("Messages generate error:", e);
+      setErr("Erreur de génération du message, veuillez réessayer.");
     } finally {
       setLoading(false);
     }

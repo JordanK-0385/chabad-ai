@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { T, SERIF, SANS, INP, ChabadLogo, Card, GBtn, AppHeader } from "./shared";
 import { db } from "./firebase";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { sanitizeError } from "./utils/sanitize-error";
 
 function logoToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -237,7 +238,7 @@ function ProfileModal({ user, profil, onClose, onSave }) {
       await updateDoc(doc(db, "users", user.uid), updated);
       onSave(updated);
     } catch (e) {
-      setErr("Erreur : " + e.message);
+      setErr("Erreur : " + sanitizeError(e));
     } finally {
       setSaving(false);
     }

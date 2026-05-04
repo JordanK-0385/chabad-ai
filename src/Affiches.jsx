@@ -95,8 +95,9 @@ export default function Affiches({ profil, onBack, headerProps }) {
     return () => window.removeEventListener("resize", h);
   }, []);
 
-  const [geminiKey] = useState(import.meta.env.VITE_GEMINI_KEY || "");
-  const [openaiKey] = useState(import.meta.env.VITE_OPENAI_KEY || "");
+  // Les clés API ne sont plus côté client — elles vivent uniquement sur le proxy
+  // /api/{gemini,openai}. Les deux fournisseurs sont donc considérés disponibles ;
+  // si une clé serveur manque, le proxy renverra 500 et l'erreur s'affichera dans l'UI.
   const [imageProvider, setImageProvider] = useState("gemini"); // "gemini" | "openai"
   const [desc,      setDesc]      = useState("");
   const [fmt,       setFmt]       = useState("");
@@ -135,10 +136,6 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const logoUrl = profil?.logoBase64 || "/logo-beth-loubavitch.png";
   const contactDefault = profil?.telephone || "";
 
-  const geminiKeyRef = useRef(geminiKey);
-  geminiKeyRef.current = geminiKey;
-  const openaiKeyRef = useRef(openaiKey);
-  openaiKeyRef.current = openaiKey;
   const imageProviderRef = useRef(imageProvider);
   imageProviderRef.current = imageProvider;
 
@@ -148,12 +145,8 @@ export default function Affiches({ profil, onBack, headerProps }) {
   const styleSelRef = useRef(styleSelection);
   styleSelRef.current = styleSelection;
 
-  const getActiveImageKey = () => (imageProviderRef.current === "openai" ? openaiKeyRef.current : geminiKeyRef.current).trim();
-
   const callGemini = useCallback(async (contentData, bcName, format, sel, styleSel) => {
     const provider = imageProviderRef.current;
-    const key = (provider === "openai" ? openaiKeyRef.current : geminiKeyRef.current).trim();
-    if (!key) return;
     const prompt = buildPrompt(contentData, bcName, format, sel, styleSel);
     const logoLine = buildLogoLine(!!profil?.logoBase64);
     const fullPrompt = CRITICAL_RULE + "\n\n" + prompt + "\n\n" + logoLine;
@@ -166,8 +159,8 @@ export default function Affiches({ profil, onBack, headerProps }) {
       : [];
 
     const rawSrc = provider === "openai"
-      ? await generateAfficheImageOpenAI(fullPrompt, key, format)
-      : await generateAfficheImageGemini(fullPrompt, key, refImages);
+      ? await generateAfficheImageOpenAI(fullPrompt)
+      : await generateAfficheImageGemini(fullPrompt, refImages);
     if (!rawSrc) return;
     // Post-crop to exact target aspect ratio (center crop, no distortion)
     try {
@@ -238,29 +231,29 @@ export default function Affiches({ profil, onBack, headerProps }) {
         }
       } catch (_) {}
 
-      if (getActiveImageKey()) {
-        const src = await callGemini(parsed, bc, fmt, illustSelRef.current, styleSelRef.current);
-        if (src) setImgSrc(src);
-      }
+      const src = await callGemini(parsed, bc, fmt, illustSelRef.current, styleSelRef.current);
+      if (src) setImgSrc(src);
     } catch (e) {
-      setErrMsg("Erreur : " + e.message);
+      console.error("Affiches generate error:", e);
+      setErrMsg("Erreur de génération, veuillez réessayer.");
     } finally {
       setLoading(false);
     }
   }, [desc, fmt, bc, contactDefault, callGemini, illustSelection, styleSelection]);
 
   const regenImage = useCallback(async () => {
-    if (!aData || !getActiveImageKey()) return;
+    if (!aData) return;
     setLoading(true); setErrMsg(""); setImgSrc(null);
     try {
       const src = await callGemini(aData, bc, fmt, illustSelection, styleSelection);
       if (src) setImgSrc(src);
     } catch (e) {
-      setErrMsg("Erreur Gemini : " + e.message);
+      console.error("Affiches regen error:", e);
+      setErrMsg("Erreur de génération d'image, veuillez réessayer.");
     } finally {
       setLoading(false);
     }
-  }, [aData, geminiKey, bc, fmt, illustSelection, styleSelection, callGemini]);
+  }, [aData, bc, fmt, illustSelection, styleSelection, callGemini]);
 
   async function downloadAffiche() {
     if (!afficheRef.current || downloading) return;
@@ -494,14 +487,13 @@ export default function Affiches({ profil, onBack, headerProps }) {
           </Card>
 
           {errMsg && <div style={{ color: T.red, fontSize: mobile ? 14 : 12, marginBottom: 12, background: "var(--color-error-bg)", border: "1px solid var(--color-error-border)", borderRadius: 7, padding: "8px 12px", lineHeight: 1.5 }}>{errMsg}</div>}
-          {((imageProvider === "gemini" && !geminiKey) || (imageProvider === "openai" && !openaiKey)) && <div style={{ color: T.red, fontSize: mobile ? 14 : 11, marginBottom: 10 }}>Configuration requise — clé API {imageProvider === "openai" ? "OpenAI" : "Gemini"} manquante</div>}
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10, fontFamily: SANS }}>
             <span style={{ color: T.muted, flexShrink: 0, letterSpacing: 0.6, textTransform: "uppercase", fontSize: mobile ? 11 : 10, fontWeight: 600 }}>Modèle image</span>
             <div style={{ display: "inline-flex", borderRadius: 9999, border: `1px solid ${T.border}`, padding: 2, background: T.surface }}>
               {[
-                { id: "gemini", label: "Gemini", available: !!geminiKey },
-                { id: "openai", label: "DALL·E 3", available: !!openaiKey },
+                { id: "gemini", label: "Gemini", available: true },
+                { id: "openai", label: "DALL·E 3", available: true },
               ].map(p => {
                 const active = imageProvider === p.id;
                 return (

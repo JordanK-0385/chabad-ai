@@ -26,4 +26,20 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  // Vercel Functions et scripts Node : env Node, pas browser.
+  {
+    files: ['api/**/*.js', 'scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: globals.node,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+    rules: {
+      'react-refresh/only-export-components': 'off',
+      'react-hooks/rules-of-hooks': 'off',
+    },
+  },
 ])

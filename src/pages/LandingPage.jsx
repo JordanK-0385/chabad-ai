@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { T, SERIF, SANS, ChabadLogo } from "../shared";
 import { signInWithGoogle, firebaseReady } from "../firebase";
+import { sanitizeError } from "../utils/sanitize-error";
 
 /* ── CSS animations (injected once) ──────────────────────────── */
 if (typeof document !== "undefined" && !document.getElementById("lp-styles")) {
@@ -418,7 +419,7 @@ export default function LandingPage() {
     try {
       await signInWithGoogle();
     } catch (e) {
-      setAuthErr(e.message || "Erreur de connexion.");
+      setAuthErr(sanitizeError(e) || "Erreur de connexion.");
       console.error("Auth error:", e);
     } finally {
       setAuthLoading(false);

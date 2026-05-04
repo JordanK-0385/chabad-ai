@@ -1,0 +1,56 @@
+/* ─── firestore.rules ──────────────────────────────────────────────────────
+ * Règles Firestore recommandées pour HABAD.ai.
+ *
+ * IMPORTANT : la clé Firebase Web (`VITE_FIREBASE_API_KEY`) est PUBLIQUE par
+ * design. La sécurité des données Firestore repose ENTIÈREMENT sur ces règles.
+ *
+ * À déployer via :
+ *   - Firebase Console > Firestore > Rules > coller ce fichier > "Publier"
+ *   - OU `firebase deploy --only firestore:rules` (nécessite firebase-tools)
+ * ──────────────────────────────────────────────────────────────────────── */
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ─── Profils utilisateurs ──────────────────────────────────────────
+    // Chacun lit/écrit uniquement son propre document users/{uid}.
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      // Sous-collections : cours, messages, affiches générés par l'utilisateur.
+      match /{subCollection}/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ─── Logs de génération (analytics) ─────────────────────────────────
+    // Chacun crée ses propres entrées (uid doit matcher l'auth).
+    // Lecture publique BLOQUÉE — uniquement les Cloud Functions / proxies
+    // serveur (qui utilisent un service account) peuvent lire pour analytics.
+    match /generations/{docId} {
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // ─── Logs d'événements UI (engagement) ──────────────────────────────
+    match /events/{docId} {
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // ─── Tout le reste : refusé par défaut ──────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

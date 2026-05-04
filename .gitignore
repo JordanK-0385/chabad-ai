@@ -5,3 +5,6 @@ dist
 .vercel
 .DS_Store
 **/.DS_Store
+# Firebase service account keys — NE JAMAIS commit
+scripts/service-account-key.json
+scripts/*-service-account*.json

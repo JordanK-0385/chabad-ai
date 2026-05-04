@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
 import { db } from "./firebase";
+import { generateCours } from "./services/claude-api";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 
 const GH_OWNER  = "JordanK-0385";
@@ -281,16 +282,7 @@ export default function Cours({ profil, onBack, headerProps }) {
         ? [...pdfBlocks, { type: "text", text: msg }]
         : msg;
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 8000, system: CLAUDE_COURS_SYS, tools: [{ type: "web_search_20250305", name: "web_search" }], messages: [{ role: "user", content: userContent }] }),
-      });
-      const d = await res.json();
-      if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
-      const rawText = d.content?.filter(b => b.type === "text").map(b => b.text).join("\n\n") || "";
-      const inputTokens = d.usage?.input_tokens || 0;
-      const outputTokens = d.usage?.output_tokens || 0;
+      const { rawText, inputTokens, outputTokens, searches } = await generateCours(userContent, CLAUDE_COURS_SYS);
       const text = rawText
         .replace(/\n{3,}/g, '\n\n')
         .replace(/ {2,}/g, ' ')
@@ -314,7 +306,6 @@ export default function Cours({ profil, onBack, headerProps }) {
       /* Save to Firestore */
       if (profil?.onboardingComplete) {
         try {
-          const searches = d.usage?.server_tool_use?.web_search_requests || 0;
           const coutEuros = ((inputTokens / 1000 * 0.003) + (outputTokens / 1000 * 0.015) + (searches * 0.01)) * 0.93;
           await addDoc(collection(db, "users", profil.uid || "anon", "cours"), {
             occasion, duree, langue, sujet: sujet.trim(), enrichissements, result: text, inputTokens: inputTokens, outputTokens: outputTokens, searches: searches, coutEuros: coutEuros, createdAt: serverTimestamp(),
@@ -348,7 +339,8 @@ export default function Cours({ profil, onBack, headerProps }) {
         } catch (_) { /* silent */ }
       }
     } catch (e) {
-      setErr("Erreur : " + e.message);
+      console.error("Cours generate error:", e);
+      setErr("Erreur de génération du cours, veuillez réessayer.");
     } finally {
       setLoading(false);
     }

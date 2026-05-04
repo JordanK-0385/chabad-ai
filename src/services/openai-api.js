@@ -1,34 +1,30 @@
-/* ─── openai-api.js ─── OpenAI DALL·E 3 API for affiche image generation ─── */
+/* ─── openai-api.js ─── Client wrapper pour /api/openai (Vercel proxy) ─── */
 
-// DALL·E 3 always generates horizontal (1792x1024). The output is then cropped
-// to the user-selected format by the caller (see src/utils/crop-image.js).
-export async function generateAfficheImage(prompt, openaiKey, _fmt) {
-  const key = openaiKey?.trim();
-  if (!key) return;
-  const res = await fetch("https://api.openai.com/v1/images/generations", {
+import { getIdToken } from "../firebase";
+
+/**
+ * Appelle le proxy serveur qui relaie vers DALL·E 3.
+ * La clé OpenAI ne quitte jamais le serveur.
+ *
+ * @param {string} prompt
+ * @returns {Promise<string>} dataURL base64 (image/png)
+ */
+export async function generateAfficheImage(prompt) {
+  const token = await getIdToken();
+  const res = await fetch("/api/openai", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${key}`,
+      "Authorization": `Bearer ${token}`,
     },
-    body: JSON.stringify({
-      model: "dall-e-3",
-      prompt,
-      size: "1792x1024",
-      quality: "hd",
-      style: "natural",
-      response_format: "b64_json",
-      n: 1,
-    }),
+    body: JSON.stringify({ prompt }),
   });
+  const d = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e?.error?.message || `OpenAI HTTP ${res.status}`);
+    throw new Error(d?.error?.message || `Erreur OpenAI (${res.status})`);
   }
-  const data = await res.json();
-  const b64 = data?.data?.[0]?.b64_json;
-  if (!b64) {
+  if (!d.dataUrl) {
     throw new Error("Aucune image retournée par OpenAI.");
   }
-  return `data:image/png;base64,${b64}`;
+  return d.dataUrl;
 }

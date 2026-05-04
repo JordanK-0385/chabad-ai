@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo } from "./shared";
 import { db } from "./firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { sanitizeError } from "./utils/sanitize-error";
 
 function logoToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -72,9 +73,28 @@ export default function Onboarding({ user, onComplete }) {
       };
 
       await setDoc(doc(db, "users", user.uid), profil);
+
+      // Notifie n8n d'une nouvelle inscription (silencieux si n8n est down).
+      // Flag welcomeEmailSent: true uniquement si le webhook a répondu OK —
+      // sinon le champ reste absent et le script one-shot pourra rattraper.
+      fetch("https://n8n.srv786690.hstgr.cloud/webhook/habad-new-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          name: user.displayName ?? "",
+        }),
+      })
+        .then(res => {
+          if (res.ok) {
+            return updateDoc(doc(db, "users", user.uid), { welcomeEmailSent: true });
+          }
+        })
+        .catch(() => {});
+
       onComplete(profil);
     } catch (e) {
-      setErr("Erreur : " + e.message);
+      setErr("Erreur : " + sanitizeError(e));
     } finally {
       setSaving(false);
     }
