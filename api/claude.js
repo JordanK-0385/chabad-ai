@@ -3,6 +3,8 @@
  * - Vérifie le Firebase ID token du caller
  * - Forward la requête à api.anthropic.com avec la clé serveur
  * - Sanitize les messages d'erreur pour ne jamais exposer la clé
+ * - Si pdfIds est fourni, télécharge les PDFs depuis Firebase Storage
+ *   et les injecte comme blocs document dans messages[0].content.
  *
  * Body attendu (JSON) :
  *   {
@@ -10,7 +12,8 @@
  *     max_tokens: 1000,
  *     system: "...",
  *     messages: [...],
- *     tools?: [...]   // optionnel — pour le web_search côté Cours
+ *     tools?: [...],   // optionnel — pour le web_search côté Cours
+ *     pdfIds?: [...]   // optionnel — noms de fichiers PDF dans Firebase Storage (path "pdfs/")
  *   }
  *
  * Réponse : passthrough JSON d'Anthropic + status code original.
@@ -23,7 +26,8 @@ const ALLOWED_MODELS = new Set([
   "claude-opus-4-20250514",
   "claude-haiku-4-20250514",
 ]);
-const MAX_BODY_BYTES = 5 * 1024 * 1024; // 5 MB (PDFs encodés base64 dans Cours)
+const MAX_BODY_BYTES = 1 * 1024 * 1024; // 1 MB — les PDFs sont récupérés serveur-side via pdfIds
+const FIREBASE_STORAGE_BUCKET = "shliach-ai-9ff9d.appspot.com";
 
 function sanitize(s) {
   if (!s) return "";
@@ -89,6 +93,46 @@ async function handler(req, res) {
     console.error("[api/claude] ANTHROPIC_KEY env var missing");
     res.status(500).json({ error: "Server configuration error" });
     return;
+  }
+
+  // Inject PDFs from Firebase Storage if pdfIds was provided
+  if (Array.isArray(body.pdfIds) && body.pdfIds.length > 0) {
+    const storageToken = process.env.FIREBASE_STORAGE_TOKEN;
+    const pdfBlocks = [];
+    for (const id of body.pdfIds) {
+      if (typeof id !== "string" || !id) continue;
+      try {
+        const encodedId = encodeURIComponent(id);
+        const url =
+          `https://firebasestorage.googleapis.com/v0/b/${FIREBASE_STORAGE_BUCKET}` +
+          `/o/pdfs%2F${encodedId}?alt=media` +
+          (storageToken ? `&token=${storageToken}` : "");
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          console.warn(`[api/claude] PDF fetch failed for ${id}: HTTP ${resp.status}`);
+          continue;
+        }
+        const buf = Buffer.from(await resp.arrayBuffer());
+        const base64 = buf.toString("base64");
+        pdfBlocks.push({
+          type: "document",
+          source: { type: "base64", media_type: "application/pdf", data: base64 },
+          ...(pdfBlocks.length < 4 ? { cache_control: { type: "ephemeral" } } : {}),
+        });
+      } catch (e) {
+        console.warn(`[api/claude] PDF fetch failed for ${id}: ${e?.message || e}`);
+      }
+    }
+    if (pdfBlocks.length > 0) {
+      const first = body.messages[0] || {};
+      let content = first.content;
+      if (typeof content === "string") {
+        content = [{ type: "text", text: content }];
+      } else if (!Array.isArray(content)) {
+        content = [];
+      }
+      body.messages[0] = { ...first, role: first.role || "user", content: [...pdfBlocks, ...content] };
+    }
   }
 
   try {

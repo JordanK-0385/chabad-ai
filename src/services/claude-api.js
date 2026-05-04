@@ -94,15 +94,18 @@ export async function generateAfficheContent(userMessage, systemPrompt) {
 /**
  * Appel Claude pour génération de cours (avec web_search tool + PDFs).
  * userContent : string ou array de blocs (text + document/pdf).
+ * pdfIds : noms de fichiers dans Firebase Storage path "pdfs/" — le serveur
+ *          les télécharge et les injecte avant le texte.
  * Renvoie { rawText, inputTokens, outputTokens, searches } ou throw.
  */
-export async function generateCours(userContent, systemPrompt) {
+export async function generateCours(userContent, systemPrompt, pdfIds = []) {
   const { status, data: d } = await callClaudeProxy({
     model: "claude-sonnet-4-20250514",
     max_tokens: 8000,
     system: systemPrompt,
     tools: [{ type: "web_search_20250305", name: "web_search" }],
     messages: [{ role: "user", content: userContent }],
+    ...(Array.isArray(pdfIds) && pdfIds.length > 0 ? { pdfIds } : {}),
   });
 
   if (d.error) throw new Error(d.error.message || "Erreur API");

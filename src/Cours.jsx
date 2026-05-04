@@ -3,15 +3,10 @@
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
-import { db } from "./firebase";
+import { db, storage } from "./firebase";
 import { generateCours } from "./services/claude-api";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
-
-const GH_OWNER  = "JordanK-0385";
-const GH_REPO   = "chabad-ai";
-const GH_BRANCH = "main";
-const GH_PATH   = "public/pdfs";
-const GH_TOKEN  = import.meta.env.VITE_GITHUB_KEY;
+import { ref, listAll } from "firebase/storage";
 
 const OCCASIONS = [
   { v: "chabbat",    l: "Chabbat",     e: "\uD83D\uDD6F\uFE0F" },
@@ -109,90 +104,6 @@ Français → cours entièrement en français, termes hébreux translittérés
 Hébreu → cours entièrement en hébreu rabbinique
 Français + Hébreu → alterne naturellement, citations en hébreu original`;
 
-function arrayBufferToBase64(buffer) {
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-  }
-  return btoa(binary);
-}
-
-const MAX_PDFS_SENT = 10;
-
-function ghHeadersObj() {
-  const h = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
-  if (GH_TOKEN) h.Authorization = `Bearer ${GH_TOKEN}`;
-  return h;
-}
-
-// List PDFs with latest-commit date, sorted most-recent first.
-async function listPdfsSorted() {
-  const headers = ghHeadersObj();
-  const listRes = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}?ref=${GH_BRANCH}`,
-    { headers }
-  );
-  if (listRes.status === 404) return [];
-  if (!listRes.ok) throw new Error(`GitHub list failed (${listRes.status})`);
-  const raw = await listRes.json();
-  if (!Array.isArray(raw) || raw.length === 0) return [];
-
-  // Keep only .pdf FILES directly in public/pdfs (no dirs, no non-pdf files),
-  // and dedupe by filename (case-insensitive) as a safety net.
-  const seen = new Set();
-  const items = raw.filter(item => {
-    if (!item || item.type !== "file") return false;
-    if (typeof item.name !== "string") return false;
-    if (!item.name.toLowerCase().endsWith(".pdf")) return false;
-    if (item.path !== `${GH_PATH}/${item.name}`) return false;
-    const key = item.name.toLowerCase();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-  if (items.length === 0) return [];
-
-  const withDates = await Promise.all(items.map(async item => {
-    let uploadDate = null;
-    try {
-      const commitRes = await fetch(
-        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(item.path)}&per_page=1&sha=${GH_BRANCH}`,
-        { headers }
-      );
-      if (commitRes.ok) {
-        const commits = await commitRes.json();
-        const dateStr = commits?.[0]?.commit?.committer?.date || commits?.[0]?.commit?.author?.date;
-        if (dateStr) uploadDate = new Date(dateStr);
-      }
-    } catch (_) { /* silent per-file */ }
-    return { name: item.name, path: item.path, sha: item.sha, uploadDate };
-  }));
-
-  withDates.sort((a, b) => {
-    const ad = a.uploadDate?.getTime?.() || 0;
-    const bd = b.uploadDate?.getTime?.() || 0;
-    return bd - ad;
-  });
-  return withDates;
-}
-
-async function fetchPdfBlocksForItems(items) {
-  if (!Array.isArray(items) || items.length === 0) return [];
-  const docs = await Promise.all(items.map(async item => {
-    const resp = await fetch(`/pdfs/${encodeURIComponent(item.name)}`);
-    if (!resp.ok) throw new Error(`PDF fetch failed for ${item.name} (${resp.status})`);
-    const buf = await resp.arrayBuffer();
-    return { data: arrayBufferToBase64(buf) };
-  }));
-  return docs.map((d, i) => ({
-    type: "document",
-    source: { type: "base64", media_type: "application/pdf", data: d.data },
-    ...(i < 4 ? { cache_control: { type: "ephemeral" } } : {})
-  }));
-}
-
 export default function Cours({ profil, onBack, headerProps }) {
   const [mobile, setMobile] = useState(window.innerWidth <= 600);
   useEffect(() => {
@@ -221,7 +132,15 @@ export default function Cours({ profil, onBack, headerProps }) {
     let cancelled = false;
     (async () => {
       try {
-        const items = await listPdfsSorted();
+        if (!storage) {
+          if (!cancelled) setPdfList([]);
+          return;
+        }
+        const res = await listAll(ref(storage, "pdfs"));
+        const items = res.items
+          .filter(it => it.name.toLowerCase().endsWith(".pdf"))
+          .map(it => ({ name: it.name }));
+        items.sort((a, b) => a.name.localeCompare(b.name));
         if (!cancelled) setPdfList(items);
       } catch (e) {
         console.warn("PDF list failed:", e.message);
@@ -273,16 +192,11 @@ export default function Cours({ profil, onBack, headerProps }) {
         `Institution : ${bc}`,
       ].filter(Boolean).join("\n");
 
-      const selectedPdfs = pdfList.slice(0, MAX_PDFS_SENT);
-      const pdfBlocks = await fetchPdfBlocksForItems(selectedPdfs).catch(e => {
-        console.warn("PDF fetch failed:", e.message);
-        return [];
-      });
-      const userContent = pdfBlocks.length > 0
-        ? [...pdfBlocks, { type: "text", text: msg }]
-        : msg;
+      const selectedPdfs = pdfList;
+      const pdfIds = selectedPdfs.map(p => p.name);
+      const userContent = msg;
 
-      const { rawText, inputTokens, outputTokens, searches } = await generateCours(userContent, CLAUDE_COURS_SYS);
+      const { rawText, inputTokens, outputTokens, searches } = await generateCours(userContent, CLAUDE_COURS_SYS, pdfIds);
       const text = rawText
         .replace(/\n{3,}/g, '\n\n')
         .replace(/ {2,}/g, ' ')
@@ -425,7 +339,7 @@ export default function Cours({ profil, onBack, headerProps }) {
           </Card>
 
           {(() => {
-            const usedCount = Math.min(pdfList.length, MAX_PDFS_SENT);
+            const usedCount = pdfList.length;
             const isEmpty = !pdfListLoading && pdfList.length === 0;
             return (
               <div style={{
@@ -465,9 +379,7 @@ export default function Cours({ profil, onBack, headerProps }) {
                     ) : (
                       <span>
                         <strong style={{ color: T.gold, fontWeight: 700 }}>{usedCount}</strong>
-                        <span style={{ color: T.muted }}> document{usedCount > 1 ? "s" : ""} utilisé{usedCount > 1 ? "s" : ""} sur </span>
-                        <strong style={{ color: T.text, fontWeight: 700 }}>{pdfList.length}</strong>
-                        <span style={{ color: T.muted }}> disponible{pdfList.length > 1 ? "s" : ""}</span>
+                        <span style={{ color: T.muted }}> document{usedCount > 1 ? "s" : ""} disponible{usedCount > 1 ? "s" : ""}</span>
                       </span>
                     )}
                   </span>
@@ -492,41 +404,28 @@ export default function Cours({ profil, onBack, headerProps }) {
                 {docsOpen && !isEmpty && !pdfListLoading && (
                   <div style={{ padding: mobile ? "0 18px 18px" : "0 22px 22px", borderTop: `1px solid ${T.border}` }}>
                     <ul style={{ listStyle: "none", padding: 0, margin: "14px 0 0", display: "flex", flexDirection: "column", gap: 6 }}>
-                      {pdfList.map((f, i) => {
-                        const used = i < MAX_PDFS_SENT;
-                        return (
-                          <li
-                            key={f.path}
-                            title={f.uploadDate ? `Uploadé le ${f.uploadDate.toLocaleDateString("fr-FR")}` : ""}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: 8,
-                              padding: "7px 10px",
-                              background: used ? T.goldFaint : T.surface,
-                              border: `1px solid ${used ? T.goldSoft : T.border}`,
-                              borderRadius: 7,
-                              fontSize: mobile ? 13 : 12,
-                              color: used ? T.text : T.muted,
-                              opacity: used ? 1 : 0.65,
-                            }}
-                          >
-                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
-                              📄 {f.name}
-                            </span>
-                            <span style={{ fontSize: 11, color: T.muted, flexShrink: 0 }}>
-                              {f.uploadDate ? f.uploadDate.toLocaleDateString("fr-FR") : "—"}
-                            </span>
-                          </li>
-                        );
-                      })}
+                      {pdfList.map(f => (
+                        <li
+                          key={f.name}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 8,
+                            padding: "7px 10px",
+                            background: T.goldFaint,
+                            border: `1px solid ${T.goldSoft}`,
+                            borderRadius: 7,
+                            fontSize: mobile ? 13 : 12,
+                            color: T.text,
+                          }}
+                        >
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
+                            📄 {f.name}
+                          </span>
+                        </li>
+                      ))}
                     </ul>
-                    {pdfList.length > MAX_PDFS_SENT && (
-                      <div style={{ fontSize: 11, color: T.faint, marginTop: 8, textAlign: "center" }}>
-                        (les {MAX_PDFS_SENT} plus récents sont utilisés)
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

@@ -2,74 +2,32 @@
 
 import { useEffect, useState, Fragment } from "react";
 import { collection, getDocs, deleteDoc, updateDoc, doc, query, orderBy } from "firebase/firestore";
-import { db } from "../firebase";
+import { ref as storageRef, listAll, uploadBytes, deleteObject } from "firebase/storage";
+import { db, storage } from "../firebase";
 import { T, SERIF, SANS, INP, AppHeader } from "../shared";
 import { sanitizeError } from "../utils/sanitize-error";
 
-const GH_OWNER  = "JordanK-0385";
-const GH_REPO   = "chabad-ai";
-const GH_BRANCH = "main";
-const GH_PATH   = "public/pdfs";
-const GH_TOKEN  = import.meta.env.VITE_GITHUB_TOKEN;
-const GH_BASE   = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`;
-const ghHeaders = () => ({
-  Authorization: `Bearer ${GH_TOKEN}`,
-  Accept: "application/vnd.github+json",
-  "X-GitHub-Api-Version": "2022-11-28",
-});
+const PDFS_PATH = "pdfs";
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+async function storageList() {
+  if (!storage) return [];
+  const res = await listAll(storageRef(storage, PDFS_PATH));
+  return res.items
+    .filter(it => it.name.toLowerCase().endsWith(".pdf"))
+    .map(it => ({ name: it.name, path: it.fullPath }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function storageUpload(file) {
+  if (!storage) throw new Error("Firebase Storage non configuré.");
+  await uploadBytes(storageRef(storage, `${PDFS_PATH}/${file.name}`), file, {
+    contentType: "application/pdf",
   });
 }
 
-async function ghList() {
-  const res = await fetch(`${GH_BASE}?ref=${GH_BRANCH}`, { headers: ghHeaders() });
-  if (res.status === 404) return [];
-  if (!res.ok) throw new Error(`GitHub list failed (${res.status})`);
-  const data = await res.json();
-  return Array.isArray(data) ? data.map(f => ({ name: f.name, path: f.path, sha: f.sha })) : [];
-}
-
-async function ghGetSha(filename) {
-  const res = await fetch(`${GH_BASE}/${encodeURIComponent(filename)}?ref=${GH_BRANCH}`, { headers: ghHeaders() });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`GitHub get failed (${res.status})`);
-  const data = await res.json();
-  return data.sha;
-}
-
-async function ghUpload(filename, base64) {
-  const sha = await ghGetSha(filename);
-  const body = { message: `Add PDF: ${filename}`, content: base64, branch: GH_BRANCH };
-  if (sha) body.sha = sha;
-  const res = await fetch(`${GH_BASE}/${encodeURIComponent(filename)}`, {
-    method: "PUT",
-    headers: { ...ghHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const j = await res.json().catch(() => ({}));
-    throw new Error(j.message || `GitHub upload failed (${res.status})`);
-  }
-}
-
-async function ghDelete(filename) {
-  const sha = await ghGetSha(filename);
-  if (!sha) throw new Error("Fichier introuvable sur GitHub.");
-  const res = await fetch(`${GH_BASE}/${encodeURIComponent(filename)}`, {
-    method: "DELETE",
-    headers: { ...ghHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({ message: `Remove PDF: ${filename}`, sha, branch: GH_BRANCH }),
-  });
-  if (!res.ok) {
-    const j = await res.json().catch(() => ({}));
-    throw new Error(j.message || `GitHub delete failed (${res.status})`);
-  }
+async function storageDelete(filename) {
+  if (!storage) throw new Error("Firebase Storage non configuré.");
+  await deleteObject(storageRef(storage, `${PDFS_PATH}/${filename}`));
 }
 
 const ADMIN_UID = "9B2EWANLCaMssqkdRjTy66bjhCE3";
@@ -106,7 +64,7 @@ export default function Admin({ user, profil, headerProps }) {
   const isAdmin = user?.uid === ADMIN_UID;
 
   async function refreshPdfList() {
-    const items = await ghList();
+    const items = await storageList();
     setPdfFiles(items);
   }
 
@@ -123,8 +81,7 @@ export default function Admin({ user, profil, headerProps }) {
           setPdfErr("Format invalide (PDF uniquement) : " + file.name);
           continue;
         }
-        const base64 = await fileToBase64(file);
-        await ghUpload(file.name, base64);
+        await storageUpload(file);
       }
       await refreshPdfList();
       setPdfSelection(null);
@@ -141,7 +98,7 @@ export default function Admin({ user, profil, headerProps }) {
     if (!window.confirm(`Supprimer ${name} ?`)) return;
     setPdfBusy(true); setPdfErr("");
     try {
-      await ghDelete(name);
+      await storageDelete(name);
       setPdfFiles(prev => prev.filter(f => f.name !== name));
     } catch (e) {
       setPdfErr(sanitizeError(e) || "Erreur de suppression.");
@@ -258,7 +215,7 @@ export default function Admin({ user, profil, headerProps }) {
     let cancelled = false;
     (async () => {
       try {
-        const items = await ghList();
+        const items = await storageList();
         if (!cancelled) setPdfFiles(items);
       } catch (e) {
         if (!cancelled) setPdfErr(sanitizeError(e) || "Erreur de chargement PDF.");
