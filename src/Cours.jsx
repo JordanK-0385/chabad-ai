@@ -11,7 +11,7 @@ const GH_OWNER  = "JordanK-0385";
 const GH_REPO   = "chabad-ai";
 const GH_BRANCH = "main";
 const GH_PATH   = "public/pdfs";
-const GH_TOKEN  = import.meta.env.VITE_GITHUB_TOKEN;
+const GH_TOKEN  = import.meta.env.VITE_GITHUB_KEY;
 
 const OCCASIONS = [
   { v: "chabbat",    l: "Chabbat",     e: "\uD83D\uDD6F\uFE0F" },
