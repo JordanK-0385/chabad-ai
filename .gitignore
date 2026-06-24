@@ -8,3 +8,4 @@ dist
 # Firebase service account keys — NE JAMAIS commit
 scripts/service-account-key.json
 scripts/*-service-account*.json
+scripts/.box-oauth.json

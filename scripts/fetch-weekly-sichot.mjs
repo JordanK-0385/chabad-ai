@@ -21,7 +21,7 @@
  *          node fetch-weekly-sichot.mjs 2026-06-27 (forcer une date de Chabbat)
  * ------------------------------------------------------------------ */
 
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import admin from 'firebase-admin';
@@ -39,30 +39,47 @@ const slug = (s) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 
-// Token Box : soit BOX_TOKEN (dev, 60 min), soit auto via Client Credentials Grant
+// Token Box : OAuth 2.0 avec refresh token persistant (rotation). BOX_TOKEN = override manuel (dev).
+const TOKEN_FILE = process.env.BOX_TOKEN_FILE || join(__dirname, '.box-oauth.json');
 let boxToken = process.env.BOX_TOKEN || null;
 
+async function boxTokenRequest(params) {
+  const r = await fetch('https://api.box.com/oauth2/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(params),
+  });
+  if (!r.ok) throw new Error(`Box OAuth ${r.status} — ${await r.text().catch(() => '')}`);
+  return r.json();
+}
+
+// Bootstrap unique : échange le code d'autorisation contre un refresh token
+async function bootstrapAuth(code) {
+  const { BOX_CLIENT_ID, BOX_CLIENT_SECRET } = process.env;
+  if (!BOX_CLIENT_ID || !BOX_CLIENT_SECRET) throw new Error('Définis BOX_CLIENT_ID et BOX_CLIENT_SECRET.');
+  if (!code) throw new Error('Usage : node fetch-weekly-sichot.mjs --auth <code>');
+  const t = await boxTokenRequest({
+    grant_type: 'authorization_code', code,
+    client_id: BOX_CLIENT_ID, client_secret: BOX_CLIENT_SECRET,
+  });
+  await writeFile(TOKEN_FILE, JSON.stringify({ refresh_token: t.refresh_token }, null, 2));
+  console.log(`✅ Refresh token enregistré dans ${TOKEN_FILE}. L'app est prête.`);
+}
+
 async function resolveBoxToken() {
-  if (boxToken) return boxToken;
-  const { BOX_CLIENT_ID, BOX_CLIENT_SECRET, BOX_ENTERPRISE_ID } = process.env;
-  if (BOX_CLIENT_ID && BOX_CLIENT_SECRET && BOX_ENTERPRISE_ID) {
-    const body = new URLSearchParams({
-      grant_type: 'client_credentials',
-      client_id: BOX_CLIENT_ID,
-      client_secret: BOX_CLIENT_SECRET,
-      box_subject_type: 'enterprise',
-      box_subject_id: BOX_ENTERPRISE_ID,
-    });
-    const r = await fetch('https://api.box.com/oauth2/token', {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body,
-    });
-    if (!r.ok) throw new Error(`Box OAuth ${r.status} — ${await r.text().catch(() => '')}`);
-    boxToken = (await r.json()).access_token;
-    return boxToken;
-  }
-  throw new Error('Identifiants Box manquants : définis BOX_TOKEN, ou BOX_CLIENT_ID + BOX_CLIENT_SECRET + BOX_ENTERPRISE_ID.');
+  if (boxToken) return boxToken; // override manuel (token dev)
+  const { BOX_CLIENT_ID, BOX_CLIENT_SECRET } = process.env;
+  if (!BOX_CLIENT_ID || !BOX_CLIENT_SECRET) throw new Error('Identifiants Box manquants : BOX_CLIENT_ID + BOX_CLIENT_SECRET.');
+  let saved;
+  try { saved = JSON.parse(await readFile(TOKEN_FILE, 'utf8')); }
+  catch { throw new Error(`Aucun refresh token. Lance d'abord le bootstrap : node ${process.argv[1]} --auth <code>`); }
+  const t = await boxTokenRequest({
+    grant_type: 'refresh_token', refresh_token: saved.refresh_token,
+    client_id: BOX_CLIENT_ID, client_secret: BOX_CLIENT_SECRET,
+  });
+  await writeFile(TOKEN_FILE, JSON.stringify({ refresh_token: t.refresh_token }, null, 2)); // Box fait tourner le refresh token
+  boxToken = t.access_token;
+  return boxToken;
 }
 
 function boxHeaders() {
@@ -201,4 +218,9 @@ async function main() {
   console.log(`✅ ${manifest.length} Si'hot publiées dans ${DEST_PREFIX} + manifeste config/currentSichot.`);
 }
 
-main().catch((e) => { console.error('❌', e.message); process.exit(1); });
+const authIdx = process.argv.indexOf('--auth');
+if (authIdx !== -1) {
+  bootstrapAuth(process.argv[authIdx + 1]).catch((e) => { console.error('❌', e.message); process.exit(1); });
+} else {
+  main().catch((e) => { console.error('❌', e.message); process.exit(1); });
+}
