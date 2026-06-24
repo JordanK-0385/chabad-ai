@@ -1,16 +1,72 @@
-# React + Vite
+# HABAD.ai — הצלחה בזמן
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Plateforme SaaS **gratuite** qui aide les Shluchim (émissaires Chabad-Loubavitch) de France à générer rapidement des contenus communautaires : **affiches d'événements**, **cours de Torah** et **messages** communautaires.
 
-Currently, two official plugins are available:
+Production : **https://habad.ai**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> Le repo s'appelle `chabad-ai` pour des raisons historiques (le code s'appelait `shliach-ai` avant le pivot). C'est le même produit que Habad.ai.
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Domaine | Techno |
+|---|---|
+| Frontend | React + Vite (mobile-first) |
+| Auth + DB | Firebase Auth (Google) + Firestore (`shliach-ai-9ff9d`) |
+| Stockage | Firebase Storage (`pdfs/`) |
+| LLMs | Claude (sonnet-4), Gemini 2.5 Flash Image, DALL·E 3 (fallback) |
+| Hosting | Vercel (auto-deploy sur push `main`) |
+| Automation | n8n self-hosted |
 
-## Expanding the ESLint configuration
+## Architecture
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Le frontend n'appelle **jamais** les LLMs directement. Tous les appels passent par des **Vercel Functions** (`api/`) qui vérifient un Firebase ID token avant de forwarder, avec les clés stockées côté serveur uniquement :
+
+```
+React (Vite)  ──►  /api/claude   ──►  Anthropic
+              ──►  /api/gemini   ──►  Google Gemini
+              ──►  /api/openai   ──►  OpenAI (DALL·E fallback)
+```
+
+## Modules
+
+1. **Affiches** — formulaire événement → Claude (JSON) → Gemini/DALL·E (image) → overlay final.
+2. **Cours** — occasion + durée → Claude (web_search chabad.org/loubavitch.fr + Sichos en document blocks) → rendu style Likouteï Si'hot.
+3. **Messages** — type + ton → Claude.
+4. **Coach Habad** *(en cours)*.
+
+## Démarrage local
+
+Pré-requis : Node 18+.
+
+```bash
+npm install
+npm run dev      # http://localhost:5200
+```
+
+Variables d'environnement requises (voir `.env.example`) — **ne jamais commit le `.env`**.
+
+| Variable | Usage |
+|---|---|
+| `ANTHROPIC_API_KEY` | proxy `/api/claude` (serveur) |
+| `GEMINI_API_KEY` | proxy `/api/gemini` (serveur) |
+| `OPENAI_API_KEY` | proxy `/api/openai` (serveur) |
+| `VITE_FIREBASE_*` | config Firebase (publique, frontend) |
+
+## Scripts
+
+```bash
+npm run dev       # serveur de dev (port 5200)
+npm run build     # build de production
+npm run preview   # prévisualiser le build
+npm run lint      # ESLint
+```
+
+## Sécurité
+
+- Aucune clé sensible côté frontend (proxies uniquement).
+- Règles de sécurité versionnées : `firestore.rules`, `storage.rules`.
+- Déploiement des règles : `firebase deploy --only firestore:rules,storage`.
+
+## Déploiement
+
+Push sur `main` → Vercel rebuild & deploy automatiquement. La CI (`.github/workflows/ci.yml`) lance `lint` + `build` à chaque push/PR.

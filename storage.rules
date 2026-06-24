@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Sources ingérées dans les prompts (Sichos) → ADMIN seul en écriture
+    match /pdfs/sources/{fileName} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == '9B2EWANLCaMssqkdRjTy66bjhCE3'
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType == 'application/pdf';
+    }
+
+    // ─── Contenus générés par l'utilisateur → chacun dans son dossier
+    match /pdfs/users/{uid}/{fileName} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('application/pdf|image/png|image/jpeg|image/webp');
+    }
+
+    // tout le reste : refusé par défaut (Storage deny implicite)
+  }
+}
