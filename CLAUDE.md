@@ -9,7 +9,7 @@ HABAD.ai — plateforme SaaS gratuite qui aide les Shluchim (émissaires Chabad-
 - Frontend : React + Vite (mobile-first)
 - Auth + DB : Firebase Auth (Google) + Firestore — projet `shliach-ai-9ff9d`
 - Stockage : Firebase Storage (`pdfs/`)
-- LLMs : Claude (claude-sonnet-4) · Gemini 2.5 Flash Image · DALL·E 3 (fallback)
+- LLMs : Claude (claude-sonnet-4-6) · Gemini 2.5 Flash Image · DALL·E 3 (fallback)
 - Hosting : Vercel (auto-deploy sur push `main`)
 - Automation : n8n self-hosted
 
