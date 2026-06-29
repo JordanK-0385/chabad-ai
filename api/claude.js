@@ -8,7 +8,7 @@
  *
  * Body attendu (JSON) :
  *   {
- *     model: "claude-sonnet-4-20250514",
+ *     model: "claude-sonnet-4-6",
  *     max_tokens: 1000,
  *     system: "...",
  *     messages: [...],
@@ -23,7 +23,7 @@ import admin from "firebase-admin";
 import { withAuth } from "./_lib/auth.js";
 
 const ALLOWED_MODELS = new Set([
-  "claude-sonnet-4-20250514",
+  "claude-sonnet-4-6",
   "claude-opus-4-20250514",
   "claude-haiku-4-20250514",
 ]);
@@ -136,7 +136,7 @@ async function handler(req, res) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: body.model || "claude-sonnet-4-20250514",
+        model: body.model || "claude-sonnet-4-6",
         max_tokens: body.max_tokens ?? 1000,
         system: body.system,
         messages: body.messages,

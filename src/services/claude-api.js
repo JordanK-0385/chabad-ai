@@ -41,7 +41,7 @@ export async function generateAfficheContent(userMessage, systemPrompt) {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
       const { status, data: d } = await callClaudeProxy({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-6",
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: "user", content: userMessage }],
@@ -100,7 +100,7 @@ export async function generateAfficheContent(userMessage, systemPrompt) {
  */
 export async function generateCours(userContent, systemPrompt, pdfIds = []) {
   const { status, data: d } = await callClaudeProxy({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 8000,
     system: systemPrompt,
     tools: [{ type: "web_search_20250305", name: "web_search" }],
@@ -125,7 +125,7 @@ export async function generateCours(userContent, systemPrompt, pdfIds = []) {
  */
 export async function generateMessage(userMessage, systemPrompt) {
   const { status, data: d } = await callClaudeProxy({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 2000,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
