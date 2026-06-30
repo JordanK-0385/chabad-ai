@@ -45,3 +45,21 @@ Voir `docs/regles-visuelles.md`. En résumé : cheveux naturels visibles pour le
 
 ## Branding
 Bordeaux `#3D1414` · Orange CTA `#E8560A` · Crème `#F8F4EE` · Fonts Playfair Display + Inter.
+
+---
+
+## PROTOCOLE MÉMOIRE — Second Cerveau
+
+**Source de vérité unique : Airtable base `appyvKVq6Q6kr37La`.**
+**Projet concerné dans Airtable : "HABAD.ai — App Shluchim Île-de-France"**
+
+**EN DÉBUT de session, avant toute action :**
+1. Lire dans la table Sessions Claude (`tblqyyvcDdkMkTf2F`) le dernier Check-out de ce projet.
+2. Lire la fiche du projet dans Projets (`tbl58obVdHkmZU0T1`) et ses tâches ouvertes.
+3. Résumer en 2 lignes "voici où on en est" avant de commencer.
+
+**EN FIN de session :**
+1. Créer un enregistrement Check-out dans Sessions Claude : projet lié, objectif, résumé, décisions, tâches créées.
+2. Mettre à jour les tâches concernées.
+
+**Si l'accès Airtable n'est pas disponible dans cet espace, le dire explicitement plutôt que d'inventer l'état du projet.**
