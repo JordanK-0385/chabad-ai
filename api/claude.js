@@ -110,7 +110,13 @@ async function handler(req, res) {
   }
 
   // Inject PDFs from Firebase Storage if pdfIds was provided
-  const pdfIds = Array.isArray(body.pdfIds) ? body.pdfIds.slice(0, MAX_PDFS) : [];
+  // Hardening : n'autoriser que des noms de fichiers .pdf simples.
+  // Empêche le path traversal et l'accès aux PDFs d'un autre utilisateur
+  // (ex. "users/<autreUid>/x.pdf") — l'admin SDK ignore storage.rules.
+  const SAFE_PDF_ID = /^[\w.\- ()]+\.pdf$/i;
+  const pdfIds = (Array.isArray(body.pdfIds) ? body.pdfIds : [])
+    .filter(id => typeof id === "string" && !id.includes("/") && !id.includes("..") && SAFE_PDF_ID.test(id))
+    .slice(0, MAX_PDFS);
   const pdfBlocks = [];
   for (const id of pdfIds) {
     const b64 = await fetchPdfFromStorage(id);

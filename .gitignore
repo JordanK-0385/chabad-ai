@@ -9,3 +9,6 @@ dist
 scripts/service-account-key.json
 scripts/*-service-account*.json
 scripts/.box-oauth.json
+
+# backups créés par audit (non versionnés)
+*.bak
