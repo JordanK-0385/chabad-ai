@@ -19,11 +19,11 @@ const CP_CSS = `
 .cp-edition{position:absolute;right:4px;top:50%;transform:translateY(-50%) rotate(180deg);writing-mode:vertical-rl;font-size:9.5px;letter-spacing:.1em;color:rgba(0,0,0,.32);white-space:nowrap}
 .cp-main{position:absolute;top:0;left:0;width:65%;height:100%;padding:44px 24px 30px 34px;display:flex;flex-direction:column;z-index:2}
 .cp-k1{font-family:"Playfair Display",serif;font-style:italic;font-weight:600;font-size:29px;color:#2A2622;text-align:center;line-height:1}
-.cp-title{font-family:"Playfair Display",serif;font-style:italic;font-weight:800;font-size:58px;color:var(--cp-title);text-align:center;line-height:.98;margin:6px 0 8px;word-break:break-word}
+.cp-title{font-family:"Playfair Display",serif;font-style:italic;font-weight:800;color:var(--cp-title);text-align:center;line-height:.98;margin:6px 0 8px;word-break:break-word}
 .cp-date{font-family:"Playfair Display",serif;font-style:italic;font-weight:600;font-size:18.5px;color:var(--cp-info);text-align:center}
 .cp-region{font-family:"Playfair Display",serif;font-size:18.5px;color:#2A2622;text-align:center;margin-top:6px}
 .cp-reflect{flex:1;display:flex;align-items:center}
-.cp-reflect p{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:500;font-size:18px;line-height:1.55;color:#2c2824;text-align:center;margin:0;width:100%}
+.cp-reflect p{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:500;font-size:16px;line-height:1.5;color:#2c2824;text-align:center;margin:0;width:100%}
 .cp-times{display:flex;align-items:flex-start;justify-content:space-between;padding-top:8px}
 .cp-times .col{flex:1;text-align:center}
 .cp-times .lab{font-family:"Playfair Display",serif;font-style:italic;font-size:21px}
@@ -50,6 +50,8 @@ const ChabbatPoster = forwardRef(function ChabbatPoster({
   sidebarColor = "#9B9384",
 }, ref) {
   const lines = String(reflection).split("\n");
+  const _letters = String(parasha).replace(/[^0-9A-Za-zÀ-ÿ]/g, "").length;
+  const titleSize = _letters > 15 ? 34 : _letters > 11 ? 42 : _letters > 8 ? 50 : 58;
   return (
     <div
       ref={ref}
@@ -74,7 +76,7 @@ const ChabbatPoster = forwardRef(function ChabbatPoster({
 
       <div className="cp-main">
         <div className="cp-k1">Horaires de Chabbat</div>
-        <div className="cp-title">{parasha}</div>
+        <div className="cp-title" style={{ fontSize: titleSize }}>{parasha}</div>
         {(hebDate || gregDate) && (
           <div className="cp-date">{[hebDate, gregDate].filter(Boolean).join(" • ")}</div>
         )}
