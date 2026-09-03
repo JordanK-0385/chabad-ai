@@ -59,7 +59,7 @@ const ChabbatPoster = forwardRef(function ChabbatPoster({
       style={{ "--cp-title": titleColor, "--cp-info": infoColor, "--cp-sidebar": sidebarColor }}
     >
       <style>{CP_CSS}</style>
-      <div className="cp-sidebar"></div>
+      <div className="cp-sidebar">
       <div className="cp-bh">{"ב״ה"}</div>
       <div className="cp-cluster"><img src="/chabbat-cluster.png" alt="" crossOrigin="anonymous" /></div>
       <div className="cp-chalom">
@@ -73,6 +73,7 @@ const ChabbatPoster = forwardRef(function ChabbatPoster({
         <div className="s">{communitySub}</div>
       </div>
       {edition && <div className="cp-edition">{edition}</div>}
+      </div>
 
       <div className="cp-main">
         <div className="cp-k1">Horaires de Chabbat</div>
