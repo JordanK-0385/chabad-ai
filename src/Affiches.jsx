@@ -7,10 +7,11 @@ import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { generateMessage } from "./services/claude-api";
 import ChabbatPoster from "./posters/ChabbatPoster";
+import AnnonceFlow from "./AnnonceFlow";
 
 const TYPES = [
   { id: "chabbat", icon: "book",   title: "Chabbat",              desc: "Horaires + pensée de la paracha", ready: true },
-  { id: "annonce", icon: "poster", title: "Annonce communautaire", desc: "Événement, cours, cantine…",       ready: false },
+  { id: "annonce", icon: "poster", title: "Annonce communautaire", desc: "Événement, cours, cantine…",       ready: true },
   { id: "gan",     icon: "cal",    title: "Gan Israel",            desc: "Centre aéré, ateliers",            ready: false },
 ];
 
@@ -236,6 +237,13 @@ export default function Affiches({ profil, headerProps }) {
           <>
             <div style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 21, color: T.text, marginBottom: 16 }}>Affiche Chabbat</div>
             <ChabbatFlow profil={profil} logEvent={logEvent} />
+          </>
+        )}
+
+        {current?.id === "annonce" && (
+          <>
+            <div style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 21, color: T.text, marginBottom: 16 }}>Annonce communautaire</div>
+            <AnnonceFlow profil={profil} logEvent={logEvent} />
           </>
         )}
       </div>
