@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
-import { T, SERIF, SANS, INP, ChabadLogo, Card, GBtn, StepLabel, BackButton, AppHeader } from "./shared";
+import { T, SERIF, SANS, INP, ChabadLogo, Card, GBtn, StepLabel, BackButton, AppHeader, ScreenHeader, TabBar } from "./shared";
 import { db } from "./firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { CLAUDE_SYS } from "./prompts/affiche-claude";
@@ -316,16 +316,16 @@ export default function Affiches({ profil, onBack, headerProps }) {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: SANS }}>
+    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: SANS, paddingBottom: 80 }}>
 
-      {headerProps && <AppHeader currentScreen="affiches" {...headerProps} />}
+      {headerProps && <ScreenHeader title="Affiches" onBack={() => headerProps.onNavigate("dashboard")} />}
 
       {/* Main */}
       <div className="mfp-page" style={{ maxWidth: 860, margin: "0 auto", padding: mobile ? "20px 14px" : "36px 24px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <style>{`@media (max-width:600px){.mfp-page button{min-height:44px!important;font-size:14px!important;width:100%!important;box-sizing:border-box!important}.mfp-page input,.mfp-page textarea{font-size:16px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}.mfp-page .poster-wrap,.mfp-page .poster-wrap *{max-width:100%!important;box-sizing:border-box!important}}`}</style>
 
         <h1 style={{ flex: "1 1 100%", fontFamily: SERIF, fontSize: "1.4rem", fontWeight: 600, color: "var(--color-text)", margin: "0 0 24px" }}>
-          🎨 Créer une affiche
+          Créer une affiche
         </h1>
 
         {/* LEFT */}
@@ -620,6 +620,7 @@ export default function Affiches({ profil, onBack, headerProps }) {
         </div>
         );
       })()}
+      {headerProps && <TabBar active="affiches" onNavigate={headerProps.onNavigate} />}
     </div>
   );
 }

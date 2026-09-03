@@ -109,7 +109,7 @@ export default function Dashboard({ user, profil, setProfil, onNavigate, onLogou
     <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: SANS, paddingBottom: 80 }}>
 
       {/* ── Barre haute minimale ── */}
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "14px 18px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "14px 18px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <ChabadLogo size={28} />
           <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 17, color: T.text }}>Habad</span>
@@ -137,12 +137,12 @@ export default function Dashboard({ user, profil, setProfil, onNavigate, onLogou
       </div>
 
       {/* ── Signature : bande de talit ── */}
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 18px" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 18px" }}>
         <TalitStripe />
       </div>
 
       {/* ── Contenu ── */}
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "20px 18px 0" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px 18px 0" }}>
 
         {/* Salutation */}
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader } from "./shared";
+import { T, SERIF, SANS, INP, Card, GBtn, StepLabel, ChabadLogo, BackButton, AppHeader, ScreenHeader, TabBar } from "./shared";
 import { db, storage } from "./firebase";
 import { generateCours } from "./services/claude-api";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
@@ -287,16 +287,16 @@ export default function Cours({ profil, onBack, headerProps }) {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: SANS }}>
+    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: SANS, paddingBottom: 80 }}>
 
       {/* Header */}
-      {headerProps && <AppHeader currentScreen="cours" {...headerProps} />}
+      {headerProps && <ScreenHeader title="Cours" onBack={() => headerProps.onNavigate("dashboard")} />}
 
       <div className="mfp-page" style={{ maxWidth: 860, margin: "0 auto", padding: mobile ? "20px 14px" : "36px 24px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", flexDirection: mobile ? "column" : "row" }}>
         <style>{`@media (max-width:600px){.mfp-page button{min-height:44px!important;font-size:14px!important;width:100%!important;box-sizing:border-box!important}.mfp-page input,.mfp-page textarea{font-size:16px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}}`}</style>
 
         <h1 style={{ flex: "1 1 100%", fontFamily: SERIF, fontSize: "1.4rem", fontWeight: 600, color: "var(--color-text)", margin: "0 0 24px" }}>
-          📖 Préparer un cours
+          Préparer un cours
         </h1>
 
         {/* LEFT - controls */}
@@ -589,6 +589,7 @@ export default function Cours({ profil, onBack, headerProps }) {
           )}
         </div>
       </div>
+      {headerProps && <TabBar active="cours" onNavigate={headerProps.onNavigate} />}
     </div>
   );
 }

@@ -74,8 +74,25 @@ export function TalitStripe({ width = "100%", color = "var(--color-stripe)", sty
     <span style={{ display: "block", height: h, background: color, opacity: op, borderRadius: 1 }} />
   );
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2, width, ...style }}>
-      {bar(2)}{bar(1, 0.4)}{bar(3)}{bar(1, 0.4)}{bar(2)}
+    <div style={{ display: "flex", flexDirection: "column", gap: 3, width, ...style }}>
+      {bar(1.5)}{bar(3)}{bar(1.5)}
+    </div>
+  );
+}
+
+export function ScreenHeader({ title, onBack }) {
+  return (
+    <div style={{ maxWidth: 860, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px 8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div onClick={onBack} aria-label="Retour" style={{ cursor: "pointer", display: "flex", color: "var(--color-text)", transform: "rotate(180deg)" }}>
+            <Icon name="chev" size={20} stroke="currentColor" />
+          </div>
+          <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 17, color: "var(--color-text)" }}>{title}</span>
+        </div>
+        <span style={{ fontFamily: HEB, fontSize: 13, color: "var(--color-accent)", direction: "rtl" }}>ב״ה</span>
+      </div>
+      <div style={{ padding: "0 18px" }}><TalitStripe /></div>
     </div>
   );
 }
