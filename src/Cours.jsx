@@ -102,7 +102,17 @@ LONGUEUR :
 LANGUE DE SORTIE :
 Français → cours entièrement en français, termes hébreux translittérés
 Hébreu → cours entièrement en hébreu rabbinique
-Français + Hébreu → alterne naturellement, citations en hébreu original`;
+Français + Hébreu → alterne naturellement, citations en hébreu original
+
+═══════════════════════════════════════════════════════════
+RÈGLE DE SORTIE FINALE — PRIORITAIRE SUR TOUT LE RESTE :
+Ta réponse finale ne contient QUE le cours lui-même. Elle commence
+DIRECTEMENT par le titre en # H1 : le tout premier caractère de ta
+réponse est le « # » du titre.
+N'écris AUCUN préambule ni commentaire sur ta démarche — jamais de
+« J'ai maintenant assez de sources », « Je vais rédiger », « Voici le
+cours », ni aucun décompte de mots. Aucune phrase méta avant le titre,
+aucune conclusion sur toi-même après le cours. Rien d'autre que le cours.`;
 
 export default function Cours({ profil, onBack, headerProps }) {
   const [mobile, setMobile] = useState(window.innerWidth <= 600);
@@ -197,7 +207,7 @@ export default function Cours({ profil, onBack, headerProps }) {
       const userContent = msg;
 
       const { rawText, inputTokens, outputTokens, searches } = await generateCours(userContent, CLAUDE_COURS_SYS, pdfIds);
-      const text = rawText
+      let text = rawText
         .replace(/\n{3,}/g, '\n\n')
         .replace(/ {2,}/g, ' ')
         // Merge orphan paragraph number: "1.\n\nText"  →  "1. Text"
@@ -214,6 +224,10 @@ export default function Cours({ profil, onBack, headerProps }) {
         .replace(/(\S)\s*\n\n\s*([.,;:!?])\s+/g, '$1$2 ')
         .replace(/\n{3,}/g, '\n\n')
         .trim();
+      // Filet de sécurité : le cours DOIT commencer par le titre # H1.
+      // On coupe tout préambule éventuel qui précéderait ce titre.
+      const _h1 = text.search(/^#\s+/m);
+      if (_h1 > 0) text = text.slice(_h1).trim();
       if (!text) throw new Error("Reponse vide de Claude.");
       setResult(text);
 

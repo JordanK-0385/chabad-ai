@@ -111,7 +111,18 @@ export async function generateCours(userContent, systemPrompt, pdfIds = []) {
   if (d.error) throw new Error(d.error.message || "Erreur API");
   if (status >= 400) throw new Error(`Erreur réseau (${status}).`);
 
-  const rawText = d.content?.filter(b => b.type === "text").map(b => b.text).join("\n\n") || "";
+  // Avec web_search, la réponse contient plusieurs blocs texte : le raisonnement
+  // du modèle ENTRE les recherches, puis le cours final. On ne garde que le texte
+  // qui suit le dernier bloc d'outil (recherche) = la réponse finale, pour éviter
+  // que le préambule (« J'ai maintenant assez de sources… ») fuite dans le cours.
+  const blocks = Array.isArray(d.content) ? d.content : [];
+  let lastToolIdx = -1;
+  for (let i = 0; i < blocks.length; i++) {
+    if (blocks[i].type !== "text") lastToolIdx = i;
+  }
+  let finalBlocks = blocks.slice(lastToolIdx + 1).filter(b => b.type === "text");
+  if (finalBlocks.length === 0) finalBlocks = blocks.filter(b => b.type === "text");
+  const rawText = finalBlocks.map(b => b.text).join("\n\n").trim();
   const inputTokens = d.usage?.input_tokens || 0;
   const outputTokens = d.usage?.output_tokens || 0;
   const searches = d.usage?.server_tool_use?.web_search_requests || 0;
