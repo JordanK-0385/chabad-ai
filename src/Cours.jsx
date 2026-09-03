@@ -78,7 +78,7 @@ RÈGLE ABSOLUE : entre le chiffre, le point et la première lettre du texte, il 
 
 CITATIONS :
 Deux options — JAMAIS MÉLANGER :
-(a) Citation courte intégrée : inline dans la phrase, entre guillemets, SANS saut de ligne avant ni après. Exemple : "1. La paracha nous enseigne : \"Vous serez saints, car Je suis saint\". Cette sainteté s'atteint dans la joie."
+(a) Citation courte intégrée : inline dans la phrase, entre guillemets, SANS saut de ligne avant ni après. Exemple : "1. La paracha nous enseigne : "Vous serez saints, car Je suis saint". Cette sainteté s'atteint dans la joie."
 (b) Citation longue mise en évidence : en blockquote markdown avec > au début de chaque ligne, précédée ET suivie d'une ligne vide. Dans ce cas, la phrase précédente DOIT se terminer par un deux-points ou un point, JAMAIS une virgule qui serait complétée après.
 > "texte cité"
 > *(Nom du livre, chapitre, verset)*
@@ -176,7 +176,6 @@ export default function Cours({ profil, onBack, headerProps }) {
   }
 
   async function getCurrentParasha() {
-    const today = new Date();
     const response = await fetch(`https://www.hebcal.com/shabbat?cfg=json&geonameid=2988507&M=on`);
     const data = await response.json();
     const parasha = data.items?.find(i => i.category === "parashat");

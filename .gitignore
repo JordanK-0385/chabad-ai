@@ -11,4 +11,4 @@ scripts/*-service-account*.json
 scripts/.box-oauth.json
 
 # backups créés par audit (non versionnés)
-*.bak
+*.bak*

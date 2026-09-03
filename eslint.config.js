@@ -23,7 +23,12 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // args/catch inutilisés = souvent intentionnels (render-props, signatures) → non bloquant
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]', args: 'none', caughtErrors: 'none' }],
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      // règles purement dev (HMR / perf) : visibles en warning, ne bloquent pas le CI
+      'react-refresh/only-export-components': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
     },
   },
   // Vercel Functions et scripts Node : env Node, pas browser.
