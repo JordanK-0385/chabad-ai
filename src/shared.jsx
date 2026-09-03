@@ -35,10 +35,13 @@ export const T = {
   navbarMuted:  "var(--navbar-text-muted)",
   parachaBg:    "var(--paracha-bg)",
   parachaBorder:"var(--paracha-border)",
+  stripe:       "var(--color-stripe)",
+  silver:       "var(--color-silver)",
 };
 
 export const SERIF = "'Playfair Display', Georgia, serif";
-export const SANS  = "'DM Sans', 'Segoe UI', sans-serif";
+export const SANS  = "'Manrope', 'Segoe UI', sans-serif";
+export const HEB   = "'Frank Ruhl Libre', 'Playfair Display', serif";
 
 export const INP = {
   width: "100%",
@@ -54,7 +57,7 @@ export const INP = {
   transition: "border-color 0.2s",
 };
 
-export function ChabadLogo({ size = 40, color = "#C9971A", flameColor = "#E8A020", style = {} }) {
+export function ChabadLogo({ size = 40, color = "var(--color-text)", flameColor = "var(--color-accent)", style = {} }) {
   const w = size * (60 / 56);
   return (
     <svg width={w} height={size} viewBox="0 0 60 56" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, ...style }}>
@@ -63,6 +66,54 @@ export function ChabadLogo({ size = 40, color = "#C9971A", flameColor = "#E8A020
       <polyline points="13,16 30,34 47,16" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
       <polyline points="20,16 30,26 40,16" fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
     </svg>
+  );
+}
+
+export function TalitStripe({ width = "100%", color = "var(--color-stripe)", style = {} }) {
+  const bar = (h, op = 1) => (
+    <span style={{ display: "block", height: h, background: color, opacity: op, borderRadius: 1 }} />
+  );
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2, width, ...style }}>
+      {bar(2)}{bar(1, 0.4)}{bar(3)}{bar(1, 0.4)}{bar(2)}
+    </div>
+  );
+}
+
+export function Icon({ name, size = 22, stroke = "currentColor", sw = 1.8, style = {} }) {
+  const c = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke, strokeWidth: sw, strokeLinecap: "round", strokeLinejoin: "round", style };
+  switch (name) {
+    case "home":   return (<svg {...c}><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>);
+    case "book":   return (<svg {...c}><path d="M12 6C10.5 4.9 8.2 4.2 6 4.2H3v14h3c2.2 0 4.5.7 6 1.8 1.5-1.1 3.8-1.8 6-1.8h3v-14h-3c-2.2 0-4.5.7-6 1.8z"/><path d="M12 6v14"/></svg>);
+    case "poster": return (<svg {...c}><rect x="4" y="4" width="16" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.4"/><path d="M5 16l4-3.5 3 2.5 3.5-4L19 16"/></svg>);
+    case "msg":    return (<svg {...c}><path d="M20 15a2 2 0 0 1-2 2H8l-4 3.5V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>);
+    case "cal":    return (<svg {...c}><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9h16M8 3v4M16 3v4"/></svg>);
+    case "chev":   return (<svg {...c}><path d="M9 6l6 6-6 6"/></svg>);
+    default:       return null;
+  }
+}
+
+const TAB_ITEMS = [
+  { id: "dashboard", label: "Accueil",  icon: "home" },
+  { id: "affiches",  label: "Affiches", icon: "poster" },
+  { id: "cours",     label: "Cours",    icon: "book" },
+  { id: "messages",  label: "Messages", icon: "msg" },
+];
+
+export function TabBar({ active, onNavigate }) {
+  return (
+    <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 900, display: "flex", background: "var(--bg-surface)", borderTop: "1px solid var(--color-border)", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)", fontFamily: SANS, boxShadow: "0 -2px 24px rgba(0,0,0,0.05)" }}>
+      {TAB_ITEMS.map(t => {
+        const on = active === t.id;
+        return (
+          <div key={t.id} onClick={() => onNavigate(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "9px 4px 8px", cursor: "pointer", color: on ? "var(--color-accent)" : "var(--color-text-subtle)", position: "relative" }}>
+            {on && <span style={{ position: "absolute", top: 1, width: 5, height: 5, borderRadius: "50%", background: "var(--color-accent)" }} />}
+            <Icon name={t.icon} size={22} stroke="currentColor" />
+            <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.01em" }}>{t.label}</span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -178,7 +229,7 @@ export function AppHeader({ currentScreen, onNavigate, user, onSignOut }) {
     <div style={{ background: T.navbarBg, borderBottom: `1px solid ${T.goldFaint}`, padding: "0 20px", height: 60, display: "flex", alignItems: "center", gap: mobile ? 8 : 14, fontFamily: SANS }}>
       {/* LEFT */}
       <div onClick={() => onNavigate("dashboard")} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", flexShrink: 0 }}>
-        <ChabadLogo size={36} />
+        <ChabadLogo size={36} color="var(--navbar-text)" flameColor="var(--color-accent)" />
         {!mobile && <span style={{ fontFamily: SERIF, fontSize: 17, color: T.navbarText, fontWeight: 700 }}>Habad.ai</span>}
       </div>
 
@@ -326,8 +377,8 @@ export function SuggestionsFAB({ user, profil }) {
         title="Boîte à idées"
         style={{
           position: "fixed",
-          bottom: 24,
-          right: 24,
+          bottom: 84,
+          right: 20,
           width: 56,
           height: 56,
           borderRadius: "50%",

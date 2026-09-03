@@ -1,90 +1,82 @@
-/* ─── theme.css ─── Chabad Brand color system ─────────────────── */
+/* ─── theme.css ─── Univers Habad : Talit & Tekhelet ──────────── */
 
-/* ── Dark mode — "Flamme Royale" (default) ───────────────────── */
+/* ── Dark mode — "Téfiline nuit" (défaut) ────────────────────── */
 :root,
 :root[data-theme="dark"] {
-  --bg-primary:          #110309;
-  --bg-surface:          #2a0a1a;
-  --bg-surface-hover:    #3d1225;
-  --bg-surface-elevated: #1d0813;
-  --color-primary:       #5d0b30;
-  --color-brand:         #871a39;
-  --color-accent:        #f27730;
-  --color-accent-hover:  #ff8c42;
-  --color-text:          #faebd7;
-  --color-text-muted:    #c9a88a;
-  --color-text-subtle:   #8a6a55;
-  --color-border:        rgba(242, 119, 48, 0.15);
-  --color-border-active: #f27730;
-  --color-border-brand:  #871a39;
-  --navbar-bg:           #0a0206;
-  --paracha-bg:          #2d0a1a;
-  --paracha-border:      #871a39;
-  /* Navbar text stays light on both themes (navbar is always dark) */
-  --navbar-text:         #faebd7;
-  --navbar-text-muted:   #c9a88a;
-  /* Alpha tints derived from accent */
-  --color-accent-faint:  rgba(242, 119, 48, 0.08);
-  --color-accent-soft:   rgba(242, 119, 48, 0.12);
-  --color-accent-alpha:  rgba(242, 119, 48, 0.25);
-  /* Semantic status colors */
-  --color-error:             #d94f4f;
-  --color-error-bg:          rgba(217, 79, 79, 0.08);
-  --color-error-border:      rgba(217, 79, 79, 0.25);
-  --color-error-border-strong: rgba(217, 79, 79, 0.35);
-  --color-success:           #2dcf90;
-  /* Contrast foreground on accent-filled surfaces (gold buttons, avatars) */
-  --color-text-on-accent:    #1a0510;
-  /* Circle highlight for icons — adapts to background luminosity */
-  --color-icon-circle-bg:    rgba(255, 255, 255, 0.08);
-  /* Modal / overlay backdrop */
+  --bg-primary:          #0E1017;
+  --bg-surface:          #171A22;
+  --bg-surface-hover:    #1F2430;
+  --bg-surface-elevated: #14161D;
+  --color-primary:       #F7F6F2;
+  --color-brand:         #2E6FC4;
+  --color-accent:        #2E6FC4;   /* tekhelet — le fil de tsitsit */
+  --color-accent-hover:  #5B93D6;
+  --color-text:          #EDEEF2;
+  --color-text-muted:    #A7B0BE;
+  --color-text-subtle:   #6E7686;
+  --color-border:        rgba(199, 203, 209, 0.14);
+  --color-border-active: #2E6FC4;
+  --color-border-brand:  #2E6FC4;
+  --navbar-bg:           #08080C;
+  --paracha-bg:          #14161D;
+  --paracha-border:      rgba(46, 111, 196, 0.40);
+  --navbar-text:         #EDEEF2;
+  --navbar-text-muted:   #9AA3AD;
+  --color-accent-faint:  rgba(46, 111, 196, 0.10);
+  --color-accent-soft:   rgba(46, 111, 196, 0.16);
+  --color-accent-alpha:  rgba(46, 111, 196, 0.30);
+  --color-error:             #E8797F;
+  --color-error-bg:          rgba(232, 121, 127, 0.10);
+  --color-error-border:      rgba(232, 121, 127, 0.28);
+  --color-error-border-strong: rgba(232, 121, 127, 0.40);
+  --color-success:           #58C79A;
+  --color-text-on-accent:    #FFFFFF;
+  --color-icon-circle-bg:    rgba(255, 255, 255, 0.06);
   --color-modal-backdrop:    rgba(0, 0, 0, 0.7);
-  /* Elevation shadows */
-  --shadow-dropdown:         0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-card-hover:       0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-dropdown:         0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover:       0 8px 32px rgba(0, 0, 0, 0.5);
+  /* Univers Habad */
+  --color-stripe:        #C7CBD1;   /* bande de talit (claire sur fond nuit) */
+  --color-silver:        #8C949E;   /* atara */
 }
 
-/* ── Light mode — "Torah Blanc" ──────────────────────────────── */
+/* ── Light mode — "Talit" ────────────────────────────────────── */
 :root[data-theme="light"] {
-  --bg-primary:          #fdf8f5;
-  --bg-surface:          #f5ece6;
-  --bg-surface-hover:    #eeddd4;
-  --bg-surface-elevated: #ffffff;
-  --color-primary:       #5d0b30;
-  --color-brand:         #871a39;
-  --color-accent:        #f27730;
-  --color-accent-hover:  #d4601a;
-  --color-text:          #1a0510;
-  --color-text-muted:    #7a4a3a;
-  --color-text-subtle:   #b08070;
-  --color-border:        rgba(93, 11, 48, 0.15);
-  --color-border-active: #871a39;
-  --color-border-brand:  #5d0b30;
-  --navbar-bg:           #5d0b30;
-  --paracha-bg:          #f5ece6;
-  --paracha-border:      #871a39;
-  /* Navbar text stays light (burgundy navbar) */
-  --navbar-text:         #faebd7;
-  --navbar-text-muted:   #e8c9a8;
-  /* Alpha tints */
-  --color-accent-faint:  rgba(242, 119, 48, 0.08);
-  --color-accent-soft:   rgba(242, 119, 48, 0.12);
-  --color-accent-alpha:  rgba(93, 11, 48, 0.20);
-  /* Semantic status colors (darkened for AA contrast on light bg) */
-  --color-error:             #b92c2c;
+  --bg-primary:          #F7F6F2;   /* laine du talit */
+  --bg-surface:          #FFFFFF;
+  --bg-surface-hover:    #EFEEE9;
+  --bg-surface-elevated: #FFFFFF;
+  --color-primary:       #17171C;   /* noir téfiline */
+  --color-brand:         #1D4E89;
+  --color-accent:        #1D4E89;   /* tekhelet */
+  --color-accent-hover:  #143961;
+  --color-text:          #1E1D24;
+  --color-text-muted:    #6C6C77;
+  --color-text-subtle:   #9C9CA6;
+  --color-border:        rgba(23, 23, 28, 0.12);
+  --color-border-active: #1D4E89;
+  --color-border-brand:  #17171C;
+  --navbar-bg:           #17171C;   /* barre haute = noir téfiline */
+  --paracha-bg:          #FFFFFF;
+  --paracha-border:      rgba(29, 78, 137, 0.25);
+  --navbar-text:         #F7F6F2;
+  --navbar-text-muted:   #9AA3AD;
+  --color-accent-faint:  rgba(29, 78, 137, 0.08);
+  --color-accent-soft:   rgba(29, 78, 137, 0.12);
+  --color-accent-alpha:  rgba(29, 78, 137, 0.22);
+  --color-error:             #B92C2C;
   --color-error-bg:          rgba(185, 44, 44, 0.08);
   --color-error-border:      rgba(185, 44, 44, 0.25);
   --color-error-border-strong: rgba(185, 44, 44, 0.35);
-  --color-success:           #1b9a65;
-  /* Contrast foreground on accent-filled surfaces */
-  --color-text-on-accent:    #1a0510;
-  /* Circle highlight tinted with burgundy alpha (visible on light cream bg) */
-  --color-icon-circle-bg:    rgba(93, 11, 48, 0.08);
-  /* Modal backdrop uses burgundy tint so light theme isn't jarring */
-  --color-modal-backdrop:    rgba(93, 11, 48, 0.35);
-  /* Softer shadows appropriate for light backgrounds */
-  --shadow-dropdown:         0 8px 24px rgba(93, 11, 48, 0.18);
-  --shadow-card-hover:       0 8px 32px rgba(93, 11, 48, 0.15);
+  --color-success:           #1B9A65;
+  --color-text-on-accent:    #FFFFFF;
+  --color-icon-circle-bg:    rgba(23, 23, 28, 0.06);
+  --color-modal-backdrop:    rgba(23, 23, 28, 0.40);
+  --shadow-dropdown:         0 8px 24px rgba(20, 25, 40, 0.18);
+  --shadow-card-hover:       0 8px 32px rgba(20, 25, 40, 0.14);
+  /* Univers Habad */
+  --color-stripe:        #17171C;   /* bande de talit (noire sur laine) */
+  --color-silver:        #8C949E;   /* atara */
 }
 
 /* ── Base reset ──────────────────────────────────────────────── */
